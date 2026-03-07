@@ -19,3 +19,13 @@
 // Stub integration point — lifetimeSystem is called here each tick
 // once the game loop body is implemented.
 export { lifetimeSystem } from '../systems/lifetimeSystem';
+
+// ── Stub integration point for movementSystem ──────────────────────────────
+// movementSystem runs at position 4 in the system execution order.
+// Once the game loop body is implemented, call it as:
+//
+//   import { movementSystem } from '../systems/movementSystem';
+//   movementSystem(world, dt);
+//
+// It must run AFTER aiSystem and BEFORE collisionSystem.
+export { movementSystem } from '../systems/movementSystem';
