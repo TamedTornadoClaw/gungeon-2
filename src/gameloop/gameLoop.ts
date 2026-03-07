@@ -29,3 +29,16 @@ export { lifetimeSystem } from '../systems/lifetimeSystem';
 //
 // It must run AFTER aiSystem and BEFORE collisionSystem.
 export { movementSystem } from '../systems/movementSystem';
+
+// Stub integration point for collisionDetectionSystem.
+// When the game loop body is implemented, call:
+//   import { collisionDetectionSystem, rebuildStatics } from '../systems/collisionDetectionSystem';
+//   const collisionEntities = world.query(['Position', 'Collider']).map(id => ({
+//     id,
+//     position: world.getComponent(id, 'Position'),
+//     collider: world.getComponent(id, 'Collider'),
+//   }));
+//   const pairs = collisionDetectionSystem(collisionEntities);
+//   // Pass pairs to CollisionResponseSystem
+//
+// Call rebuildStatics() once per room load with all static collider entities.
