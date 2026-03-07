@@ -119,7 +119,7 @@
       "TEMP-003",
       "TEMP-005"
     ],
-    "body": "**Category:** system\n**Automation:** auto\n**Depends on:** TEMP-003, TEMP-005\n**Produces:** `src/input/inputManager.ts`, `src/input/inputMapping.ts`\n\n## Description\n\nImplement InputManager that captures raw keyboard/mouse/gamepad input and produces normalized InputState. InputState interface defined in `docs/tdd/systems.md` InputSystem section. Mouse position converted from screen to world space via camera raycasting onto ground plane (y=0). InputManager holds camera reference for this.\n\nData-driven input mapping: physical keys → logical actions.\n\n## Acceptance Criteria\n\n- [ ] InputState interface with all fields from systems.md\n- [ ] moveX/moveY clamped to [-1,1] and normalized for diagonal\n- [ ] Keyboard WASD → movement, mouse → aim, LMB/RMB → fire\n- [ ] Gamepad support (twin-stick)\n- [ ] Input mapping is data-driven (changeable without code edits)\n- [ ] Tests verify normalization (diagonal doesn't exceed magnitude 1)\n- [ ] Tests verify clamping",
+    "body": "**Category:** system\n**Automation:** auto\n**Depends on:** TEMP-003, TEMP-005\n**Produces:** `src/input/inputManager.ts`, `src/input/inputMapping.ts`, `src/systems/inputSystem.ts`\n\n## Description\n\nImplement InputManager that captures raw keyboard/mouse/gamepad input and produces normalized InputState. InputState interface defined in `docs/tdd/systems.md` InputSystem section. Mouse position converted from screen to world space via camera raycasting onto ground plane (y=0). InputManager holds camera reference for this.\n\nData-driven input mapping: physical keys → logical actions.\n\n## Acceptance Criteria\n\n- [ ] InputState interface with all fields from systems.md\n- [ ] moveX/moveY clamped to [-1,1] and normalized for diagonal\n- [ ] Keyboard WASD → movement, mouse → aim, LMB/RMB → fire\n- [ ] Gamepad support (twin-stick)\n- [ ] Input mapping is data-driven (changeable without code edits)\n- [ ] Tests verify normalization (diagonal doesn't exceed magnitude 1)\n- [ ] Tests verify clamping\\n- [ ] `inputSystem(inputManager)` function in `src/systems/inputSystem.ts` returns InputState\\n- [ ] InputSystem is a thin wrapper calling InputManager methods",
     "test_spec": "test-specs/TEMP-009.md"
   },
   {
@@ -132,7 +132,7 @@
     "depends_on": [
       "TEMP-005"
     ],
-    "body": "**Category:** state\n**Automation:** auto\n**Depends on:** TEMP-005\n**Produces:** `src/store/appStore.ts`\n\n## Description\n\nImplement the Zustand app store with AppState FSM from `docs/tdd/states.md`. The `transition()` action validates against the transition map. Invalid transitions throw. Settings→X only valid when X===previousState. Store shape matches the AppStore interface in states.md.\n\n**States:** Loading, MainMenu, WeaponSelect, Gameplay, Paused, GunComparison, GunUpgrade, ForcedUpgrade, ShopBrowse, Death, Victory, Settings\n\n**Transitions:** See transition map in states.md.\n\n## Acceptance Criteria\n\n- [ ] All 11 states defined\n- [ ] `transition(to)` validates against transition map\n- [ ] Invalid transitions throw with `from → to` message\n- [ ] Settings→X validated: only valid when X===previousState\n- [ ] previousState tracked correctly\n- [ ] All per-state data fields (selectedLongArm, comparisonGunEntityId, etc.)\n- [ ] RunStats interface implemented\n- [ ] Tests cover every valid transition\n- [ ] Tests verify every invalid transition throws\n- [ ] Tests verify Settings→previousState validation",
+    "body": "**Category:** state\n**Automation:** auto\n**Depends on:** TEMP-005\n**Produces:** `src/store/appStore.ts`\n\n## Description\n\nImplement the Zustand app store with AppState FSM from `docs/tdd/states.md`. The `transition()` action validates against the transition map. Invalid transitions throw. Settings→X only valid when X===previousState. Store shape matches the AppStore interface in states.md.\n\n**States:** Loading, MainMenu, WeaponSelect, Gameplay, Paused, GunComparison, GunUpgrade, ForcedUpgrade, ShopBrowse, Death, Victory, Settings\n\n**Transitions:** See transition map in states.md.\n\n## Acceptance Criteria\n\n- [ ] All 12 states defined\n- [ ] `transition(to)` validates against transition map\n- [ ] Invalid transitions throw with `from → to` message\n- [ ] Settings→X validated: only valid when X===previousState\n- [ ] previousState tracked correctly\n- [ ] All per-state data fields (selectedLongArm, comparisonGunEntityId, etc.)\n- [ ] RunStats interface implemented\n- [ ] Tests cover every valid transition\n- [ ] Tests verify every invalid transition throws\n- [ ] Tests verify Settings→previousState validation",
     "test_spec": "test-specs/TEMP-010.md"
   },
   {
@@ -357,7 +357,8 @@
     "depends_on": [
       "TEMP-005",
       "TEMP-006",
-      "TEMP-008"
+      "TEMP-008",
+      "TEMP-004"
     ],
     "body": "**Category:** system\n**Automation:** auto\n**Depends on:** TEMP-005, TEMP-006, TEMP-008\n**Produces:** `src/systems/enemyWeaponSystem.ts`\n\n## Description\n\nImplement EnemyWeaponSystem from `docs/tdd/systems.md`. Fires enemy projectiles when AI state is Attack and cooldown allows.\n\n**Function signature:** `enemyWeaponSystem(world: World, dt: number): void`\n\n**Properties:**\n- fireCooldown -= dt per enemy weapon\n- When Attack state and cooldown<=0: spawn enemy bullet(s)\n- Shotgunner: multiple bullets with spread\n- Rifleman/ShieldGun: single accurate bullet\n- fireCooldown reset to 1/fireRate\n- Uses createEnemyBullet factory\n\n**Test spec:** `test-specs/TEMP-025.md`\n\n## Acceptance Criteria\n\n- [ ] Cooldown mechanics correct\n- [ ] Correct bullet count per enemy type\n- [ ] Spread applied for shotgunners\n- [ ] Bullets get EnemyProjectileTag\n- [ ] Tests implementing test spec pass",
     "test_spec": "test-specs/TEMP-025.md"
@@ -437,7 +438,8 @@
     ],
     "depends_on": [
       "TEMP-005",
-      "TEMP-004"
+      "TEMP-004",
+      "TEMP-006"
     ],
     "body": "**Category:** system\n**Automation:** auto\n**Depends on:** TEMP-005, TEMP-004\n**Produces:** `src/systems/gunStatSystem.ts`\n\n## Description\n\nImplement GunStatSystem from `docs/tdd/systems.md`. Recalculates computed gun stats from base + trait bonuses. Called on-demand after upgrades, not every frame.\n\n**Function signature:** `gunStatSystem(world: World): void`\n\n**Properties:**\n- damage = baseDamage + traitBonus(Damage, level) if Damage is a gun trait\n- Stats not covered by a trait use base value\n- magazineSize rounded to nearest integer\n- reloadTime clamped to minimum 0.2s\n- All bonuses from design params bonusPerLevel arrays\n\n**Test spec:** `test-specs/TEMP-030.md`\n\n## Acceptance Criteria\n\n- [ ] Stats recalculated from base + trait bonuses\n- [ ] magazineSize rounded\n- [ ] reloadTime clamped to 0.2\n- [ ] Only traits the gun has affect stats\n- [ ] Tests implementing test spec pass",
     "test_spec": "test-specs/TEMP-030.md"
@@ -546,7 +548,7 @@
       "TEMP-008",
       "TEMP-004"
     ],
-    "body": "**Category:** system\n**Automation:** auto\n**Depends on:** TEMP-035, TEMP-036, TEMP-008, TEMP-004\n**Produces:** `src/dungeon/generator.ts`\n\n## Description\n\nImplement procedural dungeon generation. Produces DungeonData: places rooms (8 per floor from config), connects with corridors (7 units wide from config), assigns enemy spawn zones, places hazards/destructibles/chests/shops, places stairs to next floor.\n\n**Properties:**\n- roomsPerFloor rooms placed without overlap\n- Corridors connect adjacent rooms, width from config (7 units)\n- enemiesPerRoom from config (3-8)\n- chestChancePerRoom, shopChancePerFloor, miniBossChancePerRoom from config\n- Boss floor at bossFloorDepth: single boss room\n\n**Test spec:** `test-specs/TEMP-037.md`\n\n## Acceptance Criteria\n\n- [ ] Generates roomsPerFloor rooms\n- [ ] No room overlap\n- [ ] All rooms connected via corridors\n- [ ] Corridors are 7 units wide\n- [ ] Rooms are 20-50 units per side\n- [ ] Enemy spawn zones placed per room\n- [ ] Chests/shops placed per config probabilities\n- [ ] Stairs placed in last room\n- [ ] Boss floor generates correctly\n- [ ] Tests implementing test spec pass",
+    "body": "**Category:** system\n**Automation:** auto\n**Depends on:** TEMP-035, TEMP-036, TEMP-008, TEMP-004\n**Produces:** `src/dungeon/generator.ts`\n\n## Description\n\nImplement procedural dungeon generation. Produces DungeonData: places rooms (8 per floor from config), connects with corridors (7 units wide from config), assigns enemy spawn zones, places hazards/destructibles/chests/shops, places stairs to next floor.\n\n**Properties:**\n- roomsPerFloor rooms placed without overlap\n- Corridors connect adjacent rooms, width from config (7 units)\n- enemiesPerRoom from config (3-8)\n- chestChancePerRoom, shopChancePerFloor, miniBossChancePerRoom from config\n- Boss floor at bossFloorDepth: single boss room\n\n**Test spec:** `test-specs/TEMP-037.md`\n\n## Acceptance Criteria\n\n- [ ] Generates roomsPerFloor rooms\n- [ ] No room overlap\n- [ ] All rooms connected via corridors\n- [ ] Corridors are 7 units wide\n- [ ] Rooms are 20-50 units per side\n- [ ] Enemy spawn zones placed per room\n- [ ] Chests/shops placed per config probabilities\n- [ ] Stairs placed in last room\n- [ ] Boss floor generates correctly\n- [ ] Tests implementing test spec pass\\n- [ ] Chests contain a random GunType selected uniformly from all 5 gun types",
     "test_spec": "test-specs/TEMP-037.md"
   },
   {
@@ -685,7 +687,7 @@
       "TEMP-001",
       "TEMP-005"
     ],
-    "body": "**Category:** integration\n**Automation:** auto\n**Depends on:** TEMP-001, TEMP-005\n**Produces:** `src/audio/audioManager.ts`\n\n## Description\n\nImplement Howler.js audio manager from `docs/tdd/overview.md`. Wraps Howler.js for sound playback. Loads sounds from sound manifest. Handles pooling, volume (from settings store), pitch variation, max instances per sound.\n\nLooping sounds (FireAmbient, WaterAmbient) started/stopped based on proximity.\n\n## Acceptance Criteria\n\n- [ ] `play(soundId)` plays correct sound\n- [ ] Volume respects settings store (masterVolume * sfxVolume)\n- [ ] Pitch variation per manifest (pitchMin/pitchMax)\n- [ ] maxInstances prevents sound stacking\n- [ ] Looping sounds support (start/stop)\n- [ ] Loads from sound manifest JSON\n- [ ] Tests verify play/stop API",
+    "body": "**Category:** integration\n**Automation:** auto\n**Depends on:** TEMP-001, TEMP-005\n**Produces:** `src/audio/audioManager.ts`\n\n## Description\n\nImplement Howler.js audio manager from `docs/tdd/overview.md`. Wraps Howler.js for sound playback. Loads sounds from sound manifest. Handles pooling, volume (from settings store), pitch variation, max instances per sound.\n\nLooping sounds (FireAmbient, WaterAmbient) started/stopped based on proximity.\n\n## Acceptance Criteria\n\n- [ ] `play(soundId)` plays correct sound\n- [ ] Volume respects settings store (masterVolume * sfxVolume)\n- [ ] Pitch variation per manifest (pitchMin/pitchMax)\n- [ ] maxInstances prevents sound stacking\n- [ ] Looping sounds support (start/stop)\n- [ ] Loads from sound manifest JSON\n- [ ] Tests verify play/stop API\\n- [ ] Create `src/audio/sounds.ts` that re-exports SoundId from `src/ecs/components.ts`",
     "test_spec": "test-specs/TEMP-047.md"
   },
   {
@@ -919,7 +921,9 @@
       "TEMP-034",
       "TEMP-046",
       "TEMP-048",
-      "TEMP-004"
+      "TEMP-004",
+      "TEMP-009",
+      "TEMP-010"
     ],
     "body": "**Category:** integration\n**Automation:** auto\n**Depends on:** All system tickets (TEMP-012 through TEMP-034, TEMP-046, TEMP-048), TEMP-006, TEMP-007, TEMP-004\n**Produces:** `src/gameloop/gameLoop.ts`\n\n## Description\n\nImplement the fixed-timestep game loop from `docs/tdd/overview.md` and `docs/tdd/systems.md`. Calls all 26 systems in the correct execution order at 60Hz. Handles delta time accumulation, spiral-of-death protection (maxFrameTime cap). Provides start/stop/freeze/resume API for state transitions.\n\n**Execution order:** Input → PlayerControl → DodgeRoll → AI → Projectile → EnemyWeapon → Movement → CollisionDetection → CollisionResponse → Damage → ShieldRegen → Hazard → Lifetime → Pickup → Chest → Shop → GunXP → Destructible → Door → Spawn → FloorTransition → Death → ExpireModifiers → Particle → Audio\n\nGunStatSystem called on-demand, not in loop.\n\n**Test spec:** `test-specs/TEMP-062.md`\n\n## Acceptance Criteria\n\n- [ ] Fixed timestep at 60Hz (0.01667s)\n- [ ] All systems called in correct order\n- [ ] Spiral-of-death protection: excess time discarded at maxFrameTime\n- [ ] start/stop/freeze/resume API\n- [ ] Event queue cleared each frame\n- [ ] Tests implementing test spec pass",
     "test_spec": "test-specs/TEMP-062.md"
@@ -3255,6 +3259,29 @@
       "TEMP-226"
     ],
     "body": "**Category:** asset\\n**Automation:** manual\\n**Depends on:** TEMP-226 (scaffold)\\n**Produces:** `assets/particles/destructibledebrismetal.png`\\n\\n## Description\\n\\nAcquire particle sprite/texture for DestructibleDebrisMetal effect. On barrel break.\\n\\n## Asset Spec\\n\\n- **Format:** PNG with alpha\\n- **Size:** 32x32 or 64x64\\n- **Art style:** Cell-shaded, bold colors\\n- **Current placeholder:** Silver point sprites\\n- **File path:** `assets/particles/destructibledebrismetal.png`\\n\\n## Acceptance Criteria\\n\\n- [ ] Asset matches spec\\n- [ ] Particle effect renders with real texture\\n- [ ] No code changes needed",
+    "test_spec": null
+  },
+  {
+    "id": "TEMP-237",
+    "title": "[verification] Foundation verification — compile and test",
+    "labels": [
+      "verification",
+      "auto"
+    ],
+    "depends_on": [
+      "TEMP-001",
+      "TEMP-002",
+      "TEMP-003",
+      "TEMP-004",
+      "TEMP-005",
+      "TEMP-006",
+      "TEMP-007",
+      "TEMP-008",
+      "TEMP-009",
+      "TEMP-010",
+      "TEMP-011"
+    ],
+    "body": "**Category:** verification\\n**Automation:** auto\\n**Depends on:** TEMP-001 through TEMP-011\\n**Produces:** Bug tickets if issues found\\n\\n## Description\\n\\nFoundation verification checkpoint after all setup, types, components, ECS world, events, factories, input manager, app state machine, and settings store are complete.\\n\\n## Acceptance Criteria\\n\\n- [ ] `npm run build` succeeds without errors\\n- [ ] `npm run typecheck` passes\\n- [ ] `npm test` passes (all foundation tests)\\n- [ ] All foundation modules import cleanly\\n- [ ] ECS World can create entities with components\\n- [ ] App state machine transitions work\\n- [ ] Design params load correctly\\n- [ ] If any issues found, file bug tickets",
     "test_spec": null
   }
 ]
