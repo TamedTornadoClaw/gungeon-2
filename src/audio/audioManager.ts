@@ -1,5 +1,6 @@
 import { Howl, Howler } from 'howler';
 import { SoundId } from '../ecs/components';
+import type { Vec3 } from '../types';
 import { useSettingsStore } from '../store/settingsStore';
 import soundManifestJson from '../../config/sound-manifest.json';
 
@@ -79,7 +80,7 @@ export class AudioManager {
     return this.manifest[key];
   }
 
-  play(soundId: SoundId): void {
+  play(soundId: SoundId, _position?: Vec3): void {
     const pool = this.pools.get(soundId);
     if (!pool) {
       console.warn(`[AudioManager] No sound loaded for SoundId.${SoundId[soundId]}`);
