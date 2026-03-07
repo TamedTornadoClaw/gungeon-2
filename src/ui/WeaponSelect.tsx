@@ -83,6 +83,12 @@ function GunCard({ gunType, selected, onSelect }: GunCardProps) {
           </div>
         ))}
       </div>
+      <div style={{ fontSize: '11px', marginTop: '8px', color: '#aaa' }}>
+        <div style={{ fontWeight: 'bold', marginBottom: '2px' }}>Traits</div>
+        {gun.traits.map((trait) => (
+          <span key={trait} style={{ marginRight: '6px' }}>{trait}</span>
+        ))}
+      </div>
     </button>
   );
 }
