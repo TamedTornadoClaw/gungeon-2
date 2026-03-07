@@ -1,15 +1,8 @@
 import type { EntityId, Vec3 } from '../types';
-import { ParticleEffect, SoundId } from '../ecs/components';
+import { EventType, ParticleEffect, SoundId } from '../ecs/components';
 
-// ── Event Type Enum ─────────────────────────────────────────────────────────
-
-export enum EventType {
-  Damage = 'Damage',
-  Particle = 'Particle',
-  Audio = 'Audio',
-  DamageNumber = 'DamageNumber',
-  DoorInteract = 'DoorInteract',
-}
+// Re-export EventType so consumers can import from either location
+export { EventType };
 
 // ── Event Interfaces ────────────────────────────────────────────────────────
 
@@ -65,6 +58,10 @@ export interface EventTypeMap {
 
 // ── Event Queue ─────────────────────────────────────────────────────────────
 
+// Integration: The game loop creates a single EventQueue instance via createEventQueue()
+// and passes it to every system that emits or consumes events. At the end of each frame,
+// the game loop calls eventQueue.clear() to flush unconsumed events before the next tick.
+
 export class EventQueue {
   private events: GameEvent[] = [];
 
@@ -91,4 +88,9 @@ export class EventQueue {
   clear(): void {
     this.events = [];
   }
+}
+
+/** Factory for creating the per-frame event queue. Called once by the game loop at startup. */
+export function createEventQueue(): EventQueue {
+  return new EventQueue();
 }

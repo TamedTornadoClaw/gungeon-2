@@ -147,6 +147,14 @@ export enum SoundId {
   WaterAmbient,
 }
 
+export enum EventType {
+  Damage = 'Damage',
+  Particle = 'Particle',
+  Audio = 'Audio',
+  DamageNumber = 'DamageNumber',
+  DoorInteract = 'DoorInteract',
+}
+
 export enum MeshId {
   Player,
   KnifeRusher,
