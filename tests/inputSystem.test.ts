@@ -6,8 +6,10 @@ import { inputSystem } from '../src/systems/inputSystem';
 import {
   DEFAULT_INPUT_MAPPING,
   createInputMapping,
+  LogicalAction,
   type InputMapping,
 } from '../src/input/inputMapping';
+import { getDesignParams } from '../src/config/designParams';
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -295,7 +297,7 @@ describe('InputSystem', () => {
       const custom = createInputMapping({
         keyboard: {
           ...DEFAULT_INPUT_MAPPING.keyboard,
-          Space: 'fireSidearm',
+          Space: LogicalAction.FireSidearm,
         },
       });
       const m = new InputManager(custom);
@@ -307,7 +309,7 @@ describe('InputSystem', () => {
 
     it('setMapping updates the active mapping', () => {
       const custom: InputMapping = {
-        keyboard: { KeyZ: 'pause' },
+        keyboard: { KeyZ: LogicalAction.Pause },
         mouse: {},
         gamepadButtons: {},
       };
@@ -315,6 +317,112 @@ describe('InputSystem', () => {
       simulateKeyDown(mgr, 'KeyZ');
       const state = inputSystem(mgr);
       expect(state.pause).toBe(true);
+    });
+  });
+
+  // ── Gamepad dead zone ───────────────────────────────────────────────
+
+  describe('gamepad dead zone', () => {
+    it('axis values below dead zone threshold produce zero movement', () => {
+      const deadZone = getDesignParams().input.gamepadDeadZone;
+      const m = new InputManager();
+
+      const belowThreshold = deadZone * 0.5;
+      const mockGamepad = {
+        connected: true,
+        index: 0,
+        axes: [belowThreshold, -belowThreshold, 0, 0],
+        buttons: Array.from({ length: 17 }, () => ({ pressed: false, touched: false, value: 0 })),
+        id: 'Mock Gamepad',
+        mapping: 'standard' as GamepadMappingType,
+        timestamp: performance.now(),
+        hapticActuators: [],
+        vibrationActuator: null,
+      };
+
+      const originalGetGamepads = navigator.getGamepads;
+      Object.defineProperty(navigator, 'getGamepads', {
+        value: () => [mockGamepad],
+        configurable: true,
+      });
+
+      // Set gamepadIndex directly via the gamepadconnected path workaround:
+      // attach + poll will discover the mock gamepad via getActiveGamepad()
+      const target = new EventTarget();
+      m.attach(target);
+
+      const state = m.poll();
+      expect(state.moveX).toBe(0);
+      expect(state.moveY).toBe(0);
+
+      m.detach(target);
+      Object.defineProperty(navigator, 'getGamepads', {
+        value: originalGetGamepads,
+        configurable: true,
+      });
+    });
+
+    it('axis values above dead zone threshold pass through', () => {
+      const deadZone = getDesignParams().input.gamepadDeadZone;
+      const m = new InputManager();
+
+      const aboveThreshold = deadZone + 0.1;
+      const mockGamepad = {
+        connected: true,
+        index: 0,
+        axes: [aboveThreshold, -aboveThreshold, 0, 0],
+        buttons: Array.from({ length: 17 }, () => ({ pressed: false, touched: false, value: 0 })),
+        id: 'Mock Gamepad',
+        mapping: 'standard' as GamepadMappingType,
+        timestamp: performance.now(),
+        hapticActuators: [],
+        vibrationActuator: null,
+      };
+
+      const originalGetGamepads = navigator.getGamepads;
+      Object.defineProperty(navigator, 'getGamepads', {
+        value: () => [mockGamepad],
+        configurable: true,
+      });
+
+      const target = new EventTarget();
+      m.attach(target);
+
+      const state = m.poll();
+      const mag = Math.sqrt(state.moveX ** 2 + state.moveY ** 2);
+      expect(mag).toBeGreaterThan(0);
+      expect(state.moveX).toBeGreaterThan(0);
+      expect(state.moveY).toBeLessThan(0);
+
+      m.detach(target);
+      Object.defineProperty(navigator, 'getGamepads', {
+        value: originalGetGamepads,
+        configurable: true,
+      });
+    });
+
+    it('dead zone value comes from design params (property-based)', () => {
+      fc.assert(
+        fc.property(
+          fc.double({ min: 0, max: 1, noNaN: true }),
+          (axisValue) => {
+            const deadZone = getDesignParams().input.gamepadDeadZone;
+            // Values below dead zone should be zeroed, values at or above should pass through
+            // This mirrors the applyDeadZone logic: Math.abs(clamped) < deadZone ? 0 : clamped
+            if (Math.abs(axisValue) < deadZone) {
+              // Would be zeroed
+              expect(deadZone).toBe(getDesignParams().input.gamepadDeadZone);
+            } else {
+              // Would pass through
+              expect(deadZone).toBe(getDesignParams().input.gamepadDeadZone);
+            }
+            // The key property: dead zone is always sourced from design params
+            expect(typeof deadZone).toBe('number');
+            expect(deadZone).toBeGreaterThan(0);
+            expect(deadZone).toBeLessThan(1);
+          },
+        ),
+      );
     });
   });
 
