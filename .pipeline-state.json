@@ -10,12 +10,23 @@
     "issueMap": "issue-map.json"
   },
   "implementation": {
-    "currentWave": 4,
-    "completedWaves": [1, 2, 3],
+    "currentWave": 5,
+    "completedWaves": [1, 2, 3, 4],
     "mergedIssues": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13],
+    "wave5": {
+      "status": "in-progress",
+      "issues": {
+        "14": { "status": "agent-running", "branch": "issue-14" },
+        "15": { "status": "agent-running", "branch": "issue-15" },
+        "16": { "status": "agent-running", "branch": "issue-16" },
+        "17": { "status": "agent-running", "branch": "issue-17" },
+        "18": { "status": "agent-running", "branch": "issue-18" },
+        "19": { "status": "agent-running", "branch": "issue-19" },
+        "20": { "status": "agent-running", "branch": "issue-20" }
+      }
+    },
     "openPRs": {},
-    "activeWorktrees": [],
-    "reviewProtocol": "run-agent.sh in existing worktree, prompt contains ONLY test-spec + PR diff + CLAUDE.md"
+    "activeWorktrees": ["issue-14", "issue-15", "issue-16", "issue-17", "issue-18", "issue-19", "issue-20"]
   },
   "notes": {
     "interviewSkipped": true,
