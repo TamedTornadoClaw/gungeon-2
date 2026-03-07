@@ -43,7 +43,7 @@ const MESH_GEOMETRIES: Record<MeshId, () => THREE.BufferGeometry> = {
   [MeshId.MiniBossKnifeRusher]: () => new THREE.BoxGeometry(1.2, 2.2, 1.2),
   [MeshId.MiniBossShieldGun]: () => new THREE.BoxGeometry(1.4, 2.5, 1.4),
   [MeshId.MiniBossShotgunner]: () => new THREE.BoxGeometry(1.4, 2.5, 1.4),
-  [MeshId.MiniBossRifleman]: () => new THREE.BoxGeometry(0.8, 2, 0.8),
+  [MeshId.MiniBossRifleman]: () => new THREE.BoxGeometry(1.4, 2.5, 1.4),
   [MeshId.MiniBossSuicideBomber]: () => new THREE.BoxGeometry(0.8, 1.5, 0.8),
   [MeshId.Boss]: () => new THREE.BoxGeometry(2, 3, 2),
   [MeshId.Pistol]: () => new THREE.BoxGeometry(0.1, 0.1, 0.3),
