@@ -11,13 +11,21 @@ interface MeshDef {
   emissiveIntensity?: number;
   transparent?: boolean;
   opacity?: number;
-  /** If true, skip toon material and use MeshBasicMaterial (for outlines, glow, etc.) */
-  useBasicMaterial?: boolean;
   /** If true, skip outline mesh generation */
   noOutline?: boolean;
-  /** Child mesh definitions (e.g., shield on ShieldGun, gun on Player) */
-  children?: MeshDef[];
 }
+
+/** Child meshes attached to parent mesh types (hidden by default) */
+const CHILD_MESH_IDS: Partial<Record<MeshId, MeshId[]>> = {
+  [MeshId.Player]: [
+    MeshId.Pistol,
+    MeshId.SMG,
+    MeshId.AssaultRifle,
+    MeshId.Shotgun,
+    MeshId.LMG,
+  ],
+  [MeshId.ShieldGun]: [MeshId.EnemyShieldMesh],
+};
 
 const MESH_DEFS: Record<MeshId, MeshDef> = {
   // ── Characters ──
@@ -277,14 +285,6 @@ function createStairsGeometry(): THREE.BufferGeometry {
 // ── Material factory ───────────────────────────────────────────────────────
 
 function createMaterial(def: MeshDef): THREE.Material {
-  if (def.useBasicMaterial) {
-    return new THREE.MeshBasicMaterial({
-      color: def.color,
-      transparent: def.transparent,
-      opacity: def.opacity ?? 1,
-    });
-  }
-
   const params: THREE.MeshToonMaterialParameters = {
     color: def.color,
     emissive: def.emissive ?? 0x000000,
@@ -299,7 +299,7 @@ function createMaterial(def: MeshDef): THREE.Material {
 
 // ── Mesh creation ──────────────────────────────────────────────────────────
 
-function createMeshFromDef(def: MeshDef): THREE.Mesh {
+function createMeshFromDef(def: MeshDef, meshId?: MeshId): THREE.Mesh {
   const geometry = def.geometry();
   const material = createMaterial(def);
   const mesh = new THREE.Mesh(geometry, material);
@@ -307,6 +307,20 @@ function createMeshFromDef(def: MeshDef): THREE.Mesh {
   if (!def.noOutline) {
     const outline = createOutlineMesh(mesh);
     mesh.add(outline);
+  }
+
+  // Attach child meshes (hidden by default)
+  if (meshId !== undefined) {
+    const childIds = CHILD_MESH_IDS[meshId];
+    if (childIds) {
+      for (const childId of childIds) {
+        const childDef = MESH_DEFS[childId];
+        const childMesh = createMeshFromDef(childDef);
+        childMesh.visible = false;
+        childMesh.name = MeshId[childId];
+        mesh.add(childMesh);
+      }
+    }
   }
 
   return mesh;
@@ -376,7 +390,7 @@ export function createSceneManager(scene: THREE.Scene): SceneManager {
     const count = DEFAULT_POOL_SIZES[meshId] ?? DEFAULT_PREALLOC;
     const pool = pools.get(meshId)!;
     for (let i = 0; i < count; i++) {
-      const mesh = createMeshFromDef(MESH_DEFS[meshId]);
+      const mesh = createMeshFromDef(MESH_DEFS[meshId], meshId);
       mesh.visible = false;
       pool.push(mesh);
     }
@@ -389,7 +403,7 @@ export function createSceneManager(scene: THREE.Scene): SceneManager {
     if (pool.length > 0) {
       mesh = pool.pop()!;
     } else {
-      mesh = createMeshFromDef(MESH_DEFS[meshId]);
+      mesh = createMeshFromDef(MESH_DEFS[meshId], meshId);
     }
 
     mesh.visible = true;
@@ -402,6 +416,16 @@ export function createSceneManager(scene: THREE.Scene): SceneManager {
     mesh.position.set(0, 0, 0);
     mesh.rotation.set(0, 0, 0);
     mesh.scale.set(1, 1, 1);
+
+    // Hide all child meshes (weapons, shields, etc.)
+    const childIds = CHILD_MESH_IDS[meshId];
+    if (childIds) {
+      for (const child of mesh.children) {
+        if (child instanceof THREE.Mesh && child.name) {
+          child.visible = false;
+        }
+      }
+    }
 
     const pool = pools.get(meshId)!;
     pool.push(mesh);

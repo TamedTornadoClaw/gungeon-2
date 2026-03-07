@@ -226,6 +226,54 @@ describe('scene graph structure', () => {
   });
 });
 
+// ── Child Mesh Attachment ────────────────────────────────────────────────────
+
+describe('child mesh attachment', () => {
+  it('Player mesh has 5 weapon children (Pistol, SMG, AssaultRifle, Shotgun, LMG)', () => {
+    const mesh = manager.acquireMesh(MeshId.Player);
+    const weaponNames = ['Pistol', 'SMG', 'AssaultRifle', 'Shotgun', 'LMG'];
+    const weaponChildren = mesh.children.filter(
+      (c) => c instanceof THREE.Mesh && weaponNames.includes(c.name),
+    );
+    expect(weaponChildren).toHaveLength(5);
+    for (const name of weaponNames) {
+      const child = mesh.children.find((c) => c.name === name);
+      expect(child).toBeDefined();
+      expect(child).toBeInstanceOf(THREE.Mesh);
+    }
+    manager.releaseMesh(MeshId.Player, mesh);
+  });
+
+  it('Player weapon children are hidden by default', () => {
+    const mesh = manager.acquireMesh(MeshId.Player);
+    const weaponNames = ['Pistol', 'SMG', 'AssaultRifle', 'Shotgun', 'LMG'];
+    for (const name of weaponNames) {
+      const child = mesh.children.find((c) => c.name === name);
+      expect(child!.visible).toBe(false);
+    }
+    manager.releaseMesh(MeshId.Player, mesh);
+  });
+
+  it('ShieldGun mesh has EnemyShieldMesh child', () => {
+    const mesh = manager.acquireMesh(MeshId.ShieldGun);
+    const shieldChild = mesh.children.find(
+      (c) => c instanceof THREE.Mesh && c.name === 'EnemyShieldMesh',
+    );
+    expect(shieldChild).toBeDefined();
+    expect(shieldChild).toBeInstanceOf(THREE.Mesh);
+    expect(shieldChild!.visible).toBe(false);
+    manager.releaseMesh(MeshId.ShieldGun, mesh);
+  });
+
+  it('release resets child mesh visibility to hidden', () => {
+    const mesh = manager.acquireMesh(MeshId.Player);
+    const pistol = mesh.children.find((c) => c.name === 'Pistol')!;
+    pistol.visible = true;
+    manager.releaseMesh(MeshId.Player, mesh);
+    expect(pistol.visible).toBe(false);
+  });
+});
+
 // ── Complete Coverage ───────────────────────────────────────────────────────
 
 describe('complete MeshId coverage', () => {
