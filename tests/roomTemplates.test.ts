@@ -1,12 +1,11 @@
 import { describe, it, expect } from 'vitest';
 import {
   ROOM_TEMPLATES,
-  DestructibleType,
   DESTRUCTIBLE_MESH,
   type RoomTemplate,
 } from '../src/dungeon/roomTemplates.js';
 import { getDesignParams } from '../src/config/designParams.js';
-import { HazardType, MeshId } from '../src/ecs/components.js';
+import { DestructibleType, HazardType, MeshId } from '../src/ecs/components.js';
 
 const params = getDesignParams();
 const { roomMinSize, roomMaxSize } = params.dungeon;
@@ -128,6 +127,44 @@ describe('Room Templates', () => {
           expect(t.shopPlacement.z).toBeGreaterThanOrEqual(0);
           expect(t.shopPlacement.z).toBeLessThanOrEqual(t.height);
         }
+      });
+
+      it('no destructible is placed at a spawn zone center', () => {
+        for (const zone of t.spawnZones) {
+          for (const d of t.destructibles) {
+            const samePos = d.x === zone.x && d.z === zone.z;
+            expect(
+              samePos,
+              `Destructible at (${d.x},${d.z}) sits on spawn zone center (${zone.x},${zone.z})`
+            ).toBe(false);
+          }
+        }
+      });
+
+      it('no two destructibles occupy the same position', () => {
+        const positions = new Set<string>();
+        for (const d of t.destructibles) {
+          const key = `${d.x},${d.z}`;
+          expect(positions.has(key), `Duplicate destructible at (${key})`).toBe(false);
+          positions.add(key);
+        }
+      });
+
+      it('total placement area does not exceed ~80% of floor area', () => {
+        const floorArea = t.width * t.height;
+
+        let placementArea = 0;
+        // Hazard areas
+        for (const h of t.hazards) {
+          placementArea += h.width * h.height;
+        }
+        // Destructibles: 1x1 unit each
+        placementArea += t.destructibles.length;
+        // Chest/shop: 1x1 unit each
+        if (t.chestPlacement) placementArea += 1;
+        if (t.shopPlacement) placementArea += 1;
+
+        expect(placementArea / floorArea).toBeLessThanOrEqual(0.8);
       });
     }
   );

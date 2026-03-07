@@ -1,4 +1,7 @@
-import { EnemyType, HazardType, MeshId } from '../ecs/components.js';
+import { DestructibleType, EnemyType, HazardType, MeshId } from '../ecs/components.js';
+
+// Re-export DestructibleType for consumers that import from this module
+export { DestructibleType } from '../ecs/components.js';
 
 // ── Template Interfaces ─────────────────────────────────────────────────────
 
@@ -19,12 +22,6 @@ export interface HazardPlacementTemplate {
   width: number;
   height: number;
   hazardType: HazardType;
-}
-
-export enum DestructibleType {
-  Crate = 'Crate',
-  Pillar = 'Pillar',
-  Barrel = 'Barrel',
 }
 
 export const DESTRUCTIBLE_MESH: Record<DestructibleType, MeshId> = {
