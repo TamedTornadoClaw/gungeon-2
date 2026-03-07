@@ -59,7 +59,7 @@ export function audioEventSystem(
     }
 
     try {
-      audioManager.play(event.sound);
+      audioManager.play(event.sound, event.position);
     } catch (error) {
       console.warn(
         `[AudioEventSystem] Error playing sound ${SoundId[event.sound]}:`,

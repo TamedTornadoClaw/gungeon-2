@@ -40,8 +40,27 @@ describe('audioEventSystem', () => {
     audioEventSystem(eq, am);
 
     expect(am.play).toHaveBeenCalledTimes(2);
-    expect(am.play).toHaveBeenCalledWith(SoundId.PistolFire);
-    expect(am.play).toHaveBeenCalledWith(SoundId.EnemyDeath);
+    expect(am.play).toHaveBeenCalledWith(SoundId.PistolFire, undefined);
+    expect(am.play).toHaveBeenCalledWith(SoundId.EnemyDeath, undefined);
+  });
+
+  it('forwards position to play() when present', () => {
+    const pos = { x: 1, y: 2, z: 3 };
+    eq.emit({ type: EventType.Audio, sound: SoundId.PistolFire, position: pos });
+
+    audioEventSystem(eq, am);
+
+    expect(am.play).toHaveBeenCalledTimes(1);
+    expect(am.play).toHaveBeenCalledWith(SoundId.PistolFire, pos);
+  });
+
+  it('passes undefined position when event has no position', () => {
+    eq.emit({ type: EventType.Audio, sound: SoundId.PistolFire });
+
+    audioEventSystem(eq, am);
+
+    expect(am.play).toHaveBeenCalledTimes(1);
+    expect(am.play).toHaveBeenCalledWith(SoundId.PistolFire, undefined);
   });
 
   it('drains all AudioEvents from the queue', () => {
@@ -85,7 +104,7 @@ describe('audioEventSystem', () => {
 
     expect(am.play).toHaveBeenCalledTimes(10);
     for (let i = 0; i < 10; i++) {
-      expect(am.play).toHaveBeenNthCalledWith(i + 1, SoundId.EnemyHitFlesh);
+      expect(am.play).toHaveBeenNthCalledWith(i + 1, SoundId.EnemyHitFlesh, undefined);
     }
   });
 
@@ -133,7 +152,7 @@ describe('audioEventSystem', () => {
     audioEventSystem(eq, am);
 
     expect(am.play).toHaveBeenCalledTimes(1);
-    expect(am.play).toHaveBeenCalledWith(SoundId.PistolFire);
+    expect(am.play).toHaveBeenCalledWith(SoundId.PistolFire, undefined);
     expect(warnSpy).toHaveBeenCalledTimes(2);
 
     warnSpy.mockRestore();
