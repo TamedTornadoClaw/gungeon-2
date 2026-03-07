@@ -2,6 +2,8 @@ import * as THREE from 'three';
 
 export { spawnDamageNumber, updateDamageNumbers, clearDamageNumbers, getActiveDamageNumbers } from './damageNumbers';
 export type { DamageNumber } from './damageNumbers';
+export { createCameraController, updateCamera, addScreenShake } from './cameraController';
+export type { CameraController } from './cameraController';
 
 export interface RendererContext {
   renderer: THREE.WebGLRenderer;
