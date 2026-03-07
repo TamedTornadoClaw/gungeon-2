@@ -22,3 +22,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Pipeline state (lives outside repo at ../pipeline-state.json)
+.pipeline-state.json
