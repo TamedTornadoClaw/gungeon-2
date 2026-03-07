@@ -5,6 +5,7 @@ import { createRenderSystem, type RenderSystem } from './rendering/renderer';
 import { initRenderer, mountRenderer, disposeRenderer, type RendererContext } from './rendering/renderer';
 import { InputManager } from './input/inputManager';
 import { getAudioManager } from './audio/audioManager';
+import { createEffectsBuffer } from './systems/effectsPipelineSystem';
 import { generateDungeon } from './dungeon/generator';
 import { createDungeonEntities } from './dungeon/dungeonEntityCreator';
 import { createPlayer } from './ecs/factories';
@@ -42,6 +43,8 @@ export function createGameSession(canvasContainer: HTMLElement): GameSession {
   inputManager.attach(document);
 
   const audioManager = getAudioManager();
+  const effectsBuffer = createEffectsBuffer();
+
   const effectsBuffer = createEffectsBuffer();
 
   const gameLoop = createGameLoop({
