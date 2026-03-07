@@ -247,6 +247,14 @@
     "maxInstances": 1,
     "loop": false
   },
+  "FloorTransition": {
+    "path": "assets/audio/floor_transition.ogg",
+    "volume": 0.7,
+    "pitchMin": 1.0,
+    "pitchMax": 1.0,
+    "maxInstances": 1,
+    "loop": false
+  },
   "DestructibleBreakWood": {
     "path": "assets/audio/destructible_break_wood.ogg",
     "volume": 0.6,
