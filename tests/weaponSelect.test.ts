@@ -7,6 +7,7 @@ function resetStore() {
   useAppStore.setState({
     currentState: AppState.WeaponSelect,
     previousState: AppState.MainMenu,
+    selectedSidearm: null,
     selectedLongArm: null,
     comparisonGunEntityId: null,
     comparisonSlot: null,
@@ -78,6 +79,18 @@ describe('WeaponSelect', () => {
     it('should reject transition to Paused from WeaponSelect', () => {
       const { transition } = useAppStore.getState();
       expect(() => transition(AppState.Paused)).toThrow('Invalid transition');
+    });
+  });
+
+  describe('selectedSidearm store field', () => {
+    it('should start as null', () => {
+      expect(useAppStore.getState().selectedSidearm).toBeNull();
+    });
+
+    it('should persist selectedSidearm through transition to Gameplay', () => {
+      useAppStore.setState({ selectedSidearm: GunType.Pistol });
+      useAppStore.getState().transition(AppState.Gameplay);
+      expect(useAppStore.getState().selectedSidearm).toBe(GunType.Pistol);
     });
   });
 

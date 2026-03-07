@@ -98,9 +98,9 @@ export function WeaponSelect() {
 
   const handleStartRun = useCallback(() => {
     if (!canStart) return;
-    useAppStore.setState({ selectedLongArm });
+    useAppStore.setState({ selectedSidearm, selectedLongArm });
     transition(AppState.Gameplay);
-  }, [canStart, selectedLongArm, transition]);
+  }, [canStart, selectedSidearm, selectedLongArm, transition]);
 
   const handleBack = useCallback(() => {
     transition(AppState.MainMenu);
