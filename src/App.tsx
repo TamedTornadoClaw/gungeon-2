@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import { Crosshair } from './ui/Crosshair'
+import { PauseOverlay } from './ui/PauseOverlay'
 import { getAudioManager } from './audio/audioManager'
 
 export function App() {
@@ -18,6 +19,7 @@ export function App() {
     <div id="app">
       Gungeon
       <Crosshair />
+      <PauseOverlay />
     </div>
   )
 }
