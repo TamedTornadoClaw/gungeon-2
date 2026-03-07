@@ -4,6 +4,7 @@ import { GameplayHUD } from './ui/GameplayHUD'
 import { LoadingScreen } from './ui/LoadingScreen'
 import { MainMenu } from './ui/MainMenu'
 import { PauseOverlay } from './ui/PauseOverlay'
+import { WeaponSelect } from './ui/WeaponSelect'
 import { getAudioManager } from './audio/audioManager'
 import { AppState } from './ecs/components'
 import { useAppStore } from './store/appStore'
@@ -26,6 +27,7 @@ export function App() {
     <div id="app">
       <LoadingScreen />
       {currentState === AppState.MainMenu && <MainMenu />}
+      {currentState === AppState.WeaponSelect && <WeaponSelect />}
       {currentState === AppState.Gameplay && <GameplayHUD />}
       {currentState === AppState.Gameplay && <Crosshair />}
       <PauseOverlay />

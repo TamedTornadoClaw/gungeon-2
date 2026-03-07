@@ -14,6 +14,7 @@ export interface AppStore {
   currentState: AppState;
   previousState: AppState | null;
   transition: (to: AppState) => void;
+  selectedSidearm: GunType | null;
   selectedLongArm: GunType | null;
   comparisonGunEntityId: EntityId | null;
   comparisonSlot: WeaponSlot | null;
@@ -48,6 +49,7 @@ const TRANSITION_MAP: ReadonlyMap<AppState, ReadonlySet<AppState>> = new Map([
 export const useAppStore = create<AppStore>()((set, get) => ({
   currentState: AppState.Loading,
   previousState: null,
+  selectedSidearm: null,
   selectedLongArm: null,
   comparisonGunEntityId: null,
   comparisonSlot: null,
