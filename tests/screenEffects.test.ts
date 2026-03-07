@@ -4,12 +4,18 @@ import {
   createScreenShakeState,
   triggerShake,
   triggerPlayerHitShake,
+  triggerExplosionShake,
+  triggerBigHitShake,
   updateScreenShake,
   createHitFlashState,
   triggerHitFlash,
   updateHitFlash,
   createDamageVignetteState,
   updateDamageVignette,
+  mountHitFlash,
+  unmountHitFlash,
+  mountDamageVignette,
+  unmountDamageVignette,
 } from '../src/rendering/screenEffects';
 import * as THREE from 'three';
 
@@ -43,7 +49,19 @@ describe('Screen Shake', () => {
   it('triggerPlayerHitShake sets intensity from design params', () => {
     const state = createScreenShakeState();
     triggerPlayerHitShake(state);
-    expect(state.intensity).toBeGreaterThan(0);
+    expect(state.intensity).toBeCloseTo(0.3);
+  });
+
+  it('triggerExplosionShake uses explosionIntensity from design params', () => {
+    const state = createScreenShakeState();
+    triggerExplosionShake(state);
+    expect(state.intensity).toBeCloseTo(0.6);
+  });
+
+  it('triggerBigHitShake uses bigHitIntensity from design params', () => {
+    const state = createScreenShakeState();
+    triggerBigHitShake(state);
+    expect(state.intensity).toBeCloseTo(0.15);
   });
 
   it('updateScreenShake decays intensity over time', () => {
@@ -170,5 +188,60 @@ describe('Damage Vignette', () => {
     const opacity = parseFloat(div.style.opacity);
     expect(opacity).toBeGreaterThanOrEqual(0);
     expect(opacity).toBeLessThanOrEqual(1);
+  });
+
+  it('pulses using sine wave at pulseSpeed', () => {
+    const div = document.createElement('div');
+    const state = createDamageVignetteState();
+    state.element = div;
+
+    // Collect opacities over several frames to verify oscillation
+    const opacities: number[] = [];
+    for (let i = 0; i < 20; i++) {
+      updateDamageVignette(state, 0.05, 10, 100);
+      opacities.push(parseFloat(div.style.opacity));
+    }
+
+    // Should have varying values (not constant), confirming sine wave behavior
+    const unique = new Set(opacities.map((o) => o.toFixed(4)));
+    expect(unique.size).toBeGreaterThan(3);
+  });
+});
+
+describe('Hit Flash mount/unmount', () => {
+  it('mountHitFlash creates an overlay element', () => {
+    const container = document.createElement('div');
+    const state = createHitFlashState();
+    mountHitFlash(state, container);
+    expect(state.element).not.toBeNull();
+    expect(container.children.length).toBe(1);
+  });
+
+  it('unmountHitFlash removes the overlay element', () => {
+    const container = document.createElement('div');
+    const state = createHitFlashState();
+    mountHitFlash(state, container);
+    unmountHitFlash(state);
+    expect(state.element).toBeNull();
+    expect(container.children.length).toBe(0);
+  });
+});
+
+describe('Damage Vignette mount/unmount', () => {
+  it('mountDamageVignette creates an overlay element', () => {
+    const container = document.createElement('div');
+    const state = createDamageVignetteState();
+    mountDamageVignette(state, container);
+    expect(state.element).not.toBeNull();
+    expect(container.children.length).toBe(1);
+  });
+
+  it('unmountDamageVignette removes the overlay element', () => {
+    const container = document.createElement('div');
+    const state = createDamageVignetteState();
+    mountDamageVignette(state, container);
+    unmountDamageVignette(state);
+    expect(state.element).toBeNull();
+    expect(container.children.length).toBe(0);
   });
 });
