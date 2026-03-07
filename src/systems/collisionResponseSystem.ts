@@ -33,28 +33,25 @@ import type {
   XPGem,
   Hazard,
   DamageOverTime,
+  SpikeCooldown,
   SpeedModifier,
   SpawnZone,
 } from '../ecs/components';
 import { getDesignParams } from '../config/designParams';
 
-// ── Spike Cooldown Tracking ───────────────────────────────────────────────
+// ── Spike Cooldown Helpers ────────────────────────────────────────────────
 
-const spikeCooldowns = new Map<EntityId, number>();
-
-export function updateSpikeCooldowns(dt: number): void {
-  for (const [id, remaining] of spikeCooldowns) {
-    const updated = remaining - dt;
-    if (updated <= 0) {
-      spikeCooldowns.delete(id);
-    } else {
-      spikeCooldowns.set(id, updated);
+export function updateSpikeCooldowns(dt: number, world: World): void {
+  const players = world.query(['SpikeCooldown']);
+  for (const id of players) {
+    const cooldown = world.getComponent<SpikeCooldown>(id, 'SpikeCooldown');
+    if (cooldown) {
+      cooldown.remaining -= dt;
+      if (cooldown.remaining <= 0) {
+        world.removeComponent(id, 'SpikeCooldown');
+      }
     }
   }
-}
-
-export function resetSpikeCooldowns(): void {
-  spikeCooldowns.clear();
 }
 
 // ── Proximity Flag Reset ──────────────────────────────────────────────────
@@ -318,7 +315,7 @@ function handleSuicideBomberExplosion(
   bomberHealth.current = 0;
 
   const params = getDesignParams();
-  const explosionRadius = (params.enemies.SuicideBomber as unknown as { explosionRadius: number }).explosionRadius;
+  const explosionRadius = params.enemies.SuicideBomber.explosionRadius;
   const explosionDamage = params.enemies.SuicideBomber.baseDamage;
 
   // Emit explosion effects
@@ -439,8 +436,8 @@ function handlePlayerHazard(
       break;
     }
     case HazardType.Spikes: {
-      const cooldownRemaining = spikeCooldowns.get(playerId);
-      if (cooldownRemaining === undefined || cooldownRemaining <= 0) {
+      const cooldown = world.getComponent<SpikeCooldown>(playerId, 'SpikeCooldown');
+      if (!cooldown) {
         const playerPos = world.getComponent<Position>(playerId, 'Position');
         eventQueue.emit({
           type: EventType.Damage,
@@ -452,7 +449,9 @@ function handlePlayerHazard(
             ? { x: playerPos.x, y: playerPos.y, z: playerPos.z }
             : { x: 0, y: 0, z: 0 },
         });
-        spikeCooldowns.set(playerId, params.hazards.spikes.cooldown);
+        world.addComponent<SpikeCooldown>(playerId, 'SpikeCooldown', {
+          remaining: params.hazards.spikes.cooldown,
+        });
       }
       break;
     }

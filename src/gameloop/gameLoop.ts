@@ -70,7 +70,7 @@ export { movementSystem } from '../systems/movementSystem';
 //
 //   import { collisionResponseSystem, updateSpikeCooldowns } from '../systems/collisionResponseSystem';
 //   const pairs = collisionDetectionSystem(collisionEntities);
-//   updateSpikeCooldowns(dt);
+//   updateSpikeCooldowns(dt, world);
 //   collisionResponseSystem(pairs, world, eventQueue);
 //
 export { collisionResponseSystem, updateSpikeCooldowns } from '../systems/collisionResponseSystem';

@@ -5,7 +5,6 @@ import { EventQueue } from '../src/gameloop/events';
 import {
   collisionResponseSystem,
   updateSpikeCooldowns,
-  resetSpikeCooldowns,
 } from '../src/systems/collisionResponseSystem';
 import type { CollisionPair } from '../src/systems/collisionDetectionSystem';
 import {
@@ -16,6 +15,7 @@ import {
   HazardType,
   ColliderShape,
   WeaponSlot,
+  GunType,
 } from '../src/ecs/components';
 import type {
   Position,
@@ -35,6 +35,7 @@ import type {
   SpawnZone,
   Collider,
   Door,
+  Chest,
   Destructible,
 } from '../src/ecs/components';
 import type { DamageEvent, DoorInteractEvent } from '../src/gameloop/events';
@@ -47,7 +48,6 @@ let eventQueue: EventQueue;
 beforeEach(() => {
   world = new World();
   eventQueue = new EventQueue();
-  resetSpikeCooldowns();
 });
 
 function makePlayer(pos: { x: number; z: number } = { x: 5, z: 5 }): number {
@@ -66,6 +66,24 @@ function makePlayer(pos: { x: number; z: number } = { x: 5, z: 5 }): number {
     isStatic: false, isTrigger: false,
   });
   world.addComponent(id, 'PlayerTag', {});
+  world.addComponent(id, 'ProximityFlags', {
+    nearPickup: false,
+    nearChest: false,
+    nearShop: false,
+    nearStairs: false,
+  });
+  return id;
+}
+
+function makeChest(pos: { x: number; z: number }): number {
+  const id = world.createEntity();
+  world.addComponent<Position>(id, 'Position', { x: pos.x, y: 0, z: pos.z });
+  world.addComponent<Chest>(id, 'Chest', { isOpen: false, gunType: GunType.Pistol });
+  world.addComponent<Collider>(id, 'Collider', {
+    type: ColliderShape.AABB, width: 1, height: 1, depth: 1,
+    isStatic: true, isTrigger: false,
+  });
+  world.addComponent(id, 'ChestTag', {});
   return id;
 }
 
@@ -600,14 +618,14 @@ describe('CollisionResponseSystem', () => {
       getDamageEvents(); // consume
 
       // Tick cooldown partially (0.5s of 1.0s)
-      updateSpikeCooldowns(0.5);
+      updateSpikeCooldowns(0.5, world);
 
       // Second hit — should be blocked
       collisionResponseSystem([pair(player, hazard, 0.5, 0.5)], world, eventQueue);
       expect(getDamageEvents().length).toBe(0);
 
       // Tick remaining cooldown
-      updateSpikeCooldowns(0.6);
+      updateSpikeCooldowns(0.6, world);
 
       // Third hit — should work
       collisionResponseSystem([pair(player, hazard, 0.5, 0.5)], world, eventQueue);
@@ -667,6 +685,32 @@ describe('CollisionResponseSystem', () => {
       const events = getDoorInteractEvents();
       expect(events.length).toBe(1);
       expect(events[0].doorEntity).toBe(door);
+    });
+  });
+
+  // ── Player + Chest ───────────────────────────────────────────────────
+
+  describe('Player + Chest', () => {
+    it('sets nearChest proximity flag on the player (aIsPlayer && bIsChest)', () => {
+      const player = makePlayer({ x: 5, z: 5 });
+      const chest = makeChest({ x: 6, z: 5 });
+
+      collisionResponseSystem([pair(player, chest, 0.5, 0.5)], world, eventQueue);
+
+      const flags = world.getComponent<{ nearChest: boolean }>(player, 'ProximityFlags')!;
+      expect(flags).toBeDefined();
+      expect(flags.nearChest).toBe(true);
+    });
+
+    it('sets nearChest proximity flag on the player (bIsPlayer && aIsChest)', () => {
+      const chest = makeChest({ x: 4, z: 5 });
+      const player = makePlayer({ x: 5, z: 5 });
+
+      collisionResponseSystem([pair(chest, player, 0.5, 0.5)], world, eventQueue);
+
+      const flags = world.getComponent<{ nearChest: boolean }>(player, 'ProximityFlags')!;
+      expect(flags).toBeDefined();
+      expect(flags.nearChest).toBe(true);
     });
   });
 
@@ -997,7 +1041,6 @@ describe('CollisionResponseSystem', () => {
           (piercing) => {
             const w = new World();
             const eq = new EventQueue();
-            resetSpikeCooldowns();
 
             const projId = w.createEntity();
             w.addComponent<Position>(projId, 'Position', { x: 0, y: 0, z: 0 });
