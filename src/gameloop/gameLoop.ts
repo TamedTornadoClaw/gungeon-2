@@ -127,3 +127,13 @@ export { doorSystem } from '../systems/doorSystem';
 //   destructibleSystem(world, eventQueue);
 //
 export { destructibleSystem } from '../systems/destructibleSystem';
+
+// ── Stub integration point for enemyWeaponSystem ──────────────────────────
+// enemyWeaponSystem runs at position 5.5 in the system execution order.
+// Once the game loop body is implemented, call it as:
+//
+//   import { enemyWeaponSystem } from '../systems/enemyWeaponSystem';
+//   enemyWeaponSystem(world, dt);
+//
+// It must run AFTER aiSystem and BEFORE movementSystem.
+export { enemyWeaponSystem } from '../systems/enemyWeaponSystem';
