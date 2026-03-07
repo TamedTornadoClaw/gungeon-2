@@ -169,6 +169,15 @@ export { pickupSystem } from '../systems/pickupSystem';
 //
 export { chestSystem } from '../systems/chestSystem';
 
+// ── Stub integration point for gunXPSystem ──────────────────────────
+// gunXPSystem runs at position 17 (after pickupSystem/chestSystem, before destructibleSystem).
+// When the game loop body is implemented, call:
+//
+//   import { gunXPSystem } from '../systems/gunXPSystem';
+//   gunXPSystem(world);
+//
+export { gunXPSystem } from '../systems/gunXPSystem';
+
 // ── Stub integration point for spawnSystem ──────────────────────────
 // spawnSystem runs at position 9 in the system execution order.
 // Once the game loop body is implemented, call it as:
