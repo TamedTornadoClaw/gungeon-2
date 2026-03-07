@@ -1,8 +1,9 @@
 import type { Vec3 } from '../types/index.js';
+import { EnemyType, HazardType } from '../ecs/components.js';
 
 export interface SpawnPoint {
   position: Vec3;
-  enemyTypes: string[];
+  enemyTypes: EnemyType[];
   enemyCount: number;
 }
 
@@ -10,7 +11,7 @@ export interface HazardPlacement {
   position: Vec3;
   width: number;
   height: number;
-  hazardType: string;
+  hazardType: HazardType;
 }
 
 export interface DestructiblePlacement {
