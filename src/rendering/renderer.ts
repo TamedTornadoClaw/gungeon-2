@@ -1,12 +1,16 @@
 import * as THREE from 'three';
+import { createCameraController, type CameraController } from './cameraController';
 
 export { spawnDamageNumber, updateDamageNumbers, clearDamageNumbers, getActiveDamageNumbers } from './damageNumbers';
 export type { DamageNumber } from './damageNumbers';
+export { createCameraController, updateCamera, addScreenShake } from './cameraController';
+export type { CameraController } from './cameraController';
 
 export interface RendererContext {
   renderer: THREE.WebGLRenderer;
   scene: THREE.Scene;
   camera: THREE.PerspectiveCamera;
+  cameraController: CameraController;
   ambientLight: THREE.AmbientLight;
   directionalLight: THREE.DirectionalLight;
 }
@@ -20,12 +24,10 @@ export function initRenderer(): RendererContext {
 
   const scene = new THREE.Scene();
 
-  const camera = new THREE.PerspectiveCamera(
-    60,
-    window.innerWidth / window.innerHeight,
-    0.1,
-    1000,
-  );
+  const cameraController = createCameraController();
+  const camera = cameraController.camera;
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
 
   const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
   scene.add(ambientLight);
@@ -42,7 +44,7 @@ export function initRenderer(): RendererContext {
   directionalLight.shadow.camera.bottom = -30;
   scene.add(directionalLight);
 
-  return { renderer, scene, camera, ambientLight, directionalLight };
+  return { renderer, scene, camera, cameraController, ambientLight, directionalLight };
 }
 
 export function mountRenderer(
