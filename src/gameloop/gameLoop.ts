@@ -237,3 +237,14 @@ export { generateDungeon } from '../dungeon/generator';
 //   floorTransitionSystem(world, input, eventQueue, floorState);
 //
 export { floorTransitionSystem } from '../systems/floorTransitionSystem';
+
+// ── Stub integration point for particleRenderer ──────────────────────────
+// particleRenderer runs on the variable-timestep render loop (NOT the fixed tick).
+// When the render loop is implemented, call:
+//
+//   import { createParticleRenderer } from '../rendering/particleRenderer';
+//   const particleRenderer = createParticleRenderer(sceneManager);
+//   // Each render frame:
+//   particleRenderer.update(world);
+//
+export { createParticleRenderer } from '../rendering/particleRenderer';

@@ -243,6 +243,7 @@ export interface ParticleEffectParams {
 
 export interface ParticlesParams {
   maxParticles: number;
+  maxParticlesPerType: number;
   effects: Record<string, ParticleEffectParams>;
 }
 
