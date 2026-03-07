@@ -154,6 +154,7 @@ export enum SoundId {
   // Environment
   ChestOpen,
   DoorOpen,
+  FloorTransition,
   DestructibleBreakWood,
   DestructibleBreakStone,
   DestructibleBreakMetal,

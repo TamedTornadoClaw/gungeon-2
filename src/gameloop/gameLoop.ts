@@ -208,3 +208,12 @@ export { particleSystem } from '../systems/particleSystem';
 //   // Then spawn entities from dungeonData rooms/corridors/stairs
 //
 export { generateDungeon } from '../dungeon/generator';
+
+// ── Stub integration point for floorTransitionSystem ──────────────────────
+// floorTransitionSystem runs after spawnSystem and collisionResponseSystem.
+// When the game loop body is implemented, call:
+//
+//   import { floorTransitionSystem } from '../systems/floorTransitionSystem';
+//   floorTransitionSystem(world, input, eventQueue, floorState);
+//
+export { floorTransitionSystem } from '../systems/floorTransitionSystem';
