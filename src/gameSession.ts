@@ -1,5 +1,6 @@
 import { World } from './ecs/world';
 import { createGameLoop, type GameLoop } from './gameloop/gameLoop';
+import { createEffectsBuffer } from './systems/effectsPipelineSystem';
 import { createRenderSystem, type RenderSystem } from './rendering/renderer';
 import { initRenderer, mountRenderer, disposeRenderer, type RendererContext } from './rendering/renderer';
 import { InputManager } from './input/inputManager';
@@ -10,7 +11,6 @@ import { createPlayer } from './ecs/factories';
 import { GunType } from './ecs/components';
 import { useAppStore } from './store/appStore';
 import type { FloorState } from './systems/floorTransitionSystem';
-import { createEffectsBuffer } from './systems/effectsPipelineSystem';
 
 export interface GameSession {
   gameLoop: GameLoop;
