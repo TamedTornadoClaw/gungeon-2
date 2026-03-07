@@ -73,6 +73,15 @@ export { movementSystem } from '../systems/movementSystem';
 //
 export { damageSystem } from '../systems/damageSystem';
 
+// ── Stub integration point for deathSystem ──────────────────────────────
+// deathSystem runs at position 7 (after damageSystem and lifetimeSystem, before pickupSystem).
+// When the game loop body is implemented, call:
+//
+//   import { deathSystem } from '../systems/deathSystem';
+//   deathSystem(world, eventQueue);
+//
+export { deathSystem } from '../systems/deathSystem';
+
 // ── Stub integration point for hazardSystem ──────────────────────────────
 // hazardSystem runs at position 12 (after shieldRegenSystem, before expireModifiersSystem).
 // When the game loop body is implemented, call:
