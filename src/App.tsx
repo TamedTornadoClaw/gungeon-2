@@ -5,6 +5,7 @@ import { GameplayHUD } from './ui/GameplayHUD'
 import { LoadingScreen } from './ui/LoadingScreen'
 import { MainMenu } from './ui/MainMenu'
 import { PauseOverlay } from './ui/PauseOverlay'
+import { SettingsScreen } from './ui/SettingsScreen'
 import { VictoryScreen } from './ui/VictoryScreen'
 import { WeaponSelect } from './ui/WeaponSelect'
 import { getAudioManager } from './audio/audioManager'
@@ -32,6 +33,7 @@ export function App() {
       {currentState === AppState.WeaponSelect && <WeaponSelect />}
       {currentState === AppState.Gameplay && <GameplayHUD />}
       {currentState === AppState.Gameplay && <Crosshair />}
+      {currentState === AppState.Settings && <SettingsScreen />}
       {currentState === AppState.Victory && <VictoryScreen />}
       <PauseOverlay />
       <DeathScreen />
