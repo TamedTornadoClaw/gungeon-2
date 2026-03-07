@@ -258,5 +258,74 @@
   },
   "input": {
     "gamepadDeadZone": 0.15
+  },
+  "sceneMeshes": {
+    "defaultPoolSize": 2,
+    "poolSizes": {
+      "Bullet": 100,
+      "EnemyBullet": 50,
+      "XPGem": 50,
+      "HealthPickup": 10,
+      "Currency": 20,
+      "KnifeRusher": 15,
+      "ShieldGun": 10,
+      "Shotgunner": 10,
+      "Rifleman": 10,
+      "SuicideBomber": 10,
+      "Wall": 200,
+      "Floor": 200,
+      "Crate": 20,
+      "Pillar": 10,
+      "Barrel": 10
+    },
+    "colors": {
+      "Player": "0x2255ff",
+      "KnifeRusher": "0xff2222",
+      "ShieldGun": "0x22cc44",
+      "Shotgunner": "0xff8800",
+      "Rifleman": "0x8822cc",
+      "SuicideBomber": "0xffdd00",
+      "MiniBossKnifeRusher": "0xaa1111",
+      "MiniBossShieldGun": "0x118833",
+      "MiniBossShotgunner": "0xaa5500",
+      "MiniBossRifleman": "0x551199",
+      "MiniBossSuicideBomber": "0xaa9900",
+      "Boss": "0x881111",
+      "Pistol": "0x444444",
+      "SMG": "0x666666",
+      "AssaultRifle": "0x666666",
+      "Shotgun": "0x666666",
+      "LMG": "0x666666",
+      "Bullet": "0xffff00",
+      "EnemyBullet": "0xff0000",
+      "XPGem": "0x00ffff",
+      "HealthPickup": "0x22ff22",
+      "Currency": "0xffd700",
+      "GunPickupGlow": "0xffffff",
+      "Wall": "0x888888",
+      "Floor": "0x444444",
+      "Pit": "0x111111",
+      "FireHazard": "0xff4400",
+      "SpikeHazard": "0x999999",
+      "WaterHazard": "0x2266ff",
+      "Crate": "0x8b6914",
+      "Pillar": "0x999999",
+      "Barrel": "0x8b5a2b",
+      "Door": "0x8b6914",
+      "Chest": "0x8b6914",
+      "Shop": "0x008888",
+      "Stairs": "0x888888",
+      "EnemyShieldMesh": "0x667788"
+    },
+    "emissive": {
+      "Bullet": { "color": "0xffff00", "intensity": 1 },
+      "EnemyBullet": { "color": "0xff0000", "intensity": 1 },
+      "XPGem": { "color": "0x00ffff", "intensity": 0.5 },
+      "GunPickupGlow": { "color": "0xffffff", "intensity": 1 },
+      "FireHazard": { "color": "0xff4400", "intensity": 0.5 }
+    },
+    "transparency": {
+      "WaterHazard": { "opacity": 0.6 }
+    }
   }
 }

@@ -177,6 +177,23 @@ export interface InputParams {
   gamepadDeadZone: number;
 }
 
+export interface EmissiveParams {
+  color: string;
+  intensity: number;
+}
+
+export interface TransparencyParams {
+  opacity: number;
+}
+
+export interface SceneMeshesParams {
+  defaultPoolSize: number;
+  poolSizes: Record<string, number>;
+  colors: Record<string, string>;
+  emissive: Record<string, EmissiveParams>;
+  transparency: Record<string, TransparencyParams>;
+}
+
 export interface DesignParams {
   player: PlayerParams;
   guns: Record<string, GunParams>;
@@ -193,6 +210,7 @@ export interface DesignParams {
   damageNumbers: DamageNumbersParams;
   gameLoop: GameLoopParams;
   input: InputParams;
+  sceneMeshes: SceneMeshesParams;
 }
 
 // --- Required sections ---
@@ -213,6 +231,7 @@ const REQUIRED_SECTIONS: ReadonlyArray<keyof DesignParams> = [
   'damageNumbers',
   'gameLoop',
   'input',
+  'sceneMeshes',
 ] as const;
 
 // --- Validation ---
