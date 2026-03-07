@@ -21,7 +21,7 @@ import {
 import type { Position, Velocity, Health } from '../src/ecs/components';
 import { useAppStore } from '../src/store/appStore';
 import { getDesignParams, validateDesignParams } from '../src/config/designParams';
-import { EventQueue, createEventQueue } from '../src/gameloop/events';
+import { createEventQueue } from '../src/gameloop/events';
 import { createPlayer, createGun } from '../src/ecs/factories';
 
 describe('Foundation Verification', () => {
