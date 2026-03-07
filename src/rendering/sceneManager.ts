@@ -61,7 +61,7 @@ const MESH_GEOMETRIES: Record<MeshId, () => THREE.BufferGeometry> = {
   [MeshId.Floor]: () => new THREE.PlaneGeometry(1, 1),
   [MeshId.Pit]: () => new THREE.PlaneGeometry(1, 1),
   [MeshId.FireHazard]: () => new THREE.PlaneGeometry(1, 1),
-  [MeshId.SpikeHazard]: () => new THREE.PlaneGeometry(1, 1),
+  [MeshId.SpikeHazard]: () => createSpikeHazardGeometry(),
   [MeshId.WaterHazard]: () => new THREE.PlaneGeometry(1, 1),
   [MeshId.Crate]: () => new THREE.BoxGeometry(1, 1, 1),
   [MeshId.Pillar]: () => new THREE.CylinderGeometry(0.4, 0.4, 2, 12),
@@ -82,7 +82,6 @@ const NO_OUTLINE_MESHES = new Set<MeshId>([
   MeshId.Floor,
   MeshId.Pit,
   MeshId.FireHazard,
-  MeshId.SpikeHazard,
   MeshId.WaterHazard,
 ]);
 
@@ -193,6 +192,54 @@ function createStairsGeometry(): THREE.BufferGeometry {
     }
     vertexOffset += pos.count;
     step.dispose();
+  }
+
+  const merged = new THREE.BufferGeometry();
+  merged.setAttribute(
+    'position',
+    new THREE.BufferAttribute(new Float32Array(allPositions), 3),
+  );
+  merged.setIndex(allIndices);
+  merged.computeVertexNormals();
+  return merged;
+}
+
+function createSpikeHazardGeometry(): THREE.BufferGeometry {
+  // Gray plane with small pyramid spikes
+  const plane = new THREE.PlaneGeometry(1, 1);
+  plane.rotateX(-Math.PI / 2);
+
+  const spikes: THREE.ConeGeometry[] = [];
+  const offsets = [
+    [-0.25, -0.25],
+    [0.25, -0.25],
+    [0, 0],
+    [-0.25, 0.25],
+    [0.25, 0.25],
+  ];
+  for (const [x, z] of offsets) {
+    const spike = new THREE.ConeGeometry(0.08, 0.2, 4);
+    spike.translate(x, 0.1, z);
+    spikes.push(spike);
+  }
+
+  const allPositions: number[] = [];
+  const allIndices: number[] = [];
+  let vertexOffset = 0;
+
+  for (const geo of [plane, ...spikes]) {
+    const pos = geo.getAttribute('position');
+    const idx = geo.getIndex();
+    if (!idx) continue;
+
+    for (let i = 0; i < pos.count * 3; i++) {
+      allPositions.push(pos.array[i] as number);
+    }
+    for (let i = 0; i < idx.count; i++) {
+      allIndices.push((idx.array[i] as number) + vertexOffset);
+    }
+    vertexOffset += pos.count;
+    geo.dispose();
   }
 
   const merged = new THREE.BufferGeometry();
