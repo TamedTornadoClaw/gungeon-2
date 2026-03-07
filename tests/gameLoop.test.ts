@@ -39,6 +39,7 @@ const mocks = vi.hoisted(() => ({
   expireModifiersSystem: vi.fn(),
   particleSystem: vi.fn(),
   audioEventSystem: vi.fn(),
+  effectsPipelineSystem: vi.fn(),
   gunStatSystem: vi.fn(),
 }));
 
@@ -83,6 +84,11 @@ vi.mock('../src/systems/audioEventSystem', () => ({
   audioEventSystem: mocks.audioEventSystem,
   createLoopManager: vi.fn(),
 }));
+vi.mock('../src/systems/effectsPipelineSystem', () => ({
+  effectsPipelineSystem: mocks.effectsPipelineSystem,
+  createEffectsBuffer: () => ({ damageNumbers: [], shakeIntensity: 0, hitFlashTriggered: false }),
+  clearEffectsBuffer: vi.fn(),
+}));
 vi.mock('../src/systems/gunStatSystem', () => ({ gunStatSystem: mocks.gunStatSystem }));
 vi.mock('../src/dungeon/generator', () => ({ generateDungeon: vi.fn() }));
 vi.mock('../src/rendering/particleRenderer', () => ({ createParticleRenderer: vi.fn() }));
@@ -118,6 +124,7 @@ function createDeps(): GameLoopDeps {
     inputManager: {} as GameLoopDeps['inputManager'],
     audioManager: {} as GameLoopDeps['audioManager'],
     floorState: { currentDepth: 1, seed: 42 },
+    effectsBuffer: { damageNumbers: [], shakeIntensity: 0, hitFlashTriggered: false },
     onRender: vi.fn(),
   };
 }
@@ -244,7 +251,7 @@ describe('gameLoop', () => {
   });
 
   describe('system execution order', () => {
-    it('calls all 26 systems in the correct order', () => {
+    it('calls all 27 systems in the correct order', () => {
       const callOrder: string[] = [];
       mocks.inputSystem.mockImplementation(() => { callOrder.push('Input'); return defaultInput(); });
       mocks.playerControlSystem.mockImplementation(() => callOrder.push('PlayerControl'));
@@ -272,6 +279,7 @@ describe('gameLoop', () => {
       mocks.expireModifiersSystem.mockImplementation(() => callOrder.push('ExpireModifiers'));
       mocks.particleSystem.mockImplementation(() => callOrder.push('Particle'));
       mocks.audioEventSystem.mockImplementation(() => callOrder.push('Audio'));
+      mocks.effectsPipelineSystem.mockImplementation(() => callOrder.push('EffectsPipeline'));
 
       const deps = createDeps();
       const loop = createGameLoop(deps);
@@ -284,7 +292,7 @@ describe('gameLoop', () => {
         'Movement', 'CollisionDetection', 'UpdateSpikeCooldowns', 'CollisionResponse',
         'Damage', 'ShieldRegen', 'Hazard', 'Lifetime', 'Pickup', 'Chest', 'Shop',
         'GunXP', 'Destructible', 'Door', 'Spawn', 'FloorTransition', 'Death',
-        'ExpireModifiers', 'Particle', 'Audio',
+        'ExpireModifiers', 'Particle', 'Audio', 'EffectsPipeline',
       ]);
       loop.stop();
     });

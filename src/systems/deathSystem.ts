@@ -138,6 +138,14 @@ function handleBomberExplosion(
     sound: SoundId.Explosion,
     position: { x: bomberPos.x, y: bomberPos.y, z: bomberPos.z },
   });
+
+  // Screen effects for explosions
+  const shakeParams = params.screenEffects.shake;
+  eventQueue.emit({
+    type: EventType.ScreenShake,
+    intensity: shakeParams.explosionIntensity,
+  });
+  eventQueue.emit({ type: EventType.HitFlash });
 }
 
 function spawnLootDrops(
