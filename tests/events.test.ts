@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
+import fc from 'fast-check';
 import {
   EventQueue,
   EventType,
@@ -7,6 +8,7 @@ import {
   type AudioEvent,
   type DamageNumberEvent,
   type DoorInteractEvent,
+  type GameEvent,
 } from '../src/gameloop/events';
 import { ParticleEffect, SoundId } from '../src/ecs/components';
 
@@ -93,6 +95,9 @@ describe('EventQueue', () => {
 
     const consumed = queue.consume(EventType.Particle);
     expect(consumed).toHaveLength(5);
+    for (let i = 0; i < 5; i++) {
+      expect((consumed[i] as ParticleEvent).position.x).toBe(i);
+    }
   });
 
   it('clear removes all events', () => {
@@ -161,6 +166,117 @@ describe('EventQueue', () => {
     expect(queue.consume(EventType.Audio)).toEqual([audio]);
     expect(queue.consume(EventType.DamageNumber)).toEqual([damageNumber]);
     expect(queue.consume(EventType.DoorInteract)).toEqual([doorInteract]);
+  });
+
+  // ── Property-based tests ──────────────────────────────────────────────────
+
+  it('consume by type returns correct partition (property)', () => {
+    const eventTypeValues = Object.values(EventType);
+    const soundValues = Object.values(SoundId);
+    const particleValues = Object.values(ParticleEffect);
+
+    const arbEventType = fc.constantFrom(...eventTypeValues);
+
+    const arbEvent: fc.Arbitrary<GameEvent> = arbEventType.chain((type) => {
+      switch (type) {
+        case EventType.Damage:
+          return fc.record({
+            type: fc.constant(EventType.Damage as const),
+            target: fc.nat(),
+            amount: fc.nat(),
+            source: fc.nat(),
+            isCritical: fc.boolean(),
+            impactPosition: fc.record({ x: fc.float(), y: fc.float(), z: fc.float() }),
+          });
+        case EventType.Particle:
+          return fc.record({
+            type: fc.constant(EventType.Particle as const),
+            effect: fc.constantFrom(...particleValues),
+            position: fc.record({ x: fc.float(), y: fc.float(), z: fc.float() }),
+          });
+        case EventType.Audio:
+          return fc.record({
+            type: fc.constant(EventType.Audio as const),
+            sound: fc.constantFrom(...soundValues),
+            position: fc.option(fc.record({ x: fc.float(), y: fc.float(), z: fc.float() }), { nil: undefined }),
+          });
+        case EventType.DamageNumber:
+          return fc.record({
+            type: fc.constant(EventType.DamageNumber as const),
+            amount: fc.nat(),
+            position: fc.record({ x: fc.float(), y: fc.float(), z: fc.float() }),
+            isCritical: fc.boolean(),
+          });
+        case EventType.DoorInteract:
+          return fc.record({
+            type: fc.constant(EventType.DoorInteract as const),
+            doorEntity: fc.nat(),
+          });
+        default:
+          return fc.constant({ type: EventType.Damage, target: 0, amount: 0, source: 0, isCritical: false, impactPosition: { x: 0, y: 0, z: 0 } } as GameEvent);
+      }
+    });
+
+    fc.assert(
+      fc.property(fc.array(arbEvent), arbEventType, (events, targetType) => {
+        const q = new EventQueue();
+        for (const e of events) q.emit(e);
+
+        const consumed = q.consume(targetType);
+        const expectedCount = events.filter((e) => e.type === targetType).length;
+        expect(consumed).toHaveLength(expectedCount);
+        expect(consumed.every((e) => e.type === targetType)).toBe(true);
+      }),
+    );
+  });
+
+  it('emit order is preserved (property)', () => {
+    fc.assert(
+      fc.property(fc.array(fc.nat(), { minLength: 1, maxLength: 50 }), (ids) => {
+        const q = new EventQueue();
+        for (const id of ids) {
+          q.emit({
+            type: EventType.Damage,
+            target: id,
+            amount: 0,
+            source: 0,
+            isCritical: false,
+            impactPosition: { x: 0, y: 0, z: 0 },
+          });
+        }
+        const consumed = q.consume(EventType.Damage) as DamageEvent[];
+        expect(consumed.map((e) => e.target)).toEqual(ids);
+      }),
+    );
+  });
+
+  it('consumed + remaining = original set (property)', () => {
+    const arbEvent: fc.Arbitrary<GameEvent> = fc.oneof(
+      fc.record({
+        type: fc.constant(EventType.Damage as const),
+        target: fc.nat(),
+        amount: fc.nat(),
+        source: fc.nat(),
+        isCritical: fc.boolean(),
+        impactPosition: fc.record({ x: fc.float(), y: fc.float(), z: fc.float() }),
+      }),
+      fc.record({
+        type: fc.constant(EventType.Audio as const),
+        sound: fc.constantFrom(...Object.values(SoundId)),
+      }),
+    );
+
+    fc.assert(
+      fc.property(fc.array(arbEvent), (events) => {
+        const q = new EventQueue();
+        for (const e of events) q.emit(e);
+
+        const consumed = q.consume(EventType.Damage);
+        const remaining = q.consume(EventType.Audio);
+
+        expect(consumed.length + remaining.length).toBe(events.length);
+      }),
+    );
   });
 
   it('AudioEvent position is optional', () => {
