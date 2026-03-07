@@ -12,13 +12,9 @@
   "implementation": {
     "currentWave": 4,
     "completedWaves": [1, 2, 3],
-    "mergedIssues": [1, 2, 3, 4, 5, 6, 7, 8, 10, 13],
-    "openPRs": {
-      "250": { "issue": 9, "title": "Component definitions and enums", "status": "needs-rebase", "branch": "issue-9/branch" },
-      "248": { "issue": 11, "title": "Camera controller", "status": "needs-rebase", "branch": "issue-11/branch" },
-      "249": { "issue": 12, "title": "Screen effects", "status": "needs-rebase", "branch": "issue-12/branch" }
-    },
-    "activeWorktrees": ["issue-9", "issue-11", "issue-12"],
+    "mergedIssues": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13],
+    "openPRs": {},
+    "activeWorktrees": [],
     "reviewProtocol": "run-agent.sh in existing worktree, prompt contains ONLY test-spec + PR diff + CLAUDE.md"
   },
   "notes": {
@@ -30,7 +26,6 @@
     "issueReviewApproved": true,
     "repoCreated": true,
     "ghAuthCommand": "source ~/skills/visionary-cc/references/gh-auth-refresh.sh",
-    "agentSpawnCommand": "bash ~/skills/visionary-cc/references/run-agent.sh <worktree> <id> <prompt>",
-    "rebaseAgentsStuck": "Rebase agents for PRs 248, 249, 250 got stuck on interactive rebase conflicts. Need explicit conflict resolution prompts or manual abort+retry."
+    "agentSpawnCommand": "bash ~/skills/visionary-cc/references/run-agent.sh <worktree> <id> <prompt>"
   }
 }
