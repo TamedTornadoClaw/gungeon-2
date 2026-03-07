@@ -1,8 +1,7 @@
 import type { EntityId } from '../types';
 
 /** Component data can be any object */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type ComponentData = Record<string, any>;
+type ComponentData = Record<string, unknown>;
 
 /**
  * Lightweight ECS world: sparse set of component maps keyed by EntityId.
