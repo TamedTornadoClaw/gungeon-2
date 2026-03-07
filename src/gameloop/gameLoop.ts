@@ -137,3 +137,13 @@ export { destructibleSystem } from '../systems/destructibleSystem';
 //
 // It must run AFTER aiSystem and BEFORE movementSystem.
 export { enemyWeaponSystem } from '../systems/enemyWeaponSystem';
+
+// ── Stub integration point for pickupSystem ──────────────────────────
+// pickupSystem runs at position 8 in the system execution order.
+// Once the game loop body is implemented, call it as:
+//
+//   import { pickupSystem } from '../systems/pickupSystem';
+//   pickupSystem(world, input, eventQueue, dt);
+//
+// It must run AFTER deathSystem and BEFORE spawnSystem.
+export { pickupSystem } from '../systems/pickupSystem';

@@ -15,6 +15,7 @@ export interface PlayerParams {
   dodgeRoll: DodgeRollParams;
   xpCollectionRange: number;
   xpGemFlySpeed: number;
+  xpGemCollectionThreshold: number;
   interactRange: number;
 }
 

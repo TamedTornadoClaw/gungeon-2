@@ -416,6 +416,8 @@ export interface Pickup {
 export interface XPGem {
   /** Tracks the gun entity that earned this XP, not the slot — survives weapon swaps */
   sourceGunEntityId: EntityId;
+  /** Category of the source gun at spawn time — used for slot-based fallback */
+  sourceCategory: GunCategory;
   amount: number;
   isFlying: boolean;
 }
