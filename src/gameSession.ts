@@ -44,8 +44,6 @@ export function createGameSession(canvasContainer: HTMLElement): GameSession {
   const audioManager = getAudioManager();
   const effectsBuffer = createEffectsBuffer();
 
-  const effectsBuffer = createEffectsBuffer();
-
   const gameLoop = createGameLoop({
     world,
     inputManager,
