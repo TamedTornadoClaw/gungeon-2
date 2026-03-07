@@ -1,4 +1,4 @@
-import type { EntityId, Vec2 } from '../types';
+import type { EntityId } from '../types';
 
 // ── Enums ──────────────────────────────────────────────────────────────────
 
@@ -465,17 +465,17 @@ export interface Renderable {
 
 // ── Tags (marker components — no data) ─────────────────────────────────────
 
-export interface PlayerTag {}
-export interface EnemyTag {}
-export interface ProjectileTag {}
-export interface PlayerProjectileTag {}
-export interface EnemyProjectileTag {}
-export interface PickupTag {}
-export interface WallTag {}
-export interface HazardTag {}
-export interface DestructibleTag {}
-export interface DoorTag {}
-export interface ChestTag {}
-export interface ShopTag {}
-export interface StairsTag {}
-export interface BossTag {}
+export type PlayerTag = Record<string, never>;
+export type EnemyTag = Record<string, never>;
+export type ProjectileTag = Record<string, never>;
+export type PlayerProjectileTag = Record<string, never>;
+export type EnemyProjectileTag = Record<string, never>;
+export type PickupTag = Record<string, never>;
+export type WallTag = Record<string, never>;
+export type HazardTag = Record<string, never>;
+export type DestructibleTag = Record<string, never>;
+export type DoorTag = Record<string, never>;
+export type ChestTag = Record<string, never>;
+export type ShopTag = Record<string, never>;
+export type StairsTag = Record<string, never>;
+export type BossTag = Record<string, never>;
