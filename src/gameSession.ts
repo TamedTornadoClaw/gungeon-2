@@ -10,6 +10,7 @@ import { createPlayer } from './ecs/factories';
 import { GunType } from './ecs/components';
 import { useAppStore } from './store/appStore';
 import type { FloorState } from './systems/floorTransitionSystem';
+import { createEffectsBuffer } from './systems/effectsPipelineSystem';
 
 export interface GameSession {
   gameLoop: GameLoop;
@@ -42,11 +43,14 @@ export function createGameSession(canvasContainer: HTMLElement): GameSession {
 
   const audioManager = getAudioManager();
 
+  const effectsBuffer = createEffectsBuffer();
+
   const gameLoop = createGameLoop({
     world,
     inputManager,
     audioManager,
     floorState,
+    effectsBuffer,
     onRender: (alpha) => renderSystem.update(world, alpha, 0),
   });
 
