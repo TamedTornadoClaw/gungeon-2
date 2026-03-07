@@ -90,3 +90,13 @@ export { hazardSystem } from '../systems/hazardSystem';
 //   gunStatSystem(world);
 //
 export { gunStatSystem } from '../systems/gunStatSystem';
+
+// ── Stub integration point for projectileSystem ──────────────────────────
+// projectileSystem runs at position 5 in the system execution order.
+// Once the game loop body is implemented, call it as:
+//
+//   import { projectileSystem } from '../systems/projectileSystem';
+//   projectileSystem(world, dt, eventQueue);
+//
+// It must run AFTER dodgeRollSystem and BEFORE movementSystem.
+export { projectileSystem } from '../systems/projectileSystem';
