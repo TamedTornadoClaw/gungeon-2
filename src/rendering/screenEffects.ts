@@ -1,5 +1,29 @@
+/**
+ * Screen effects module: shake, hit flash, and damage vignette.
+ *
+ * Integration point: the render system (src/rendering/) creates a ScreenEffects
+ * instance, mounts it on the canvas container, and calls updateScreenEffects()
+ * every frame from the game loop.
+ */
+
 import * as THREE from 'three';
 import { getDesignParams } from '../config/designParams';
+
+/** Intensity threshold below which shake is considered settled. */
+const SHAKE_INTENSITY_THRESHOLD = 0.001;
+
+/** Background color for the hit flash overlay. */
+const HIT_FLASH_COLOR = 'white';
+
+/** Z-index for the hit flash overlay. */
+const HIT_FLASH_Z_INDEX = '10';
+
+/** Z-index for the damage vignette overlay. */
+const VIGNETTE_Z_INDEX = '9';
+
+/** CSS gradient for the damage vignette effect. */
+const VIGNETTE_GRADIENT =
+  'radial-gradient(ellipse at center, transparent 50%, rgba(255, 0, 0, 0.6) 100%)';
 
 // --- Screen Shake ---
 
@@ -43,7 +67,7 @@ export function updateScreenShake(
 ): void {
   const params = getDesignParams().screenEffects.shake;
 
-  if (state.intensity > 0.001) {
+  if (state.intensity > SHAKE_INTENSITY_THRESHOLD) {
     state.offsetX = (Math.random() * 2 - 1) * state.intensity;
     state.offsetY = (Math.random() * 2 - 1) * state.intensity;
     state.intensity *= params.damping;
@@ -79,10 +103,10 @@ export function mountHitFlash(
   const div = document.createElement('div');
   div.style.position = 'absolute';
   div.style.inset = '0';
-  div.style.backgroundColor = 'white';
+  div.style.backgroundColor = HIT_FLASH_COLOR;
   div.style.opacity = '0';
   div.style.pointerEvents = 'none';
-  div.style.zIndex = '10';
+  div.style.zIndex = HIT_FLASH_Z_INDEX;
   container.appendChild(div);
   state.element = div;
 }
@@ -136,10 +160,9 @@ export function mountDamageVignette(
   div.style.position = 'absolute';
   div.style.inset = '0';
   div.style.pointerEvents = 'none';
-  div.style.zIndex = '9';
+  div.style.zIndex = VIGNETTE_Z_INDEX;
   div.style.opacity = '0';
-  div.style.background =
-    'radial-gradient(ellipse at center, transparent 50%, rgba(255, 0, 0, 0.6) 100%)';
+  div.style.background = VIGNETTE_GRADIENT;
   container.appendChild(div);
   state.element = div;
 }
