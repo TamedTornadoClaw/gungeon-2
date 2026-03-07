@@ -178,3 +178,14 @@ export { chestSystem } from '../systems/chestSystem';
 //
 // It must run AFTER pickupSystem.
 export { spawnSystem } from '../systems/spawnSystem';
+
+// ── Stub integration point for audioEventSystem ──────────────────────────
+// audioEventSystem runs LAST in the system execution order (position 26).
+// When the game loop body is implemented, call:
+//
+//   import { audioEventSystem } from '../systems/audioEventSystem';
+//   audioEventSystem(eventQueue, audioManager);
+//
+// It consumes all AudioEvents from the queue and dispatches them to the AudioManager.
+// Looping sounds are managed separately via createLoopManager().
+export { audioEventSystem, createLoopManager } from '../systems/audioEventSystem';
