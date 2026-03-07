@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { AppState, GunTrait, GunType } from '../src/ecs/components';
+import { AppState, GunType } from '../src/ecs/components';
 import type { Gun } from '../src/ecs/components';
 import { useAppStore } from '../src/store/appStore';
 import { useUpgradeStore } from '../src/store/upgradeStore';
