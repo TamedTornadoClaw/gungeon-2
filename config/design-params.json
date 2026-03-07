@@ -210,7 +210,12 @@
     "chestChancePerRoom": 0.25,
     "shopChancePerFloor": 0.5,
     "healthPickupDropChance": 0.05,
-    "bossFloorDepth": 10
+    "bossFloorDepth": 10,
+    "wallThickness": 1,
+    "wallHeight": 2,
+    "spawnZoneScale": 0.8,
+    "chestOffset": 3,
+    "shopOffset": -3
   },
   "shop": {
     "healthPickupPrice": 30,
