@@ -42,3 +42,12 @@ export { movementSystem } from '../systems/movementSystem';
 //   // Pass pairs to CollisionResponseSystem
 //
 // Call rebuildStatics() once per room load with all static collider entities.
+
+// ── Stub integration point for damageSystem ──────────────────────────────
+// damageSystem runs at position 6 (after collisionResponseSystem, before lifetimeSystem).
+// When the game loop body is implemented, call:
+//
+//   import { damageSystem } from '../systems/damageSystem';
+//   damageSystem(world, eventQueue);
+//
+export { damageSystem } from '../systems/damageSystem';
