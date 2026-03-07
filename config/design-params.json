@@ -181,7 +181,10 @@
       "miniBossStatMultiplier": 2.5,
       "miniBossXPMultiplier": 3.0,
       "bossStatMultiplier": 4.0,
-      "bossXPMultiplier": 10.0
+      "bossXPMultiplier": 10.0,
+      "bossScale": 2,
+      "miniBossScale": 1.5,
+      "bossProjectileSpeed": 16.0
     }
   },
   "hazards": {
@@ -219,6 +222,19 @@
   "projectiles": {
     "bulletColliderSize": 0.2,
     "enemyBulletLifetime": 2.0
+  },
+  "entityColliders": {
+    "player": { "width": 1, "height": 1, "depth": 1 },
+    "enemy": { "width": 1, "height": 1, "depth": 1 },
+    "boss": { "width": 2, "height": 2, "depth": 2 },
+    "door": { "width": 2, "height": 2, "depth": 1 },
+    "shop": { "width": 3, "height": 2, "depth": 3 },
+    "stairs": { "width": 2, "height": 1, "depth": 2 },
+    "chest": { "width": 1, "height": 1, "depth": 1 },
+    "gunPickup": { "width": 1, "height": 1, "depth": 1 },
+    "xpGem": { "width": 0.5, "height": 0.5, "depth": 0.5 },
+    "healthPickup": { "width": 0.5, "height": 0.5, "depth": 0.5 },
+    "currency": { "width": 0.5, "height": 0.5, "depth": 0.5 }
   },
   "destructibles": {
     "crateHealth": 30,

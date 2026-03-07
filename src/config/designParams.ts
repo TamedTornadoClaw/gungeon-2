@@ -81,6 +81,9 @@ export interface DepthScalingParams {
   miniBossXPMultiplier: number;
   bossStatMultiplier: number;
   bossXPMultiplier: number;
+  bossScale: number;
+  miniBossScale: number;
+  bossProjectileSpeed: number;
 }
 
 export interface EnemiesParams {
@@ -124,6 +127,26 @@ export interface GunMechanicsParams {
 export interface ProjectilesParams {
   bulletColliderSize: number;
   enemyBulletLifetime: number;
+}
+
+export interface ColliderDimensions {
+  width: number;
+  height: number;
+  depth: number;
+}
+
+export interface EntityCollidersParams {
+  player: ColliderDimensions;
+  enemy: ColliderDimensions;
+  boss: ColliderDimensions;
+  door: ColliderDimensions;
+  shop: ColliderDimensions;
+  stairs: ColliderDimensions;
+  chest: ColliderDimensions;
+  gunPickup: ColliderDimensions;
+  xpGem: ColliderDimensions;
+  healthPickup: ColliderDimensions;
+  currency: ColliderDimensions;
 }
 
 export interface DestructiblesParams {
@@ -204,6 +227,7 @@ export interface DesignParams {
   shop: ShopParams;
   gunMechanics: GunMechanicsParams;
   projectiles: ProjectilesParams;
+  entityColliders: EntityCollidersParams;
   destructibles: DestructiblesParams;
   camera: CameraParams;
   screenEffects: ScreenEffectsParams;
@@ -225,6 +249,7 @@ const REQUIRED_SECTIONS: ReadonlyArray<keyof DesignParams> = [
   'shop',
   'gunMechanics',
   'projectiles',
+  'entityColliders',
   'destructibles',
   'camera',
   'screenEffects',
