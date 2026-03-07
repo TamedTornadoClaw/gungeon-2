@@ -109,3 +109,12 @@ export { gunStatSystem } from '../systems/gunStatSystem';
 //
 // It must run AFTER dodgeRollSystem and BEFORE movementSystem.
 export { projectileSystem } from '../systems/projectileSystem';
+
+// ── Stub integration point for doorSystem ──────────────────────────────
+// doorSystem runs after collisionResponseSystem emits DoorInteract events.
+// When the game loop body is implemented, call:
+//
+//   import { doorSystem } from '../systems/doorSystem';
+//   doorSystem(world, eventQueue);
+//
+export { doorSystem } from '../systems/doorSystem';
