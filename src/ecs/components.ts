@@ -85,6 +85,20 @@ export enum DestructibleType {
   Barrel = 'Barrel',
 }
 
+export enum LogicalAction {
+  MoveUp = 'moveUp',
+  MoveDown = 'moveDown',
+  MoveLeft = 'moveLeft',
+  MoveRight = 'moveRight',
+  FireSidearm = 'fireSidearm',
+  FireLongArm = 'fireLongArm',
+  Reload = 'reload',
+  DodgeRoll = 'dodgeRoll',
+  Interact = 'interact',
+  OpenUpgrade = 'openUpgrade',
+  Pause = 'pause',
+}
+
 export enum ColliderShape {
   AABB,
 }

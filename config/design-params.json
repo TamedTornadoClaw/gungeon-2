@@ -255,5 +255,8 @@
   "gameLoop": {
     "fixedTimestep": 0.01667,
     "maxFrameTime": 0.1
+  },
+  "input": {
+    "gamepadDeadZone": 0.15
   }
 }
