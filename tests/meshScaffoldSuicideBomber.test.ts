@@ -29,13 +29,13 @@ describe('SuicideBomber mesh scaffold', () => {
     manager.releaseMesh(MeshId.SuicideBomber, mesh);
   });
 
-  it('uses BoxGeometry(0.8, 1.5, 0.8) as placeholder', () => {
+  it('uses SphereGeometry(0.6, 16, 16) as placeholder', () => {
     const mesh = manager.acquireMesh(MeshId.SuicideBomber);
-    expect(mesh.geometry).toBeInstanceOf(THREE.BoxGeometry);
-    const params = (mesh.geometry as THREE.BoxGeometry).parameters;
-    expect(params.width).toBe(0.8);
-    expect(params.height).toBe(1.5);
-    expect(params.depth).toBe(0.8);
+    expect(mesh.geometry).toBeInstanceOf(THREE.SphereGeometry);
+    const params = (mesh.geometry as THREE.SphereGeometry).parameters;
+    expect(params.radius).toBe(0.6);
+    expect(params.widthSegments).toBe(16);
+    expect(params.heightSegments).toBe(16);
     manager.releaseMesh(MeshId.SuicideBomber, mesh);
   });
 
