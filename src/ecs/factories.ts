@@ -654,6 +654,7 @@ export function createWall(world: World, position: Vec3, size: Vec3): EntityId {
   const id = world.createEntity();
 
   world.addComponent<Position>(id, 'Position', pos(position));
+  world.addComponent<PreviousPosition>(id, 'PreviousPosition', prevPos(position));
   world.addComponent<Collider>(id, 'Collider', {
     type: ColliderShape.AABB,
     width: size.x,
@@ -672,6 +673,20 @@ export function createWall(world: World, position: Vec3, size: Vec3): EntityId {
   return id;
 }
 
+export function createFloor(world: World, position: Vec3, _size: Vec3): EntityId {
+  const id = world.createEntity();
+
+  world.addComponent<Position>(id, 'Position', pos(position));
+  world.addComponent<PreviousPosition>(id, 'PreviousPosition', prevPos(position));
+  world.addComponent<Renderable>(id, 'Renderable', {
+    meshId: MeshId.Floor,
+    visible: true,
+    scale: 1,
+  });
+
+  return id;
+}
+
 export function createHazard(
   world: World,
   hazardType: HazardType,
@@ -681,6 +696,7 @@ export function createHazard(
   const id = world.createEntity();
 
   world.addComponent<Position>(id, 'Position', pos(position));
+  world.addComponent<PreviousPosition>(id, 'PreviousPosition', prevPos(position));
   world.addComponent<Hazard>(id, 'Hazard', { hazardType });
   world.addComponent<Collider>(id, 'Collider', {
     type: ColliderShape.AABB,
