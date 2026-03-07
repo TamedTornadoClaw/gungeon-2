@@ -1,0 +1,122 @@
+{
+  "MuzzleFlash": {
+    "count": 5,
+    "lifetime": 0.15,
+    "speed": 8.0,
+    "spread": 0.5,
+    "sizeStart": 0.3,
+    "sizeEnd": 0.05,
+    "colorStart": "0xffff00",
+    "colorEnd": "0xff8800",
+    "gravity": 0,
+    "emissive": true
+  },
+  "BloodSplat": {
+    "count": 8,
+    "lifetime": 0.4,
+    "speed": 5.0,
+    "spread": 3.14,
+    "sizeStart": 0.15,
+    "sizeEnd": 0.05,
+    "colorStart": "0xff0000",
+    "colorEnd": "0x880000",
+    "gravity": 10,
+    "emissive": false
+  },
+  "Sparks": {
+    "count": 6,
+    "lifetime": 0.3,
+    "speed": 10.0,
+    "spread": 1.0,
+    "sizeStart": 0.1,
+    "sizeEnd": 0.02,
+    "colorStart": "0xffff44",
+    "colorEnd": "0xff8800",
+    "gravity": 5,
+    "emissive": true
+  },
+  "Explosion": {
+    "count": 20,
+    "lifetime": 0.6,
+    "speed": 12.0,
+    "spread": 6.28,
+    "sizeStart": 0.5,
+    "sizeEnd": 0.1,
+    "colorStart": "0xff4400",
+    "colorEnd": "0x441100",
+    "gravity": 3,
+    "emissive": true
+  },
+  "XPGemTrail": {
+    "count": 2,
+    "lifetime": 0.3,
+    "speed": 1.0,
+    "spread": 6.28,
+    "sizeStart": 0.1,
+    "sizeEnd": 0.0,
+    "colorStart": "0x00ffff",
+    "colorEnd": "0x004444",
+    "gravity": 0,
+    "emissive": true
+  },
+  "BulletImpactWall": {
+    "count": 4,
+    "lifetime": 0.2,
+    "speed": 6.0,
+    "spread": 1.5,
+    "sizeStart": 0.1,
+    "sizeEnd": 0.02,
+    "colorStart": "0xcccccc",
+    "colorEnd": "0x666666",
+    "gravity": 8,
+    "emissive": false
+  },
+  "BulletImpactEnemy": {
+    "count": 6,
+    "lifetime": 0.25,
+    "speed": 5.0,
+    "spread": 2.0,
+    "sizeStart": 0.12,
+    "sizeEnd": 0.03,
+    "colorStart": "0xff2222",
+    "colorEnd": "0x880000",
+    "gravity": 8,
+    "emissive": false
+  },
+  "DestructibleDebrisWood": {
+    "count": 10,
+    "lifetime": 0.5,
+    "speed": 7.0,
+    "spread": 6.28,
+    "sizeStart": 0.2,
+    "sizeEnd": 0.1,
+    "colorStart": "0x8b6914",
+    "colorEnd": "0x5a4510",
+    "gravity": 12,
+    "emissive": false
+  },
+  "DestructibleDebrisStone": {
+    "count": 10,
+    "lifetime": 0.5,
+    "speed": 7.0,
+    "spread": 6.28,
+    "sizeStart": 0.2,
+    "sizeEnd": 0.1,
+    "colorStart": "0x999999",
+    "colorEnd": "0x555555",
+    "gravity": 12,
+    "emissive": false
+  },
+  "DestructibleDebrisMetal": {
+    "count": 10,
+    "lifetime": 0.5,
+    "speed": 7.0,
+    "spread": 6.28,
+    "sizeStart": 0.2,
+    "sizeEnd": 0.1,
+    "colorStart": "0xaaaaaa",
+    "colorEnd": "0x666666",
+    "gravity": 12,
+    "emissive": false
+  }
+}
