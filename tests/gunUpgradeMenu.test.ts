@@ -21,10 +21,10 @@ function resetStores() {
   });
   useUpgradeStore.setState({
     gunEntityId: null,
+    gunXP: 0,
+    traits: [],
+    upgradesSpent: 0,
     worldRef: null,
-    xp: 0,
-    traits: [GunTrait.Damage, GunTrait.Damage, GunTrait.Damage],
-    traitLevels: [0, 0, 0],
   });
 }
 
@@ -61,9 +61,9 @@ describe('GunUpgradeMenu', () => {
       const state = useUpgradeStore.getState();
       expect(state.gunEntityId).toBe(gunId);
       expect(state.worldRef).toBe(world);
-      expect(state.xp).toBe(500);
+      expect(state.gunXP).toBe(500);
       expect(state.traits).toHaveLength(3);
-      expect(state.traitLevels).toEqual([0, 0, 0]);
+      expect(state.traits.map((t) => t.level)).toEqual([0, 0, 0]);
     });
 
     it('should copy traits from gun component', () => {
@@ -72,7 +72,7 @@ describe('GunUpgradeMenu', () => {
 
       useUpgradeStore.getState().openUpgrade(gunId, world);
 
-      expect(useUpgradeStore.getState().traits).toEqual([...gun.traits]);
+      expect(useUpgradeStore.getState().traits.map((t) => t.trait)).toEqual([...gun.traits]);
     });
 
     it('should not populate store if gun entity is invalid', () => {
@@ -84,18 +84,18 @@ describe('GunUpgradeMenu', () => {
     });
   });
 
-  describe('spendXP', () => {
+  describe('spendUpgrade', () => {
     it('should upgrade trait when player has enough XP', () => {
       const params = getDesignParams();
       const cost = params.traits.xpCosts[0];
       const { world, gunId } = setupGunWithXP(cost + 100);
       useUpgradeStore.getState().openUpgrade(gunId, world);
 
-      const success = useUpgradeStore.getState().spendXP(0);
+      const success = useUpgradeStore.getState().spendUpgrade(0);
 
       expect(success).toBe(true);
-      expect(useUpgradeStore.getState().traitLevels[0]).toBe(1);
-      expect(useUpgradeStore.getState().xp).toBe(100);
+      expect(useUpgradeStore.getState().traits[0].level).toBe(1);
+      expect(useUpgradeStore.getState().gunXP).toBe(100);
     });
 
     it('should update gun ECS component on upgrade', () => {
@@ -104,7 +104,7 @@ describe('GunUpgradeMenu', () => {
       const { world, gunId } = setupGunWithXP(cost);
       useUpgradeStore.getState().openUpgrade(gunId, world);
 
-      useUpgradeStore.getState().spendXP(0);
+      useUpgradeStore.getState().spendUpgrade(0);
 
       const gun = world.getComponent<Gun>(gunId, 'Gun')!;
       expect(gun.traitLevels[0]).toBe(1);
@@ -115,10 +115,10 @@ describe('GunUpgradeMenu', () => {
       const { world, gunId } = setupGunWithXP(10);
       useUpgradeStore.getState().openUpgrade(gunId, world);
 
-      const success = useUpgradeStore.getState().spendXP(0);
+      const success = useUpgradeStore.getState().spendUpgrade(0);
 
       expect(success).toBe(false);
-      expect(useUpgradeStore.getState().traitLevels[0]).toBe(0);
+      expect(useUpgradeStore.getState().traits[0].level).toBe(0);
     });
 
     it('should fail when trait is at max level', () => {
@@ -128,13 +128,13 @@ describe('GunUpgradeMenu', () => {
       gun.traitLevels[0] = params.traits.maxLevel;
       useUpgradeStore.getState().openUpgrade(gunId, world);
 
-      const success = useUpgradeStore.getState().spendXP(0);
+      const success = useUpgradeStore.getState().spendUpgrade(0);
 
       expect(success).toBe(false);
     });
 
     it('should fail when worldRef is null', () => {
-      const success = useUpgradeStore.getState().spendXP(0);
+      const success = useUpgradeStore.getState().spendUpgrade(0);
       expect(success).toBe(false);
     });
 
@@ -144,12 +144,12 @@ describe('GunUpgradeMenu', () => {
       const { world, gunId } = setupGunWithXP(totalXP);
       useUpgradeStore.getState().openUpgrade(gunId, world);
 
-      useUpgradeStore.getState().spendXP(0);
-      expect(useUpgradeStore.getState().traitLevels[0]).toBe(1);
+      useUpgradeStore.getState().spendUpgrade(0);
+      expect(useUpgradeStore.getState().traits[0].level).toBe(1);
 
-      useUpgradeStore.getState().spendXP(0);
-      expect(useUpgradeStore.getState().traitLevels[0]).toBe(2);
-      expect(useUpgradeStore.getState().xp).toBe(10);
+      useUpgradeStore.getState().spendUpgrade(0);
+      expect(useUpgradeStore.getState().traits[0].level).toBe(2);
+      expect(useUpgradeStore.getState().gunXP).toBe(10);
     });
 
     it('should allow upgrading different traits independently', () => {
@@ -158,11 +158,11 @@ describe('GunUpgradeMenu', () => {
       const { world, gunId } = setupGunWithXP(totalXP);
       useUpgradeStore.getState().openUpgrade(gunId, world);
 
-      useUpgradeStore.getState().spendXP(0);
-      useUpgradeStore.getState().spendXP(1);
-      useUpgradeStore.getState().spendXP(2);
+      useUpgradeStore.getState().spendUpgrade(0);
+      useUpgradeStore.getState().spendUpgrade(1);
+      useUpgradeStore.getState().spendUpgrade(2);
 
-      expect(useUpgradeStore.getState().traitLevels).toEqual([1, 1, 1]);
+      expect(useUpgradeStore.getState().traits.map((t) => t.level)).toEqual([1, 1, 1]);
     });
   });
 
@@ -176,7 +176,7 @@ describe('GunUpgradeMenu', () => {
       const state = useUpgradeStore.getState();
       expect(state.gunEntityId).toBeNull();
       expect(state.worldRef).toBeNull();
-      expect(state.xp).toBe(0);
+      expect(state.gunXP).toBe(0);
     });
 
     it('should transition to Gameplay when closing', () => {

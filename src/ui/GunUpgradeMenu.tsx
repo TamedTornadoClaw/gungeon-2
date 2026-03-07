@@ -1,7 +1,6 @@
 import { AppState, GunTrait, SoundId } from '../ecs/components';
 import { useAppStore } from '../store/appStore';
 import { useUpgradeStore } from '../store/upgradeStore';
-import { getDesignParams } from '../config/designParams';
 import { getAudioManager } from '../audio/audioManager';
 
 const TRAIT_LABELS: Record<GunTrait, string> = {
@@ -91,18 +90,15 @@ const CLOSE_BUTTON_STYLE: React.CSSProperties = {
 export function GunUpgradeMenu() {
   const currentState = useAppStore((s) => s.currentState);
   const transition = useAppStore((s) => s.transition);
-  const xp = useUpgradeStore((s) => s.xp);
+  const gunXP = useUpgradeStore((s) => s.gunXP);
   const traits = useUpgradeStore((s) => s.traits);
-  const traitLevels = useUpgradeStore((s) => s.traitLevels);
-  const spendXP = useUpgradeStore((s) => s.spendXP);
+  const spendUpgrade = useUpgradeStore((s) => s.spendUpgrade);
   const closeUpgrade = useUpgradeStore((s) => s.closeUpgrade);
 
   if (currentState !== AppState.GunUpgrade) return null;
 
-  const params = getDesignParams();
-
   const handleUpgrade = (index: number) => {
-    const success = spendXP(index);
+    const success = spendUpgrade(index);
     if (success) {
       getAudioManager().play(SoundId.UpgradeSpent);
     }
@@ -118,15 +114,14 @@ export function GunUpgradeMenu() {
       <div style={PANEL_STYLE}>
         <div style={TITLE_STYLE}>Upgrade Gun</div>
         <div data-testid="gun-xp" style={XP_STYLE}>
-          XP: {xp}
+          XP: {gunXP}
         </div>
 
         <div data-testid="trait-list">
-          {traits.map((trait, index) => {
-            const level = traitLevels[index];
-            const maxed = level >= params.traits.maxLevel;
-            const cost = maxed ? null : params.traits.xpCosts[level];
-            const canAfford = cost !== null && xp >= cost;
+          {traits.map((traitData, index) => {
+            const { trait, level, maxLevel, cost } = traitData;
+            const maxed = cost === null;
+            const canAfford = cost !== null && gunXP >= cost;
             const disabled = maxed || !canAfford;
 
             return (
@@ -136,7 +131,7 @@ export function GunUpgradeMenu() {
                     {TRAIT_LABELS[trait]}
                   </div>
                   <div style={{ fontSize: 11, opacity: 0.7 }}>
-                    Lv {level} / {params.traits.maxLevel}
+                    Lv {level} / {maxLevel}
                   </div>
                 </div>
                 <button
