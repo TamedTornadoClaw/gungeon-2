@@ -1,12 +1,12 @@
 {
-  "stage": "decomposition",
+  "stage": "test-specs",
   "preset": "browser-3d",
   "repo": null,
   "documents": {
     "gdd": "GDD.md",
     "tdd": "docs/tdd/",
     "tddReview": "docs/tdd-review.md",
-    "issueManifest": null,
+    "issueManifest": "issues.json",
     "issueMap": null
   },
   "notes": {
@@ -14,6 +14,8 @@
     "gddSkipped": true,
     "tddReviewPasses": 4,
     "tddApproved": true,
+    "issueReviewPasses": 2,
+    "issueReviewApproved": true,
     "repoNotCreated": "User has not specified org/owner yet. Create repo before issue creation."
   }
 }
