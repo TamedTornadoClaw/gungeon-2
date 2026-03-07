@@ -10,12 +10,23 @@
     "issueMap": "issue-map.json"
   },
   "implementation": {
-    "currentWave": 4,
-    "completedWaves": [1, 2, 3],
-    "mergedIssues": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13],
+    "currentWave": 5,
+    "completedWaves": [1, 2, 3, 4, 5],
+    "mergedIssues": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20],
+    "wave5": {
+      "status": "complete",
+      "issues": {
+        "14": { "status": "merged", "branch": "issue-14", "pr": 252 },
+        "15": { "status": "merged", "branch": "issue-15", "pr": 251 },
+        "16": { "status": "merged", "branch": "issue-16", "pr": 257 },
+        "17": { "status": "merged", "branch": "issue-17", "pr": 254 },
+        "18": { "status": "merged", "branch": "issue-18", "pr": 255 },
+        "19": { "status": "merged", "branch": "issue-19", "pr": 256 },
+        "20": { "status": "merged", "branch": "issue-20", "pr": 253 }
+      }
+    },
     "openPRs": {},
-    "activeWorktrees": [],
-    "reviewProtocol": "run-agent.sh in existing worktree, prompt contains ONLY test-spec + PR diff + CLAUDE.md"
+    "activeWorktrees": []
   },
   "notes": {
     "interviewSkipped": true,
