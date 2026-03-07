@@ -189,3 +189,12 @@ export { spawnSystem } from '../systems/spawnSystem';
 // It consumes all AudioEvents from the queue and dispatches them to the AudioManager.
 // Looping sounds are managed separately via createLoopManager().
 export { audioEventSystem, createLoopManager } from '../systems/audioEventSystem';
+
+// ── Stub integration point for particleSystem ──────────────────────────
+// particleSystem runs late in the frame (after all gameplay systems).
+// When the game loop body is implemented, call:
+//
+//   import { particleSystem } from '../systems/particleSystem';
+//   particleSystem(world, eventQueue, dt);
+//
+export { particleSystem } from '../systems/particleSystem';

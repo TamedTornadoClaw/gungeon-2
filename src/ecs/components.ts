@@ -491,6 +491,18 @@ export interface SpawnZone {
 
 // ── Rendering ──────────────────────────────────────────────────────────────
 
+export interface Particle {
+  effect: ParticleEffect;
+  totalLifetime: number;
+  remainingLifetime: number;
+  sizeStart: number;
+  sizeEnd: number;
+  colorStart: number;
+  colorEnd: number;
+  opacity: number;
+  gravity: number;
+}
+
 export interface Renderable {
   meshId: MeshId;
   visible: boolean;
