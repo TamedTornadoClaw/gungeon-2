@@ -118,3 +118,12 @@ export { projectileSystem } from '../systems/projectileSystem';
 //   doorSystem(world, eventQueue);
 //
 export { doorSystem } from '../systems/doorSystem';
+
+// ── Stub integration point for destructibleSystem ──────────────────────────
+// destructibleSystem runs at position 7.5 (after deathSystem, before pickupSystem).
+// When the game loop body is implemented, call:
+//
+//   import { destructibleSystem } from '../systems/destructibleSystem';
+//   destructibleSystem(world, eventQueue);
+//
+export { destructibleSystem } from '../systems/destructibleSystem';
