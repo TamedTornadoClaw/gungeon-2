@@ -198,3 +198,13 @@ export { audioEventSystem, createLoopManager } from '../systems/audioEventSystem
 //   particleSystem(world, eventQueue, dt);
 //
 export { particleSystem } from '../systems/particleSystem';
+
+// ── Stub integration point for dungeonGenerator ──────────────────────────
+// generateDungeon is called once per floor load (initial and on stairs transition).
+// When the game loop body is implemented, call:
+//
+//   import { generateDungeon } from '../dungeon/generator';
+//   const dungeonData = generateDungeon(seed, depth);
+//   // Then spawn entities from dungeonData rooms/corridors/stairs
+//
+export { generateDungeon } from '../dungeon/generator';
