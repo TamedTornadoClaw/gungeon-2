@@ -3,6 +3,19 @@ import * as THREE from 'three';
 export { spawnDamageNumber, updateDamageNumbers, clearDamageNumbers, getActiveDamageNumbers } from './damageNumbers';
 export type { DamageNumber } from './damageNumbers';
 
+export {
+  createScreenEffects,
+  mountScreenEffects,
+  unmountScreenEffects,
+  updateScreenEffects,
+  triggerShake,
+  triggerPlayerHitShake,
+  triggerExplosionShake,
+  triggerBigHitShake,
+  triggerHitFlash,
+} from './screenEffects';
+export type { ScreenEffects, ScreenShakeState, HitFlashState, DamageVignetteState } from './screenEffects';
+
 export interface RendererContext {
   renderer: THREE.WebGLRenderer;
   scene: THREE.Scene;
