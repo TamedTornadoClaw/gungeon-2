@@ -89,7 +89,13 @@ export function unmountRenderer(ctx: RendererContext): void {
   canvas.parentElement?.removeChild(canvas);
 }
 
-export function renderFrame(ctx: RendererContext, _alpha: number): void {
+export function renderFrame(ctx: RendererContext, _alpha: number, world?: import('../ecs/world').World): void {
+  // TODO: Once the game loop passes `world` here, remove the guard.
+  // Integration point: the game loop's render phase should call
+  // renderFrame(ctx, alpha, world) so instanced meshes stay in sync.
+  if (world) {
+    ctx.instancedRenderer.update(world);
+  }
   ctx.renderer.render(ctx.scene, ctx.camera);
 }
 

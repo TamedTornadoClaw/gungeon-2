@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import * as fc from 'fast-check';
 import * as THREE from 'three';
 import { MeshId } from '../src/ecs/components';
 import type { Position, Renderable } from '../src/ecs/components';
@@ -243,7 +244,124 @@ describe('non-instanced entities', () => {
   });
 });
 
+// ── Property-based tests ───────────────────────────────────────────────────
+
+describe('property-based: instance count and matrix positions', () => {
+  it('instance count matches visible entity count for N random entities', () => {
+    fc.assert(
+      fc.property(
+        fc.array(
+          fc.record({
+            x: fc.float({ min: -1000, max: 1000, noNaN: true }),
+            y: fc.float({ min: -1000, max: 1000, noNaN: true }),
+            z: fc.float({ min: -1000, max: 1000, noNaN: true }),
+            visible: fc.boolean(),
+          }),
+          { minLength: 0, maxLength: 80 },
+        ),
+        (entities) => {
+          // Fresh state per property run
+          const s = new THREE.Scene();
+          const sm = createSceneManager(s);
+          const ir = createInstancedRenderer(sm);
+          const w = new World();
+
+          for (const e of entities) {
+            const id = w.createEntity();
+            w.addComponent<Position>(id, 'Position', { x: e.x, y: e.y, z: e.z });
+            w.addComponent<Renderable>(id, 'Renderable', { meshId: MeshId.Bullet, visible: e.visible, scale: 1 });
+          }
+
+          ir.update(w);
+
+          const visibleCount = entities.filter((e) => e.visible).length;
+          const poolMax = 100; // Bullet pool size from design-params
+          expect(ir.getInstanceCount(MeshId.Bullet)).toBe(Math.min(visibleCount, poolMax));
+
+          ir.dispose();
+          sm.dispose();
+        },
+      ),
+      { numRuns: 50 },
+    );
+  });
+
+  it('all instance matrices have correct positions', () => {
+    fc.assert(
+      fc.property(
+        fc.array(
+          fc.record({
+            x: fc.float({ min: -500, max: 500, noNaN: true }),
+            y: fc.float({ min: -500, max: 500, noNaN: true }),
+            z: fc.float({ min: -500, max: 500, noNaN: true }),
+          }),
+          { minLength: 1, maxLength: 50 },
+        ),
+        (positions) => {
+          const s = new THREE.Scene();
+          const sm = createSceneManager(s);
+          const ir = createInstancedRenderer(sm);
+          const w = new World();
+
+          for (const p of positions) {
+            const id = w.createEntity();
+            w.addComponent<Position>(id, 'Position', { x: p.x, y: p.y, z: p.z });
+            w.addComponent<Renderable>(id, 'Renderable', { meshId: MeshId.Bullet, visible: true, scale: 1 });
+          }
+
+          ir.update(w);
+
+          const mesh = findInstancedMeshIn(sm, MeshId.Bullet)!;
+          const mat = new THREE.Matrix4();
+          const vec = new THREE.Vector3();
+
+          for (let i = 0; i < Math.min(positions.length, 100); i++) {
+            mesh.getMatrixAt(i, mat);
+            vec.setFromMatrixPosition(mat);
+            expect(vec.x).toBeCloseTo(positions[i].x, 2);
+            expect(vec.y).toBeCloseTo(positions[i].y, 2);
+            expect(vec.z).toBeCloseTo(positions[i].z, 2);
+          }
+
+          ir.dispose();
+          sm.dispose();
+        },
+      ),
+      { numRuns: 30 },
+    );
+  });
+});
+
+// ── Pool overflow ──────────────────────────────────────────────────────────
+
+describe('pool overflow', () => {
+  it('does not crash when entity count exceeds pool size and clamps to pool max', () => {
+    const poolMax = 10; // HealthPickup pool size from design-params
+
+    // Spawn more entities than the pool allows
+    const overCount = poolMax + 20;
+    for (let i = 0; i < overCount; i++) {
+      addEntity(MeshId.HealthPickup, i, 0, 0);
+    }
+
+    // Should not throw
+    expect(() => instancedRenderer.update(world)).not.toThrow();
+
+    // Count should be clamped to pool max
+    expect(instancedRenderer.getInstanceCount(MeshId.HealthPickup)).toBe(poolMax);
+  });
+});
+
 // ── Helpers ────────────────────────────────────────────────────────────────
+
+function findInstancedMeshIn(sm: SceneManager, meshId: MeshId): THREE.InstancedMesh | undefined {
+  const name = `Instanced_${MeshId[meshId]}`;
+  for (const group of [sm.dungeonGroup, sm.entityGroup]) {
+    const found = group.children.find((c) => c.name === name);
+    if (found && found instanceof THREE.InstancedMesh) return found;
+  }
+  return undefined;
+}
 
 function findInstancedMesh(meshId: MeshId): THREE.InstancedMesh | undefined {
   const name = `Instanced_${MeshId[meshId]}`;
