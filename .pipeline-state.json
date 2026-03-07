@@ -16,16 +16,24 @@
     "wave5": {
       "status": "in-progress",
       "issues": {
-        "14": { "status": "agent-running", "branch": "issue-14" },
-        "15": { "status": "agent-running", "branch": "issue-15" },
-        "16": { "status": "agent-running", "branch": "issue-16" },
-        "17": { "status": "agent-running", "branch": "issue-17" },
-        "18": { "status": "agent-running", "branch": "issue-18" },
-        "19": { "status": "agent-running", "branch": "issue-19" },
-        "20": { "status": "agent-running", "branch": "issue-20" }
+        "14": { "status": "pr-review", "branch": "issue-14", "pr": 252 },
+        "15": { "status": "pr-review", "branch": "issue-15", "pr": 251 },
+        "16": { "status": "pr-review", "branch": "issue-16", "pr": 257 },
+        "17": { "status": "pr-review", "branch": "issue-17", "pr": 254 },
+        "18": { "status": "pr-review", "branch": "issue-18", "pr": 255 },
+        "19": { "status": "pr-review", "branch": "issue-19", "pr": 256 },
+        "20": { "status": "pr-review", "branch": "issue-20", "pr": 253 }
       }
     },
-    "openPRs": {},
+    "openPRs": {
+      "251": { "issue": 15, "title": "Event types and event queue", "status": "pr-review" },
+      "252": { "issue": 14, "title": "ECS World", "status": "pr-review" },
+      "253": { "issue": 20, "title": "Room templates", "status": "pr-review" },
+      "254": { "issue": 17, "title": "App state machine", "status": "pr-review" },
+      "255": { "issue": 18, "title": "Scene manager", "status": "pr-review" },
+      "256": { "issue": 19, "title": "Audio manager", "status": "pr-review" },
+      "257": { "issue": 16, "title": "Input manager", "status": "pr-review" }
+    },
     "activeWorktrees": ["issue-14", "issue-15", "issue-16", "issue-17", "issue-18", "issue-19", "issue-20"]
   },
   "notes": {
