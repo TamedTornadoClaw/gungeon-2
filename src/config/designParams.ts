@@ -197,6 +197,11 @@ export interface DamageNumbersParams {
   critScale: number;
 }
 
+export interface LoadingScreenParams {
+  loadDurationMs: number;
+  progressIntervalMs: number;
+}
+
 export interface GameLoopParams {
   fixedTimestep: number;
   maxFrameTime: number;
@@ -256,6 +261,7 @@ export interface DesignParams {
   camera: CameraParams;
   screenEffects: ScreenEffectsParams;
   particles: ParticlesParams;
+  loadingScreen: LoadingScreenParams;
   damageNumbers: DamageNumbersParams;
   gameLoop: GameLoopParams;
   input: InputParams;
@@ -279,6 +285,7 @@ const REQUIRED_SECTIONS: ReadonlyArray<keyof DesignParams> = [
   'camera',
   'screenEffects',
   'particles',
+  'loadingScreen',
   'damageNumbers',
   'gameLoop',
   'input',
