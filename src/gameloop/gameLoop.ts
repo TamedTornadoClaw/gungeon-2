@@ -1,250 +1,230 @@
-/**
- * Game loop orchestration — fixed-timestep update with variable-rate rendering.
- *
- * System execution order (fixed-timestep tick):
- *   1. inputSystem(inputManager)        — capture & normalize player input
- *   2. playerControlSystem              — apply input to player entity
- *   3. dodgeRollSystem                  — manage dodge roll state
- *   3.5 aiSystem                        — enemy AI decisions
- *   4. movementSystem                   — integrate velocities
- *   5. collisionSystem                  — detect & resolve collisions
- *   6. damageSystem                     — apply damage from collisions/hazards
- *   6.5 lifetimeSystem                  — decrement lifetimes, destroy expired entities
- *   7. deathSystem                      — remove dead entities, spawn drops
- *   8. pickupSystem                     — collect pickups
- *   9. spawnSystem                      — spawn enemies/items
- *
- * TODO: Implement game loop body once all systems are available.
- */
+import { World } from '../ecs/world';
+import { createEventQueue } from './events';
+import { getDesignParams } from '../config/designParams';
+import { InputManager, type InputState } from '../input/inputManager';
+import { AudioManager } from '../audio/audioManager';
+import { inputSystem } from '../systems/inputSystem';
+import { playerControlSystem } from '../systems/playerControlSystem';
+import { dodgeRollSystem } from '../systems/dodgeRollSystem';
+import { aiSystem } from '../systems/aiSystem';
+import { projectileSystem } from '../systems/projectileSystem';
+import { enemyWeaponSystem } from '../systems/enemyWeaponSystem';
+import { movementSystem } from '../systems/movementSystem';
+import {
+  collisionDetectionSystem,
+  type CollisionEntity,
+} from '../systems/collisionDetectionSystem';
+import {
+  collisionResponseSystem,
+  updateSpikeCooldowns,
+} from '../systems/collisionResponseSystem';
+import { damageSystem } from '../systems/damageSystem';
+import { shieldRegenSystem } from '../systems/shieldRegenSystem';
+import { hazardSystem } from '../systems/hazardSystem';
+import { lifetimeSystem } from '../systems/lifetimeSystem';
+import { pickupSystem } from '../systems/pickupSystem';
+import { chestSystem } from '../systems/chestSystem';
+import { shopSystem } from '../systems/shopSystem';
+import { gunXPSystem } from '../systems/gunXPSystem';
+import { destructibleSystem } from '../systems/destructibleSystem';
+import { doorSystem } from '../systems/doorSystem';
+import { spawnSystem } from '../systems/spawnSystem';
+import { floorTransitionSystem, type FloorState } from '../systems/floorTransitionSystem';
+import { deathSystem } from '../systems/deathSystem';
+import { expireModifiersSystem } from '../systems/expireModifiersSystem';
+import { particleSystem } from '../systems/particleSystem';
+import { audioEventSystem } from '../systems/audioEventSystem';
+import type { Position, Collider } from '../ecs/components';
 
-// Stub integration point — lifetimeSystem is called here each tick
-// once the game loop body is implemented.
-export { lifetimeSystem } from '../systems/lifetimeSystem';
-
-// ── Stub integration point for dodgeRollSystem ─────────────────────────────
-// dodgeRollSystem runs at position 3 in the system execution order.
-// Once the game loop body is implemented, call it as:
-//
-//   import { dodgeRollSystem } from '../systems/dodgeRollSystem';
-//   dodgeRollSystem(world, dt);
-//
-// It must run AFTER playerControlSystem and BEFORE movementSystem.
-export { dodgeRollSystem } from '../systems/dodgeRollSystem';
-
-// ── Stub integration point for aiSystem ─────────────────────────────────
-// aiSystem runs at position 3.5 in the system execution order.
-// Once the game loop body is implemented, call it as:
-//
-//   import { aiSystem } from '../systems/aiSystem';
-//   aiSystem(world, dt, currentDepth);
-//
-// It must run AFTER dodgeRollSystem and BEFORE movementSystem.
-export { aiSystem } from '../systems/aiSystem';
-
-// ── Stub integration point for movementSystem ──────────────────────────────
-// movementSystem runs at position 4 in the system execution order.
-// Once the game loop body is implemented, call it as:
-//
-//   import { movementSystem } from '../systems/movementSystem';
-//   movementSystem(world, dt);
-//
-// It must run AFTER aiSystem and BEFORE collisionSystem.
-export { movementSystem } from '../systems/movementSystem';
-
-// Stub integration point for collisionDetectionSystem.
-// When the game loop body is implemented, call:
-//   import { collisionDetectionSystem, rebuildStatics } from '../systems/collisionDetectionSystem';
-//   const collisionEntities = world.query(['Position', 'Collider']).map(id => ({
-//     id,
-//     position: world.getComponent(id, 'Position'),
-//     collider: world.getComponent(id, 'Collider'),
-//   }));
-//   const pairs = collisionDetectionSystem(collisionEntities);
-//   // Pass pairs to CollisionResponseSystem
-//
-// Call rebuildStatics() once per room load with all static collider entities.
-
-// ── Stub integration point for collisionResponseSystem ───────────────────
-// collisionResponseSystem runs at position 5.5 (after collisionDetectionSystem,
-// before damageSystem). When the game loop body is implemented, call:
-//
-//   import { collisionResponseSystem, updateSpikeCooldowns } from '../systems/collisionResponseSystem';
-//   const pairs = collisionDetectionSystem(collisionEntities);
-//   updateSpikeCooldowns(dt, world);
-//   collisionResponseSystem(pairs, world, eventQueue);
-//
-export { collisionResponseSystem, updateSpikeCooldowns } from '../systems/collisionResponseSystem';
-
-// ── Stub integration point for damageSystem ──────────────────────────────
-// damageSystem runs at position 6 (after collisionResponseSystem, before lifetimeSystem).
-// When the game loop body is implemented, call:
-//
-//   import { damageSystem } from '../systems/damageSystem';
-//   damageSystem(world, eventQueue);
-//
-export { damageSystem } from '../systems/damageSystem';
-
-// ── Stub integration point for deathSystem ──────────────────────────────
-// deathSystem runs at position 7 (after damageSystem and lifetimeSystem, before pickupSystem).
-// When the game loop body is implemented, call:
-//
-//   import { deathSystem } from '../systems/deathSystem';
-//   deathSystem(world, eventQueue);
-//
-export { deathSystem } from '../systems/deathSystem';
-
-// ── Stub integration point for hazardSystem ──────────────────────────────
-// hazardSystem runs at position 12 (after shieldRegenSystem, before expireModifiersSystem).
-// When the game loop body is implemented, call:
-//
-//   import { hazardSystem } from '../systems/hazardSystem';
-//   hazardSystem(world, eventQueue, dt);
-//
-export { hazardSystem } from '../systems/hazardSystem';
-
-// ── Stub integration point for gunStatSystem ──────────────────────────────
-// gunStatSystem is called on-demand after trait upgrades, NOT every frame.
-// When the upgrade UI modifies trait levels, call:
-//
-//   import { gunStatSystem } from '../systems/gunStatSystem';
-//   gunStatSystem(world);
-//
 export { gunStatSystem } from '../systems/gunStatSystem';
-
-// ── Stub integration point for projectileSystem ──────────────────────────
-// projectileSystem runs at position 5 in the system execution order.
-// Once the game loop body is implemented, call it as:
-//
-//   import { projectileSystem } from '../systems/projectileSystem';
-//   projectileSystem(world, dt, eventQueue);
-//
-// It must run AFTER dodgeRollSystem and BEFORE movementSystem.
-export { projectileSystem } from '../systems/projectileSystem';
-
-// ── Stub integration point for doorSystem ──────────────────────────────
-// doorSystem runs after collisionResponseSystem emits DoorInteract events.
-// When the game loop body is implemented, call:
-//
-//   import { doorSystem } from '../systems/doorSystem';
-//   doorSystem(world, eventQueue);
-//
-export { doorSystem } from '../systems/doorSystem';
-
-// ── Stub integration point for destructibleSystem ──────────────────────────
-// destructibleSystem runs at position 7.5 (after deathSystem, before pickupSystem).
-// When the game loop body is implemented, call:
-//
-//   import { destructibleSystem } from '../systems/destructibleSystem';
-//   destructibleSystem(world, eventQueue);
-//
-export { destructibleSystem } from '../systems/destructibleSystem';
-
-// ── Stub integration point for enemyWeaponSystem ──────────────────────────
-// enemyWeaponSystem runs at position 5.5 in the system execution order.
-// Once the game loop body is implemented, call it as:
-//
-//   import { enemyWeaponSystem } from '../systems/enemyWeaponSystem';
-//   enemyWeaponSystem(world, dt);
-//
-// It must run AFTER aiSystem and BEFORE movementSystem.
-export { enemyWeaponSystem } from '../systems/enemyWeaponSystem';
-
-// ── Stub integration point for pickupSystem ──────────────────────────
-// pickupSystem runs at position 8 in the system execution order.
-// Once the game loop body is implemented, call it as:
-//
-//   import { pickupSystem } from '../systems/pickupSystem';
-//   pickupSystem(world, input, eventQueue, dt);
-//
-// It must run AFTER deathSystem and BEFORE spawnSystem.
-export { pickupSystem } from '../systems/pickupSystem';
-
-// ── Stub integration point for chestSystem ──────────────────────────
-// chestSystem runs at position 15 (after pickupSystem, reads nearChest
-// proximity flag set by collisionResponseSystem).
-// When the game loop body is implemented, call:
-//
-//   import { chestSystem } from '../systems/chestSystem';
-//   chestSystem(world, input, eventQueue);
-//
-export { chestSystem } from '../systems/chestSystem';
-
-// ── Stub integration point for shopSystem ──────────────────────────
-// shopSystem runs at position 16 (after chestSystem, reads nearShop
-// proximity flag set by collisionResponseSystem).
-// When the game loop body is implemented, call:
-//
-//   import { shopSystem } from '../systems/shopSystem';
-//   shopSystem(world, input, eventQueue);
-//
-// purchaseShopItem is called from the shop UI, not the game loop.
-export { shopSystem, purchaseShopItem } from '../systems/shopSystem';
-
-// ── Stub integration point for gunXPSystem ──────────────────────────
-// gunXPSystem runs at position 17 (after pickupSystem/chestSystem, before destructibleSystem).
-// When the game loop body is implemented, call:
-//
-//   import { gunXPSystem } from '../systems/gunXPSystem';
-//   gunXPSystem(world);
-//
-export { gunXPSystem } from '../systems/gunXPSystem';
-
-// ── Stub integration point for spawnSystem ──────────────────────────
-// spawnSystem runs at position 9 in the system execution order.
-// Once the game loop body is implemented, call it as:
-//
-//   import { spawnSystem } from '../systems/spawnSystem';
-//   spawnSystem(world, currentDepth);
-//
-// It must run AFTER pickupSystem.
-export { spawnSystem } from '../systems/spawnSystem';
-
-// ── Stub integration point for audioEventSystem ──────────────────────────
-// audioEventSystem runs LAST in the system execution order (position 26).
-// When the game loop body is implemented, call:
-//
-//   import { audioEventSystem } from '../systems/audioEventSystem';
-//   audioEventSystem(eventQueue, audioManager);
-//
-// It consumes all AudioEvents from the queue and dispatches them to the AudioManager.
-// Looping sounds are managed separately via createLoopManager().
-export { audioEventSystem, createLoopManager } from '../systems/audioEventSystem';
-
-// ── Stub integration point for particleSystem ──────────────────────────
-// particleSystem runs late in the frame (after all gameplay systems).
-// When the game loop body is implemented, call:
-//
-//   import { particleSystem } from '../systems/particleSystem';
-//   particleSystem(world, eventQueue, dt);
-//
-export { particleSystem } from '../systems/particleSystem';
-
-// ── Stub integration point for dungeonGenerator ──────────────────────────
-// generateDungeon is called once per floor load (initial and on stairs transition).
-// When the game loop body is implemented, call:
-//
-//   import { generateDungeon } from '../dungeon/generator';
-//   const dungeonData = generateDungeon(seed, depth);
-//   // Then spawn entities from dungeonData rooms/corridors/stairs
-//
+export { purchaseShopItem } from '../systems/shopSystem';
+export { createLoopManager } from '../systems/audioEventSystem';
 export { generateDungeon } from '../dungeon/generator';
-
-// ── Stub integration point for floorTransitionSystem ──────────────────────
-// floorTransitionSystem runs after spawnSystem and collisionResponseSystem.
-// When the game loop body is implemented, call:
-//
-//   import { floorTransitionSystem } from '../systems/floorTransitionSystem';
-//   floorTransitionSystem(world, input, eventQueue, floorState);
-//
-export { floorTransitionSystem } from '../systems/floorTransitionSystem';
-
-// ── Stub integration point for particleRenderer ──────────────────────────
-// particleRenderer runs on the variable-timestep render loop (NOT the fixed tick).
-// When the render loop is implemented, call:
-//
-//   import { createParticleRenderer } from '../rendering/particleRenderer';
-//   const particleRenderer = createParticleRenderer(sceneManager);
-//   // Each render frame:
-//   particleRenderer.update(world);
-//
 export { createParticleRenderer } from '../rendering/particleRenderer';
+
+const { gameLoop: gameLoopParams } = getDesignParams();
+const FIXED_TIMESTEP = gameLoopParams.fixedTimestep;
+const MAX_FRAME_TIME = gameLoopParams.maxFrameTime;
+
+export interface GameLoopDeps {
+  world: World;
+  inputManager: InputManager;
+  audioManager: AudioManager;
+  floorState: FloorState;
+  onRender?: (alpha: number) => void;
+}
+
+export interface GameLoop {
+  start(): void;
+  stop(): void;
+  freeze(): void;
+  resume(): void;
+}
+
+export function createGameLoop(deps: GameLoopDeps): GameLoop {
+  const eventQueue = createEventQueue();
+
+  let running = false;
+  let frozen = false;
+  let accumulator = 0;
+  let lastTimestamp = -1;
+  let rafId: number | null = null;
+
+  function tick(timestamp: number): void {
+    if (!running) return;
+
+    rafId = requestAnimationFrame(tick);
+
+    if (lastTimestamp < 0) {
+      lastTimestamp = timestamp;
+      deps.onRender?.(0);
+      return;
+    }
+
+    let elapsed = (timestamp - lastTimestamp) / 1000;
+    lastTimestamp = timestamp;
+
+    // Guard against negative dt (browser bugs / timestamp wraps)
+    if (elapsed < 0) elapsed = 0;
+
+    if (!frozen) {
+      // Spiral-of-death protection: clamp before adding to accumulator
+      if (elapsed > MAX_FRAME_TIME) {
+        elapsed = MAX_FRAME_TIME;
+      }
+      accumulator += elapsed;
+
+      while (accumulator >= FIXED_TIMESTEP) {
+        simulationStep(FIXED_TIMESTEP);
+        accumulator -= FIXED_TIMESTEP;
+      }
+    }
+
+    // Render even when frozen (for pause overlays)
+    const alpha = frozen ? 0 : accumulator / FIXED_TIMESTEP;
+    deps.onRender?.(alpha);
+  }
+
+  function simulationStep(dt: number): void {
+    const { world, inputManager, audioManager, floorState } = deps;
+
+    // 1. Input
+    const input: InputState = inputSystem(inputManager);
+
+    // 2. PlayerControl
+    playerControlSystem(world, input, dt);
+
+    // 3. DodgeRoll
+    dodgeRollSystem(world, dt);
+
+    // 4. AI
+    aiSystem(world, dt, floorState.currentDepth);
+
+    // 5. Projectile
+    projectileSystem(world, dt, eventQueue);
+
+    // 6. EnemyWeapon
+    enemyWeaponSystem(world, dt);
+
+    // 7. Movement
+    movementSystem(world, dt);
+
+    // 8. CollisionDetection
+    const collisionEntities: CollisionEntity[] = world
+      .query(['Position', 'Collider'])
+      .map((id) => ({
+        id,
+        position: world.getComponent<Position>(id, 'Position')!,
+        collider: world.getComponent<Collider>(id, 'Collider')!,
+      }));
+    const pairs = collisionDetectionSystem(collisionEntities);
+
+    // 9. CollisionResponse
+    updateSpikeCooldowns(dt, world);
+    collisionResponseSystem(pairs, world, eventQueue);
+
+    // 10. Damage
+    damageSystem(world, eventQueue);
+
+    // 11. ShieldRegen
+    shieldRegenSystem(world, dt);
+
+    // 12. Hazard
+    hazardSystem(world, eventQueue, dt);
+
+    // 13. Lifetime
+    lifetimeSystem(world, dt);
+
+    // 14. Pickup
+    pickupSystem(world, input, eventQueue, dt);
+
+    // 15. Chest
+    chestSystem(world, input, eventQueue);
+
+    // 16. Shop
+    shopSystem(world, input, eventQueue);
+
+    // 17. GunXP
+    gunXPSystem(world);
+
+    // 18. Destructible
+    destructibleSystem(world, eventQueue);
+
+    // 19. Door
+    doorSystem(world, eventQueue);
+
+    // 20. Spawn
+    spawnSystem(world, floorState.currentDepth);
+
+    // 21. FloorTransition
+    floorTransitionSystem(world, input, eventQueue, floorState);
+
+    // 22. Death
+    deathSystem(world, eventQueue);
+
+    // 23. ExpireModifiers
+    expireModifiersSystem(world);
+
+    // 24. Particle
+    particleSystem(world, eventQueue, dt);
+
+    // 25. Audio
+    audioEventSystem(eventQueue, audioManager);
+
+    // Clear event queue for next step
+    eventQueue.clear();
+  }
+
+  return {
+    start(): void {
+      if (running) return;
+      running = true;
+      frozen = false;
+      accumulator = 0;
+      lastTimestamp = -1;
+      rafId = requestAnimationFrame(tick);
+    },
+
+    stop(): void {
+      if (!running) return;
+      running = false;
+      frozen = false;
+      if (rafId !== null) {
+        cancelAnimationFrame(rafId);
+        rafId = null;
+      }
+    },
+
+    freeze(): void {
+      if (!running || frozen) return;
+      frozen = true;
+    },
+
+    resume(): void {
+      if (!running || !frozen) return;
+      frozen = false;
+      accumulator = 0;
+      lastTimestamp = -1;
+    },
+  };
+}
