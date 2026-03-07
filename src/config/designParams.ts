@@ -218,6 +218,24 @@ export interface SceneMeshesParams {
   transparency: Record<string, TransparencyParams>;
 }
 
+export interface ParticleEffectParams {
+  count: number;
+  lifetime: number;
+  speed: number;
+  spread: number;
+  sizeStart: number;
+  sizeEnd: number;
+  colorStart: string;
+  colorEnd: string;
+  gravity: number;
+  emissive: boolean;
+}
+
+export interface ParticlesParams {
+  maxParticles: number;
+  effects: Record<string, ParticleEffectParams>;
+}
+
 export interface DesignParams {
   player: PlayerParams;
   guns: Record<string, GunParams>;
@@ -232,6 +250,7 @@ export interface DesignParams {
   destructibles: DestructiblesParams;
   camera: CameraParams;
   screenEffects: ScreenEffectsParams;
+  particles: ParticlesParams;
   damageNumbers: DamageNumbersParams;
   gameLoop: GameLoopParams;
   input: InputParams;
@@ -254,6 +273,7 @@ const REQUIRED_SECTIONS: ReadonlyArray<keyof DesignParams> = [
   'destructibles',
   'camera',
   'screenEffects',
+  'particles',
   'damageNumbers',
   'gameLoop',
   'input',
