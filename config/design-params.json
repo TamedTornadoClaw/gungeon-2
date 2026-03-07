@@ -276,6 +276,7 @@
   },
   "particles": {
     "maxParticles": 300,
+    "maxParticlesPerType": 64,
     "effects": {
       "MuzzleFlash": {
         "count": 5,

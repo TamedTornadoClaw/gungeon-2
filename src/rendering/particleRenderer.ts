@@ -3,11 +3,8 @@ import { ParticleEffect } from '../ecs/components';
 import type { Position, Particle } from '../ecs/components';
 import type { World } from '../ecs/world';
 import { getParticleManifest } from '../config/particleManifest';
+import { getDesignParams } from '../config/designParams';
 import type { SceneManager } from './sceneManager';
-
-// ── Constants ────────────────────────────────────────────────────────────────
-
-const MAX_PARTICLES_PER_TYPE = 64;
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -23,6 +20,8 @@ function parseHexColor(hex: string): number {
   return parseInt(hex.replace('0x', ''), 16);
 }
 
+const tempColor = new THREE.Color();
+
 function lerpColor(c1: number, c2: number, t: number): THREE.Color {
   const r1 = (c1 >> 16) & 0xff;
   const g1 = (c1 >> 8) & 0xff;
@@ -31,7 +30,7 @@ function lerpColor(c1: number, c2: number, t: number): THREE.Color {
   const g2 = (c2 >> 8) & 0xff;
   const b2 = c2 & 0xff;
 
-  return new THREE.Color(
+  return tempColor.setRGB(
     (r1 + (r2 - r1) * t) / 255,
     (g1 + (g2 - g1) * t) / 255,
     (b1 + (b2 - b1) * t) / 255,
@@ -42,6 +41,7 @@ function lerpColor(c1: number, c2: number, t: number): THREE.Color {
 
 export function createParticleRenderer(sceneManager: SceneManager): ParticleRenderer {
   const manifest = getParticleManifest();
+  const maxParticlesPerType = getDesignParams().particles.maxParticlesPerType;
   const instancedMeshes = new Map<ParticleEffect, THREE.InstancedMesh>();
   const tempMatrix = new THREE.Matrix4();
   let totalActiveCount = 0;
@@ -76,7 +76,7 @@ export function createParticleRenderer(sceneManager: SceneManager): ParticleRend
     const instancedMesh = new THREE.InstancedMesh(
       geometry,
       material,
-      MAX_PARTICLES_PER_TYPE,
+      maxParticlesPerType,
     );
     instancedMesh.count = 0;
     instancedMesh.name = `Particle_${effectName}`;
@@ -86,7 +86,7 @@ export function createParticleRenderer(sceneManager: SceneManager): ParticleRend
     const startColor = config
       ? new THREE.Color(parseHexColor(config.colorStart))
       : new THREE.Color(0xffffff);
-    for (let i = 0; i < MAX_PARTICLES_PER_TYPE; i++) {
+    for (let i = 0; i < maxParticlesPerType; i++) {
       instancedMesh.setColorAt(i, startColor);
     }
     if (instancedMesh.instanceColor) {
@@ -120,7 +120,7 @@ export function createParticleRenderer(sceneManager: SceneManager): ParticleRend
     for (const effect of allEffects) {
       const instancedMesh = instancedMeshes.get(effect)!;
       const entityIds = groups.get(effect)!;
-      const count = Math.min(entityIds.length, MAX_PARTICLES_PER_TYPE);
+      const count = Math.min(entityIds.length, maxParticlesPerType);
 
       for (let i = 0; i < count; i++) {
         const entityId = entityIds[i];

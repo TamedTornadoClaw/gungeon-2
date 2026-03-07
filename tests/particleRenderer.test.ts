@@ -6,6 +6,9 @@ import type { Position, Velocity, Particle } from '../src/ecs/components';
 import { World } from '../src/ecs/world';
 import { createSceneManager, type SceneManager } from '../src/rendering/sceneManager';
 import { createParticleRenderer, type ParticleRenderer } from '../src/rendering/particleRenderer';
+import { getDesignParams } from '../src/config/designParams';
+
+const MAX_PER_TYPE = getDesignParams().particles.maxParticlesPerType;
 
 let scene: THREE.Scene;
 let sceneManager: SceneManager;
@@ -349,8 +352,8 @@ describe('cleanup', () => {
 // ── Pool overflow ──────────────────────────────────────────────────────────
 
 describe('pool overflow', () => {
-  it('does not crash when particle count exceeds pool max and clamps to 64', () => {
-    const overCount = 80;
+  it('does not crash when particle count exceeds pool max and clamps to maxParticlesPerType', () => {
+    const overCount = MAX_PER_TYPE + 16;
     for (let i = 0; i < overCount; i++) {
       addParticleEntity(ParticleEffect.Explosion, i, 0, 0);
     }
@@ -358,7 +361,7 @@ describe('pool overflow', () => {
     expect(() => particleRenderer.update(world)).not.toThrow();
 
     const mesh = findParticleMesh(ParticleEffect.Explosion)!;
-    expect(mesh.count).toBe(64);
+    expect(mesh.count).toBe(MAX_PER_TYPE);
   });
 });
 
@@ -401,7 +404,7 @@ describe('property-based: particle count and positions', () => {
 
           pr.update(w);
 
-          const expected = Math.min(particles.length, 64);
+          const expected = Math.min(particles.length, MAX_PER_TYPE);
           expect(pr.getActiveCount()).toBe(expected);
 
           pr.dispose();
