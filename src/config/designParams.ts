@@ -173,6 +173,10 @@ export interface GameLoopParams {
   maxFrameTime: number;
 }
 
+export interface InputParams {
+  gamepadDeadZone: number;
+}
+
 export interface DesignParams {
   player: PlayerParams;
   guns: Record<string, GunParams>;
@@ -188,6 +192,7 @@ export interface DesignParams {
   screenEffects: ScreenEffectsParams;
   damageNumbers: DamageNumbersParams;
   gameLoop: GameLoopParams;
+  input: InputParams;
 }
 
 // --- Required sections ---
@@ -207,6 +212,7 @@ const REQUIRED_SECTIONS: ReadonlyArray<keyof DesignParams> = [
   'screenEffects',
   'damageNumbers',
   'gameLoop',
+  'input',
 ] as const;
 
 // --- Validation ---

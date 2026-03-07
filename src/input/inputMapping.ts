@@ -5,18 +5,8 @@
  * into logical actions. Change the mapping to rebind controls without code edits.
  */
 
-export type LogicalAction =
-  | 'moveUp'
-  | 'moveDown'
-  | 'moveLeft'
-  | 'moveRight'
-  | 'fireSidearm'
-  | 'fireLongArm'
-  | 'reload'
-  | 'dodgeRoll'
-  | 'interact'
-  | 'openUpgrade'
-  | 'pause';
+import { LogicalAction } from '../ecs/components';
+export { LogicalAction } from '../ecs/components';
 
 export interface InputMapping {
   keyboard: Record<string, LogicalAction>;
@@ -26,29 +16,29 @@ export interface InputMapping {
 
 export const DEFAULT_INPUT_MAPPING: InputMapping = {
   keyboard: {
-    KeyW: 'moveUp',
-    KeyS: 'moveDown',
-    KeyA: 'moveLeft',
-    KeyD: 'moveRight',
-    KeyR: 'reload',
-    Space: 'dodgeRoll',
-    KeyE: 'interact',
-    KeyU: 'openUpgrade',
-    Escape: 'pause',
+    KeyW: LogicalAction.MoveUp,
+    KeyS: LogicalAction.MoveDown,
+    KeyA: LogicalAction.MoveLeft,
+    KeyD: LogicalAction.MoveRight,
+    KeyR: LogicalAction.Reload,
+    Space: LogicalAction.DodgeRoll,
+    KeyE: LogicalAction.Interact,
+    KeyU: LogicalAction.OpenUpgrade,
+    Escape: LogicalAction.Pause,
   },
   mouse: {
-    0: 'fireSidearm',  // LMB
-    2: 'fireLongArm',  // RMB
+    0: LogicalAction.FireSidearm,  // LMB
+    2: LogicalAction.FireLongArm,  // RMB
   },
   gamepadButtons: {
     // Standard gamepad mapping (https://w3c.github.io/gamepad/#remapping)
-    5: 'fireSidearm',   // RB
-    7: 'fireLongArm',   // RT
-    2: 'reload',        // X
-    0: 'dodgeRoll',     // A
-    3: 'interact',      // Y
-    8: 'pause',         // Back/Select
-    1: 'openUpgrade',   // B
+    5: LogicalAction.FireSidearm,   // RB
+    7: LogicalAction.FireLongArm,   // RT
+    2: LogicalAction.Reload,        // X
+    0: LogicalAction.DodgeRoll,     // A
+    3: LogicalAction.Interact,      // Y
+    8: LogicalAction.Pause,         // Back/Select
+    1: LogicalAction.OpenUpgrade,   // B
   },
 };
 

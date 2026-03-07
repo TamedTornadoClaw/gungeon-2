@@ -6,8 +6,10 @@
  * The camera reference comes from the CameraController created by the renderer.
  */
 import * as THREE from 'three';
-import type { InputMapping, LogicalAction } from './inputMapping';
+import type { InputMapping } from './inputMapping';
+import { LogicalAction } from './inputMapping';
 import { DEFAULT_INPUT_MAPPING } from './inputMapping';
+import { getDesignParams } from '../config/designParams';
 
 export interface InputState {
   moveX: number;
@@ -22,8 +24,6 @@ export interface InputState {
   openUpgrade: boolean;
   pause: boolean;
 }
-
-const GAMEPAD_DEAD_ZONE = 0.15;
 
 export class InputManager {
   private readonly keysDown = new Set<string>();
@@ -169,10 +169,10 @@ export class InputManager {
     // Compute movement from keyboard
     let kbMoveX = 0;
     let kbMoveY = 0;
-    if (actionStates.get('moveRight')) kbMoveX += 1;
-    if (actionStates.get('moveLeft')) kbMoveX -= 1;
-    if (actionStates.get('moveUp')) kbMoveY += 1;
-    if (actionStates.get('moveDown')) kbMoveY -= 1;
+    if (actionStates.get(LogicalAction.MoveRight)) kbMoveX += 1;
+    if (actionStates.get(LogicalAction.MoveLeft)) kbMoveX -= 1;
+    if (actionStates.get(LogicalAction.MoveUp)) kbMoveY += 1;
+    if (actionStates.get(LogicalAction.MoveDown)) kbMoveY -= 1;
 
     // Merge: last active input source wins for movement
     let moveX: number;
@@ -219,23 +219,23 @@ export class InputManager {
       moveY,
       aimWorldX: this.lastAimWorldX,
       aimWorldY: this.lastAimWorldY,
-      fireSidearm: actionStates.get('fireSidearm') === true,
-      fireLongArm: actionStates.get('fireLongArm') === true,
-      reload: actionStates.get('reload') === true,
-      dodgeRoll: actionStates.get('dodgeRoll') === true,
-      interact: actionStates.get('interact') === true,
-      openUpgrade: actionStates.get('openUpgrade') === true,
-      pause: actionStates.get('pause') === true,
+      fireSidearm: actionStates.get(LogicalAction.FireSidearm) === true,
+      fireLongArm: actionStates.get(LogicalAction.FireLongArm) === true,
+      reload: actionStates.get(LogicalAction.Reload) === true,
+      dodgeRoll: actionStates.get(LogicalAction.DodgeRoll) === true,
+      interact: actionStates.get(LogicalAction.Interact) === true,
+      openUpgrade: actionStates.get(LogicalAction.OpenUpgrade) === true,
+      pause: actionStates.get(LogicalAction.Pause) === true,
     };
   }
 
   private isActionOneShot(action: LogicalAction): boolean {
     // One-shot actions fire once on key-down, not continuously while held
-    return action === 'dodgeRoll'
-      || action === 'interact'
-      || action === 'openUpgrade'
-      || action === 'pause'
-      || action === 'reload';
+    return action === LogicalAction.DodgeRoll
+      || action === LogicalAction.Interact
+      || action === LogicalAction.OpenUpgrade
+      || action === LogicalAction.Pause
+      || action === LogicalAction.Reload;
   }
 
   private updateAimFromMouse(): void {
@@ -261,7 +261,7 @@ export class InputManager {
 
   private applyDeadZone(value: number): number {
     const clamped = clamp(value, -1, 1);
-    return Math.abs(clamped) < GAMEPAD_DEAD_ZONE ? 0 : clamped;
+    return Math.abs(clamped) < getDesignParams().input.gamepadDeadZone ? 0 : clamped;
   }
 
   private getActiveGamepad(): Gamepad | null {
