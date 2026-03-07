@@ -7,6 +7,7 @@ import { LoadingScreen } from './ui/LoadingScreen'
 import { MainMenu } from './ui/MainMenu'
 import { PauseOverlay } from './ui/PauseOverlay'
 import { SettingsScreen } from './ui/SettingsScreen'
+import { ShopUI } from './ui/ShopUI'
 import { VictoryScreen } from './ui/VictoryScreen'
 import { WeaponSelect } from './ui/WeaponSelect'
 import { getAudioManager } from './audio/audioManager'
@@ -35,6 +36,7 @@ export function App() {
       {currentState === AppState.Gameplay && <GameplayHUD />}
       {currentState === AppState.Gameplay && <Crosshair />}
       {currentState === AppState.Settings && <SettingsScreen />}
+      {currentState === AppState.ShopBrowse && <ShopUI />}
       {currentState === AppState.Victory && <VictoryScreen />}
       <GunComparisonScreen />
       <PauseOverlay />
