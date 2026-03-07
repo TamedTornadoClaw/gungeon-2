@@ -17,15 +17,15 @@ describe('test framework', () => {
 
   it('creates a test world with entities', () => {
     const world = createTestWorld();
-    expect(world.entities).toHaveLength(0);
+    expect(world.getEntityCount()).toBe(0);
 
-    const entity = createTestEntity(world, { health: 100 });
-    expect(entity.id).toBe(1);
-    expect(entity.components.get('health')).toBe(100);
-    expect(world.entities).toHaveLength(1);
+    const entityId = createTestEntity(world, { health: 100 });
+    expect(entityId).toBe(1);
+    expect(world.hasComponent(entityId, 'health')).toBe(true);
+    expect(world.getEntityCount()).toBe(1);
 
-    const entity2 = createTestEntity(world);
-    expect(entity2.id).toBe(2);
-    expect(world.entities).toHaveLength(2);
+    const entityId2 = createTestEntity(world);
+    expect(entityId2).toBe(2);
+    expect(world.getEntityCount()).toBe(2);
   });
 });
