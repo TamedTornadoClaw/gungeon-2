@@ -2,7 +2,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen, cleanup } from '@testing-library/react';
 import { act } from 'react';
-import { AppState, GunType } from '../src/ecs/components';
+import { AppState } from '../src/ecs/components';
 import { useAppStore } from '../src/store/appStore';
 import type { GameLoop } from '../src/gameloop/gameLoop';
 

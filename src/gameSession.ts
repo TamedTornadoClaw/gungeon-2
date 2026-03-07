@@ -42,6 +42,7 @@ export function createGameSession(canvasContainer: HTMLElement): GameSession {
   inputManager.attach(document);
 
   const audioManager = getAudioManager();
+  const effectsBuffer = createEffectsBuffer();
 
   const effectsBuffer = createEffectsBuffer();
 
