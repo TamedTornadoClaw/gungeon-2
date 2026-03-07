@@ -4,7 +4,8 @@
  * System execution order (fixed-timestep tick):
  *   1. inputSystem(inputManager)        — capture & normalize player input
  *   2. playerControlSystem              — apply input to player entity
- *   3. aiSystem                         — enemy AI decisions
+ *   3. dodgeRollSystem                  — manage dodge roll state
+ *   3.5 aiSystem                        — enemy AI decisions
  *   4. movementSystem                   — integrate velocities
  *   5. collisionSystem                  — detect & resolve collisions
  *   6. damageSystem                     — apply damage from collisions/hazards
@@ -19,6 +20,16 @@
 // Stub integration point — lifetimeSystem is called here each tick
 // once the game loop body is implemented.
 export { lifetimeSystem } from '../systems/lifetimeSystem';
+
+// ── Stub integration point for dodgeRollSystem ─────────────────────────────
+// dodgeRollSystem runs at position 3 in the system execution order.
+// Once the game loop body is implemented, call it as:
+//
+//   import { dodgeRollSystem } from '../systems/dodgeRollSystem';
+//   dodgeRollSystem(world, dt);
+//
+// It must run AFTER playerControlSystem and BEFORE movementSystem.
+export { dodgeRollSystem } from '../systems/dodgeRollSystem';
 
 // ── Stub integration point for movementSystem ──────────────────────────────
 // movementSystem runs at position 4 in the system execution order.
