@@ -1,7 +1,7 @@
 {
   "stage": "test-specs-complete",
   "preset": "browser-3d",
-  "repo": null,
+  "repo": "TamedTornadoClaw/gungeon-2",
   "documents": {
     "gdd": "GDD.md",
     "tdd": "docs/tdd/",
@@ -16,6 +16,6 @@
     "tddApproved": true,
     "issueReviewPasses": 2,
     "issueReviewApproved": true,
-    "repoNotCreated": "User has not specified org/owner yet. Create repo before issue creation."
+    "repoCreated": true
   }
 }
