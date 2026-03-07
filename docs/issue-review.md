@@ -293,3 +293,31 @@ The dungeon generator places chests per `chestChancePerRoom`, and ChestSystem (T
   - **Finding 3:** Missing `src/audio/sounds.ts` re-export file
   - **Finding 8:** No verification ticket after the foundation wave
   - **Finding 28:** Chest gun type selection logic unspecified in TEMP-037
+
+## Run 2 — 2026-03-07
+
+**Result: PASS**
+
+All 7 findings from Run 1 verified as resolved:
+
+1. **TEMP-009 now includes inputSystem.ts wrapper** — Confirmed. TEMP-009 `Produces` field lists `src/systems/inputSystem.ts`, and acceptance criteria include "`inputSystem(inputManager)` function in `src/systems/inputSystem.ts` returns InputState" and "InputSystem is a thin wrapper calling InputManager methods."
+2. **TEMP-010 references "12 states" not "11 states"** — Confirmed. Body says "All 12 states defined" in acceptance criteria. No mention of "11 states."
+3. **TEMP-025 depends on TEMP-004** — Confirmed. `depends_on` array includes `TEMP-004`. (Body text still says "TEMP-005, TEMP-006, TEMP-008" — cosmetic mismatch only; the authoritative `depends_on` array is correct.)
+4. **TEMP-030 depends on TEMP-006** — Confirmed. `depends_on` array includes `TEMP-006`. (Same cosmetic body text mismatch; non-blocking.)
+5. **TEMP-037 specifies chest gun type selection** — Confirmed. Acceptance criteria include "Chests contain a random GunType selected uniformly from all 5 gun types."
+6. **TEMP-047 includes sounds.ts re-export** — Confirmed. Acceptance criteria include "Create `src/audio/sounds.ts` that re-exports SoundId from `src/ecs/components.ts`."
+7. **TEMP-062 depends on TEMP-009 and TEMP-010** — Confirmed. `depends_on` array includes both `TEMP-009` and `TEMP-010`.
+8. **TEMP-237 exists as foundation verification ticket** — Confirmed. TEMP-237 is a `[verification]` ticket depending on TEMP-001 through TEMP-011, with acceptance criteria covering `npm run build`, `npm run typecheck`, `npm test`, module imports, ECS world, state machine, and design params.
+
+Full re-review found no additional issues:
+
+- **CLAUDE.md scaffolding ticket:** TEMP-001 produces `CLAUDE.md` with content from TDD overview. Pass.
+- **System integration tickets:** All 26 systems are wired via TEMP-062 (game loop), TEMP-063 (renderer-to-ECS), TEMP-064 (dungeon-to-entities), TEMP-065 (UI-to-state), TEMP-066 (effects/audio pipeline). Pass.
+- **Wave verification tickets:** Foundation (TEMP-237), core systems+rendering (TEMP-067), full game flow (TEMP-068). Pass.
+- **Asset coverage:** All 37 MeshId values have scaffold+acquire tickets (TEMP-071 to TEMP-144). All 35 SoundId values have scaffold+acquire tickets (TEMP-145 to TEMP-216). All 10 ParticleEffect values have scaffold+acquire tickets (TEMP-217 to TEMP-236). All acquire tickets depend on their corresponding scaffold tickets. Pass.
+- **Dependency correctness:** No circular dependencies. No dangling references. All 237 ticket IDs valid. All dependency edges flow forward. Pass.
+- **TDD coverage:** All 26 systems, all 12 AppState values, all components/enums, all config files, all rendering modules, all dungeon generation elements, all module structure files covered by tickets. Pass.
+- **Property contracts:** All system tickets reference their TDD system signatures and properties. Pass.
+- **Test specs:** All system, state, and integration tickets have `test_spec` fields. Pass.
+
+Sign-off: The issue list is complete, consistent, and sufficient to build the game.
