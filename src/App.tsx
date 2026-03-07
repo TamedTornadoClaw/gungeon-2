@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import { Crosshair } from './ui/Crosshair'
+import { LoadingScreen } from './ui/LoadingScreen'
 import { MainMenu } from './ui/MainMenu'
 import { PauseOverlay } from './ui/PauseOverlay'
 import { getAudioManager } from './audio/audioManager'
@@ -22,6 +23,7 @@ export function App() {
 
   return (
     <div id="app">
+      <LoadingScreen />
       {currentState === AppState.MainMenu && <MainMenu />}
       {currentState === AppState.Gameplay && <Crosshair />}
       <PauseOverlay />
