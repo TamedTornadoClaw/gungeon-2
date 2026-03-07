@@ -158,3 +158,13 @@ export { enemyWeaponSystem } from '../systems/enemyWeaponSystem';
 //
 // It must run AFTER deathSystem and BEFORE spawnSystem.
 export { pickupSystem } from '../systems/pickupSystem';
+
+// ── Stub integration point for chestSystem ──────────────────────────
+// chestSystem runs at position 15 (after pickupSystem, reads nearChest
+// proximity flag set by collisionResponseSystem).
+// When the game loop body is implemented, call:
+//
+//   import { chestSystem } from '../systems/chestSystem';
+//   chestSystem(world, input, eventQueue);
+//
+export { chestSystem } from '../systems/chestSystem';
