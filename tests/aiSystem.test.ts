@@ -517,6 +517,7 @@ describe('aiSystem', () => {
               );
             }
 
+            enemies.forEach((id) => getAI(world, id).state);
             aiSystem(world, DT);
 
             // All enemies should have been processed (no crash, all have valid states)
