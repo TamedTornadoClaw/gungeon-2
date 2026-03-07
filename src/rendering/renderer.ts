@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { createCameraController, type CameraController } from './cameraController';
+import { createSceneManager, type SceneManager } from './sceneManager';
 
 export { spawnDamageNumber, updateDamageNumbers, clearDamageNumbers, getActiveDamageNumbers } from './damageNumbers';
 export type { DamageNumber } from './damageNumbers';
@@ -19,11 +20,15 @@ export {
 } from './screenEffects';
 export type { ScreenEffects, ScreenShakeState, HitFlashState, DamageVignetteState } from './screenEffects';
 
+export { createSceneManager, getAllMeshIds, getMeshDef } from './sceneManager';
+export type { SceneManager } from './sceneManager';
+
 export interface RendererContext {
   renderer: THREE.WebGLRenderer;
   scene: THREE.Scene;
   camera: THREE.PerspectiveCamera;
   cameraController: CameraController;
+  sceneManager: SceneManager;
   ambientLight: THREE.AmbientLight;
   directionalLight: THREE.DirectionalLight;
 }
@@ -57,7 +62,9 @@ export function initRenderer(): RendererContext {
   directionalLight.shadow.camera.bottom = -30;
   scene.add(directionalLight);
 
-  return { renderer, scene, camera, cameraController, ambientLight, directionalLight };
+  const sceneManager = createSceneManager(scene);
+
+  return { renderer, scene, camera, cameraController, sceneManager, ambientLight, directionalLight };
 }
 
 export function mountRenderer(
@@ -117,6 +124,7 @@ export function stopRenderLoop(): void {
 export function disposeRenderer(ctx: RendererContext): void {
   stopRenderLoop();
   unmountRenderer(ctx);
+  ctx.sceneManager.dispose();
   ctx.renderer.dispose();
   ctx.scene.traverse((object) => {
     if (object instanceof THREE.Mesh) {
