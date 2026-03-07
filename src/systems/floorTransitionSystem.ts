@@ -98,15 +98,15 @@ export function floorTransitionSystem(
   // Clear nearStairs to prevent double transition
   flags.nearStairs = false;
 
-  // Emit floor transition audio
+  // Clear any remaining events from old floor before emitting new ones
+  eventQueue.clear();
+
+  // Emit floor transition audio after clear so it isn't discarded
   eventQueue.emit({
     type: EventType.Audio,
     sound: SoundId.FloorTransition,
     position: { x: dungeonData.playerStart.x, y: dungeonData.playerStart.y, z: dungeonData.playerStart.z },
   });
-
-  // Clear any remaining events from old floor
-  eventQueue.clear();
 }
 
 function spawnDungeonEntities(world: World, dungeonData: DungeonData, depth: number): void {
@@ -125,23 +125,24 @@ function spawnDungeonEntities(world: World, dungeonData: DungeonData, depth: num
     const max = room.bounds.max;
     const roomW = max.x - min.x;
     const roomH = max.z - min.z;
-    const wallThickness = 1;
+    const wt = params.dungeon.wallThickness;
+    const wh = params.dungeon.wallHeight;
 
     // North wall
-    createWall(world, { x: min.x + roomW / 2, y: 0, z: min.z }, { x: roomW, y: 2, z: wallThickness });
+    createWall(world, { x: min.x + roomW / 2, y: 0, z: min.z }, { x: roomW, y: wh, z: wt });
     // South wall
-    createWall(world, { x: min.x + roomW / 2, y: 0, z: max.z }, { x: roomW, y: 2, z: wallThickness });
+    createWall(world, { x: min.x + roomW / 2, y: 0, z: max.z }, { x: roomW, y: wh, z: wt });
     // West wall
-    createWall(world, { x: min.x, y: 0, z: min.z + roomH / 2 }, { x: wallThickness, y: 2, z: roomH });
+    createWall(world, { x: min.x, y: 0, z: min.z + roomH / 2 }, { x: wt, y: wh, z: roomH });
     // East wall
-    createWall(world, { x: max.x, y: 0, z: min.z + roomH / 2 }, { x: wallThickness, y: 2, z: roomH });
+    createWall(world, { x: max.x, y: 0, z: min.z + roomH / 2 }, { x: wt, y: wh, z: roomH });
 
     // Spawn zones (enemy spawners)
     for (const sp of room.spawnPoints) {
       createSpawnZone(
         world,
         sp.position,
-        { x: roomW * 0.8, y: roomH * 0.8 },
+        { x: roomW * params.dungeon.spawnZoneScale, y: roomH * params.dungeon.spawnZoneScale },
         sp.enemyTypes,
         sp.enemyCount,
       );
@@ -159,7 +160,7 @@ function spawnDungeonEntities(world: World, dungeonData: DungeonData, depth: num
 
     // Chest
     if (room.hasChest) {
-      const cx = (min.x + max.x) / 2 + 3;
+      const cx = (min.x + max.x) / 2 + params.dungeon.chestOffset;
       const cz = (min.z + max.z) / 2;
       const allGunTypes = [GunType.Pistol, GunType.SMG, GunType.AssaultRifle, GunType.Shotgun, GunType.LMG];
       const randomGun = allGunTypes[Math.floor(Math.random() * allGunTypes.length)];
@@ -168,7 +169,7 @@ function spawnDungeonEntities(world: World, dungeonData: DungeonData, depth: num
 
     // Shop
     if (room.hasShop) {
-      const sx = (min.x + max.x) / 2 - 3;
+      const sx = (min.x + max.x) / 2 + params.dungeon.shopOffset;
       const sz = (min.z + max.z) / 2;
       createShop(world, { x: sx, y: 0, z: sz }, [
         {

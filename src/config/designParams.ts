@@ -113,6 +113,11 @@ export interface DungeonParams {
   shopChancePerFloor: number;
   healthPickupDropChance: number;
   bossFloorDepth: number;
+  wallThickness: number;
+  wallHeight: number;
+  spawnZoneScale: number;
+  chestOffset: number;
+  shopOffset: number;
 }
 
 export interface ShopParams {
