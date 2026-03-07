@@ -305,7 +305,7 @@ describe('Core Verification', () => {
     it('creates a dungeon, places player, runs frames, and detects collisions', () => {
       // Generate and populate dungeon
       const dungeon = generateDungeon(123, 1);
-      const result = createDungeonEntities(world, dungeon, 1);
+      createDungeonEntities(world, dungeon, 1);
       const playerId = createPlayer(world, dungeon.playerStart, GunType.AssaultRifle);
 
       // Verify world has entities
