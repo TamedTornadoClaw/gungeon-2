@@ -71,3 +71,12 @@ export { damageSystem } from '../systems/damageSystem';
 //   hazardSystem(world, eventQueue, dt);
 //
 export { hazardSystem } from '../systems/hazardSystem';
+
+// ── Stub integration point for gunStatSystem ──────────────────────────────
+// gunStatSystem is called on-demand after trait upgrades, NOT every frame.
+// When the upgrade UI modifies trait levels, call:
+//
+//   import { gunStatSystem } from '../systems/gunStatSystem';
+//   gunStatSystem(world);
+//
+export { gunStatSystem } from '../systems/gunStatSystem';
