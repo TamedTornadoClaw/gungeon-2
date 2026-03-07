@@ -41,6 +41,8 @@ export { purchaseShopItem } from '../systems/shopSystem';
 export { createLoopManager } from '../systems/audioEventSystem';
 export { generateDungeon } from '../dungeon/generator';
 export { createParticleRenderer } from '../rendering/particleRenderer';
+export { createRenderSystem } from '../rendering/renderer';
+export type { RenderSystem } from '../rendering/renderer';
 
 const { gameLoop: gameLoopParams } = getDesignParams();
 const FIXED_TIMESTEP = gameLoopParams.fixedTimestep;

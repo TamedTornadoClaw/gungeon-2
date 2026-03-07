@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { MeshId } from '../ecs/components';
-import type { Position, Renderable } from '../ecs/components';
+import type { Position, PreviousPosition, Renderable } from '../ecs/components';
 import type { World } from '../ecs/world';
 import { getDesignParams } from '../config/designParams';
 import type { SceneManager } from './sceneManager';
@@ -29,8 +29,9 @@ const INSTANCED_MESH_IDS: ReadonlyArray<MeshId> = [
 ];
 
 export interface InstancedRenderer {
-  /** Update all instanced meshes from ECS state. Call once per render frame. */
-  update(world: World): void;
+  /** Update all instanced meshes from ECS state. Call once per render frame.
+   *  @param alpha Interpolation factor [0,1) between PreviousPosition and Position */
+  update(world: World, alpha?: number): void;
   /** Get the current active instance count for a mesh type */
   getInstanceCount(meshId: MeshId): number;
   /** Check whether a MeshId uses instanced rendering */
@@ -130,7 +131,7 @@ export function createInstancedRenderer(sceneManager: SceneManager): InstancedRe
     );
   }
 
-  function update(world: World): void {
+  function update(world: World, alpha: number = 1): void {
     // Query all entities with Position and Renderable
     const entities = world.query(['Position', 'Renderable']);
 
@@ -148,9 +149,15 @@ export function createInstancedRenderer(sceneManager: SceneManager): InstancedRe
       const pos = world.getComponent(entityId, 'Position') as Position | undefined;
       if (!pos) continue;
 
+      // Interpolate with PreviousPosition if available
+      const prev = world.getComponent(entityId, 'PreviousPosition') as PreviousPosition | undefined;
+      const x = prev ? prev.x + (pos.x - prev.x) * alpha : pos.x;
+      const y = prev ? prev.y + (pos.y - prev.y) * alpha : pos.y;
+      const z = prev ? prev.z + (pos.z - prev.z) * alpha : pos.z;
+
       const group = groups.get(renderable.meshId);
       if (group) {
-        group.push({ x: pos.x, y: pos.y, z: pos.z, scale: renderable.scale });
+        group.push({ x, y, z, scale: renderable.scale });
       }
     }
 

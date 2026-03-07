@@ -1,7 +1,11 @@
 import * as THREE from 'three';
-import { createCameraController, type CameraController } from './cameraController';
+import { createCameraController, updateCamera, type CameraController } from './cameraController';
 import { createSceneManager, type SceneManager } from './sceneManager';
 import { createInstancedRenderer, type InstancedRenderer } from './instancedRenderer';
+import { MeshId, GunType, WeaponSlot } from '../ecs/components';
+import type { Position, PreviousPosition, Rotation, Renderable, Player, Gun } from '../ecs/components';
+import type { World } from '../ecs/world';
+import type { EntityId } from '../types';
 
 export { spawnDamageNumber, updateDamageNumbers, clearDamageNumbers, getActiveDamageNumbers } from './damageNumbers';
 export type { DamageNumber } from './damageNumbers';
@@ -89,12 +93,181 @@ export function unmountRenderer(ctx: RendererContext): void {
   canvas.parentElement?.removeChild(canvas);
 }
 
-export function renderFrame(ctx: RendererContext, _alpha: number, world?: import('../ecs/world').World): void {
-  // TODO: Once the game loop passes `world` here, remove the guard.
-  // Integration point: the game loop's render phase should call
-  // renderFrame(ctx, alpha, world) so instanced meshes stay in sync.
+// ── GunType to MeshId mapping ──────────────────────────────────────────────
+
+const GUN_TYPE_TO_MESH_ID: Record<GunType, MeshId> = {
+  [GunType.Pistol]: MeshId.Pistol,
+  [GunType.SMG]: MeshId.SMG,
+  [GunType.AssaultRifle]: MeshId.AssaultRifle,
+  [GunType.Shotgun]: MeshId.Shotgun,
+  [GunType.LMG]: MeshId.LMG,
+};
+
+const WEAPON_MESH_NAMES = new Set([
+  MeshId[MeshId.Pistol],
+  MeshId[MeshId.SMG],
+  MeshId[MeshId.AssaultRifle],
+  MeshId[MeshId.Shotgun],
+  MeshId[MeshId.LMG],
+]);
+
+// ── Render System ──────────────────────────────────────────────────────────
+
+export interface RenderSystem {
+  /** Call each render frame with the interpolation alpha and dt */
+  update(world: World, alpha: number, dt: number): void;
+  /** Release all tracked meshes back to pool */
+  releaseAll(): void;
+  /** Get the entity-to-mesh map (for testing) */
+  getMeshMap(): ReadonlyMap<EntityId, THREE.Mesh>;
+}
+
+export function createRenderSystem(ctx: RendererContext): RenderSystem {
+  const meshMap = new Map<EntityId, THREE.Mesh>();
+  const meshIdMap = new Map<EntityId, MeshId>();
+
+  function update(world: World, alpha: number, dt: number): void {
+    // 1. Update instanced meshes (bullets, enemies, pickups, dungeon tiles)
+    ctx.instancedRenderer.update(world, alpha);
+
+    // 2. Sync individual (non-instanced) meshes
+    syncIndividualMeshes(world, alpha);
+
+    // 3. Update camera to follow player
+    updateCameraFollow(world, alpha, dt);
+
+    // 4. Render
+    ctx.renderer.render(ctx.scene, ctx.camera);
+  }
+
+  function syncIndividualMeshes(world: World, alpha: number): void {
+    const entities = world.query(['Position', 'Renderable']);
+    const currentEntities = new Set<EntityId>();
+
+    for (const entityId of entities) {
+      const renderable = world.getComponent<Renderable>(entityId, 'Renderable');
+      if (!renderable) continue;
+
+      // Skip instanced mesh types — handled by instancedRenderer
+      if (ctx.instancedRenderer.isInstanced(renderable.meshId)) continue;
+
+      currentEntities.add(entityId);
+
+      let mesh = meshMap.get(entityId);
+      const prevMeshId = meshIdMap.get(entityId);
+
+      // If meshId changed, release old mesh and acquire new one
+      if (mesh && prevMeshId !== undefined && prevMeshId !== renderable.meshId) {
+        ctx.sceneManager.entityGroup.remove(mesh);
+        ctx.sceneManager.releaseMesh(prevMeshId, mesh);
+        mesh = undefined;
+      }
+
+      // Acquire mesh from pool if needed
+      if (!mesh) {
+        mesh = ctx.sceneManager.acquireMesh(renderable.meshId);
+        ctx.sceneManager.entityGroup.add(mesh);
+        meshMap.set(entityId, mesh);
+        meshIdMap.set(entityId, renderable.meshId);
+      }
+
+      // Handle visibility
+      mesh.visible = renderable.visible;
+      if (!renderable.visible) continue;
+
+      // Interpolate position
+      const pos = world.getComponent<Position>(entityId, 'Position')!;
+      const prev = world.getComponent<PreviousPosition>(entityId, 'PreviousPosition');
+      const x = prev ? prev.x + (pos.x - prev.x) * alpha : pos.x;
+      const y = prev ? prev.y + (pos.y - prev.y) * alpha : pos.y;
+      const z = prev ? prev.z + (pos.z - prev.z) * alpha : pos.z;
+      mesh.position.set(x, y, z);
+
+      // Sync rotation
+      const rotation = world.getComponent<Rotation>(entityId, 'Rotation');
+      if (rotation) {
+        mesh.rotation.y = rotation.y;
+      }
+
+      // Sync scale
+      mesh.scale.set(renderable.scale, renderable.scale, renderable.scale);
+
+      // Handle weapon visibility for player
+      if (renderable.meshId === MeshId.Player) {
+        updateWeaponVisibility(world, entityId, mesh);
+      }
+    }
+
+    // Release meshes for destroyed entities
+    for (const [entityId, mesh] of meshMap) {
+      if (!currentEntities.has(entityId)) {
+        const meshId = meshIdMap.get(entityId)!;
+        ctx.sceneManager.entityGroup.remove(mesh);
+        ctx.sceneManager.releaseMesh(meshId, mesh);
+        meshMap.delete(entityId);
+        meshIdMap.delete(entityId);
+      }
+    }
+  }
+
+  function updateWeaponVisibility(world: World, playerEntityId: EntityId, playerMesh: THREE.Mesh): void {
+    const player = world.getComponent<Player>(playerEntityId, 'Player');
+    if (!player) return;
+
+    // Determine active gun type
+    const activeGunEntityId = player.activeSlot === WeaponSlot.Sidearm
+      ? player.sidearmSlot
+      : player.longArmSlot;
+    const activeGun = world.getComponent<Gun>(activeGunEntityId, 'Gun');
+    const activeWeaponMeshName = activeGun
+      ? MeshId[GUN_TYPE_TO_MESH_ID[activeGun.gunType]]
+      : null;
+
+    // Show only the active weapon child mesh
+    for (const child of playerMesh.children) {
+      if (child instanceof THREE.Mesh && WEAPON_MESH_NAMES.has(child.name)) {
+        child.visible = child.name === activeWeaponMeshName;
+      }
+    }
+  }
+
+  function updateCameraFollow(world: World, alpha: number, dt: number): void {
+    const playerEntities = world.query(['Position', 'Player']);
+    if (playerEntities.length === 0) return;
+
+    const playerEntityId = playerEntities[0];
+    const pos = world.getComponent<Position>(playerEntityId, 'Position')!;
+    const prev = world.getComponent<PreviousPosition>(playerEntityId, 'PreviousPosition');
+
+    const x = prev ? prev.x + (pos.x - prev.x) * alpha : pos.x;
+    const y = prev ? prev.y + (pos.y - prev.y) * alpha : pos.y;
+    const z = prev ? prev.z + (pos.z - prev.z) * alpha : pos.z;
+
+    updateCamera(ctx.cameraController, x, y, z, dt);
+  }
+
+  function releaseAll(): void {
+    for (const [entityId, mesh] of meshMap) {
+      const meshId = meshIdMap.get(entityId)!;
+      ctx.sceneManager.entityGroup.remove(mesh);
+      ctx.sceneManager.releaseMesh(meshId, mesh);
+    }
+    meshMap.clear();
+    meshIdMap.clear();
+  }
+
+  function getMeshMap(): ReadonlyMap<EntityId, THREE.Mesh> {
+    return meshMap;
+  }
+
+  return { update, releaseAll, getMeshMap };
+}
+
+// ── Legacy renderFrame (backwards-compatible) ──────────────────────────────
+
+export function renderFrame(ctx: RendererContext, alpha: number, world?: World): void {
   if (world) {
-    ctx.instancedRenderer.update(world);
+    ctx.instancedRenderer.update(world, alpha);
   }
   ctx.renderer.render(ctx.scene, ctx.camera);
 }
@@ -111,10 +284,6 @@ export function startRenderLoop(
     const dt = (now - lastTime) / 1000;
     lastTime = now;
 
-    // Alpha represents the interpolation factor between the last fixed
-    // timestep state and the current one.  The game loop is responsible
-    // for computing the true alpha; here we pass dt so the caller can
-    // derive it.  When no game loop is connected yet, default to 1.
     const alpha = dt > 0 ? 1 : 0;
 
     onFrame(alpha);
