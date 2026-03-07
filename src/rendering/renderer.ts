@@ -1,5 +1,8 @@
 import * as THREE from 'three';
 
+export { spawnDamageNumber, updateDamageNumbers, clearDamageNumbers, getActiveDamageNumbers } from './damageNumbers';
+export type { DamageNumber } from './damageNumbers';
+
 export interface RendererContext {
   renderer: THREE.WebGLRenderer;
   scene: THREE.Scene;
