@@ -168,3 +168,13 @@ export { pickupSystem } from '../systems/pickupSystem';
 //   chestSystem(world, input, eventQueue);
 //
 export { chestSystem } from '../systems/chestSystem';
+
+// ── Stub integration point for spawnSystem ──────────────────────────
+// spawnSystem runs at position 9 in the system execution order.
+// Once the game loop body is implemented, call it as:
+//
+//   import { spawnSystem } from '../systems/spawnSystem';
+//   spawnSystem(world, currentDepth);
+//
+// It must run AFTER pickupSystem.
+export { spawnSystem } from '../systems/spawnSystem';
