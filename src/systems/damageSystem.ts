@@ -2,6 +2,7 @@ import { World } from '../ecs/world';
 import { EventQueue, type DamageEvent } from '../gameloop/events';
 import { EventType, ParticleEffect, SoundId } from '../ecs/components';
 import type { Health, Shield, Armor, Projectile } from '../ecs/components';
+import { getDesignParams } from '../config/designParams';
 
 /**
  * DamageSystem — position 10 in system execution order.
@@ -88,6 +89,22 @@ function processDamageEvent(world: World, eventQueue: EventQueue, event: DamageE
   emitAudioEvent(eventQueue, soundId, impactPosition);
 
   emitDamageNumberEvent(eventQueue, amount, impactPosition, isCritical);
+
+  // Screen effects for player hits
+  const isPlayer = world.hasComponent(target, 'PlayerTag');
+  if (isPlayer) {
+    const shakeParams = getDesignParams().screenEffects.shake;
+    eventQueue.emit({
+      type: EventType.ScreenShake,
+      intensity: shakeParams.playerHitIntensity,
+    });
+    emitAudioEvent(eventQueue, SoundId.PlayerHitGrunt, impactPosition);
+  }
+
+  // Hit flash for critical hits
+  if (isCritical) {
+    eventQueue.emit({ type: EventType.HitFlash });
+  }
 }
 
 function emitParticleEvent(

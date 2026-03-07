@@ -34,6 +34,10 @@ import { deathSystem } from '../systems/deathSystem';
 import { expireModifiersSystem } from '../systems/expireModifiersSystem';
 import { particleSystem } from '../systems/particleSystem';
 import { audioEventSystem } from '../systems/audioEventSystem';
+import {
+  effectsPipelineSystem,
+  type EffectsBuffer,
+} from '../systems/effectsPipelineSystem';
 import type { Position, Collider } from '../ecs/components';
 
 export { gunStatSystem } from '../systems/gunStatSystem';
@@ -43,6 +47,7 @@ export { generateDungeon } from '../dungeon/generator';
 export { createParticleRenderer } from '../rendering/particleRenderer';
 export { createRenderSystem } from '../rendering/renderer';
 export type { RenderSystem } from '../rendering/renderer';
+export type { EffectsBuffer } from '../systems/effectsPipelineSystem';
 
 const { gameLoop: gameLoopParams } = getDesignParams();
 const FIXED_TIMESTEP = gameLoopParams.fixedTimestep;
@@ -53,6 +58,7 @@ export interface GameLoopDeps {
   inputManager: InputManager;
   audioManager: AudioManager;
   floorState: FloorState;
+  effectsBuffer: EffectsBuffer;
   onRender?: (alpha: number) => void;
 }
 
@@ -192,6 +198,9 @@ export function createGameLoop(deps: GameLoopDeps): GameLoop {
 
     // 25. Audio
     audioEventSystem(eventQueue, audioManager);
+
+    // 26. Effects Pipeline (buffer DamageNumber, ScreenShake, HitFlash for render)
+    effectsPipelineSystem(eventQueue, deps.effectsBuffer);
 
     // Clear event queue for next step
     eventQueue.clear();

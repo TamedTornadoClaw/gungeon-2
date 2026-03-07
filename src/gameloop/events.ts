@@ -39,6 +39,15 @@ export interface DoorInteractEvent {
   doorEntity: EntityId;
 }
 
+export interface ScreenShakeEvent {
+  type: EventType.ScreenShake;
+  intensity: number;
+}
+
+export interface HitFlashEvent {
+  type: EventType.HitFlash;
+}
+
 // ── Union & Type Map ────────────────────────────────────────────────────────
 
 export type GameEvent =
@@ -46,7 +55,9 @@ export type GameEvent =
   | ParticleEvent
   | AudioEvent
   | DamageNumberEvent
-  | DoorInteractEvent;
+  | DoorInteractEvent
+  | ScreenShakeEvent
+  | HitFlashEvent;
 
 export interface EventTypeMap {
   [EventType.Damage]: DamageEvent;
@@ -54,6 +65,8 @@ export interface EventTypeMap {
   [EventType.Audio]: AudioEvent;
   [EventType.DamageNumber]: DamageNumberEvent;
   [EventType.DoorInteract]: DoorInteractEvent;
+  [EventType.ScreenShake]: ScreenShakeEvent;
+  [EventType.HitFlash]: HitFlashEvent;
 }
 
 // ── Event Queue ─────────────────────────────────────────────────────────────

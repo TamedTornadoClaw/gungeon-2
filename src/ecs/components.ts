@@ -168,6 +168,8 @@ export enum EventType {
   Audio = 'Audio',
   DamageNumber = 'DamageNumber',
   DoorInteract = 'DoorInteract',
+  ScreenShake = 'ScreenShake',
+  HitFlash = 'HitFlash',
 }
 
 export enum MeshId {
