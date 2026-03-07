@@ -1,5 +1,26 @@
+/**
+ * Damage number floating text system.
+ *
+ * Integration: The game loop's render phase should call `spawnDamageNumber` when
+ * a damage event is emitted and `updateDamageNumbers` every frame. The expected
+ * integration point is the main render loop in `src/rendering/` or the game
+ * loop orchestrator in `src/gameloop/`. `clearDamageNumbers` should be called
+ * on scene teardown (e.g. room transitions or returning to menu).
+ */
 import * as THREE from 'three';
 import { getDesignParams } from '../config/designParams';
+
+// --- Rendering constants ---
+const CANVAS_WIDTH = 128;
+const CANVAS_HEIGHT = 64;
+const FONT_SIZE_NORMAL = 36;
+const FONT_SIZE_CRIT = 48;
+const STROKE_WIDTH = 4;
+const BASE_SCALE = 1.0;
+
+const COLOR_STROKE = '#000000';
+const COLOR_NORMAL = '#ffffff';
+const COLOR_CRIT = '#ffff00';
 
 export interface DamageNumber {
   sprite: THREE.Sprite;
@@ -12,25 +33,23 @@ const activeNumbers: DamageNumber[] = [];
 
 function createTextTexture(text: string, isCrit: boolean): THREE.Texture {
   const canvas = document.createElement('canvas');
-  canvas.width = 128;
-  canvas.height = 64;
+  canvas.width = CANVAS_WIDTH;
+  canvas.height = CANVAS_HEIGHT;
   const ctx = canvas.getContext('2d')!;
 
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
-  const fontSize = isCrit ? 48 : 36;
+  const fontSize = isCrit ? FONT_SIZE_CRIT : FONT_SIZE_NORMAL;
   ctx.font = `bold ${fontSize}px sans-serif`;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
 
-  // Black outline
-  ctx.strokeStyle = '#000000';
-  ctx.lineWidth = 4;
-  ctx.strokeText(text, canvas.width / 2, canvas.height / 2);
+  ctx.strokeStyle = COLOR_STROKE;
+  ctx.lineWidth = STROKE_WIDTH;
+  ctx.strokeText(text, CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2);
 
-  // Fill color: yellow for crits, white for normal
-  ctx.fillStyle = isCrit ? '#ffff00' : '#ffffff';
-  ctx.fillText(text, canvas.width / 2, canvas.height / 2);
+  ctx.fillStyle = isCrit ? COLOR_CRIT : COLOR_NORMAL;
+  ctx.fillText(text, CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2);
 
   const texture = new THREE.CanvasTexture(canvas);
   texture.needsUpdate = true;
@@ -55,8 +74,7 @@ export function spawnDamageNumber(
   const sprite = new THREE.Sprite(material);
   sprite.position.copy(position);
 
-  const baseScale = 1.0;
-  const scale = isCrit ? baseScale * params.critScale : baseScale;
+  const scale = isCrit ? BASE_SCALE * params.critScale : BASE_SCALE;
   sprite.scale.set(scale * 2, scale, 1);
 
   scene.add(sprite);
@@ -89,6 +107,10 @@ export function updateDamageNumbers(scene: THREE.Scene, dt: number): void {
     const alpha = 1 - dn.age / dn.lifetime;
     (dn.sprite.material as THREE.SpriteMaterial).opacity = alpha;
   }
+}
+
+export function getActiveDamageNumbers(): ReadonlyArray<DamageNumber> {
+  return activeNumbers;
 }
 
 export function clearDamageNumbers(scene: THREE.Scene): void {
