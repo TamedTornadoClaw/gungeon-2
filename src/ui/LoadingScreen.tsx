@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
 import { AppState } from '../ecs/components';
+import { getDesignParams } from '../config/designParams';
 import { useAppStore } from '../store/appStore';
 
-const SIMULATED_LOAD_DURATION_MS = 2000;
-const PROGRESS_INTERVAL_MS = 50;
-const PROGRESS_INCREMENT = PROGRESS_INTERVAL_MS / SIMULATED_LOAD_DURATION_MS;
+const { loadDurationMs, progressIntervalMs } = getDesignParams().loadingScreen;
+const PROGRESS_INCREMENT = progressIntervalMs / loadDurationMs;
 
 export function LoadingScreen() {
   const currentState = useAppStore((s) => s.currentState);
@@ -23,7 +23,7 @@ export function LoadingScreen() {
         }
         return next;
       });
-    }, PROGRESS_INTERVAL_MS);
+    }, progressIntervalMs);
 
     return () => clearInterval(interval);
   }, [currentState]);

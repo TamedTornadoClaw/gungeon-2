@@ -399,6 +399,10 @@
       }
     }
   },
+  "loadingScreen": {
+    "loadDurationMs": 2000,
+    "progressIntervalMs": 50
+  },
   "gameLoop": {
     "fixedTimestep": 0.01667,
     "maxFrameTime": 0.1
