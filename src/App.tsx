@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { Crosshair } from './ui/Crosshair'
 import { DeathScreen } from './ui/DeathScreen'
 import { GameplayHUD } from './ui/GameplayHUD'
+import { GunComparisonScreen } from './ui/GunComparisonScreen'
 import { LoadingScreen } from './ui/LoadingScreen'
 import { MainMenu } from './ui/MainMenu'
 import { PauseOverlay } from './ui/PauseOverlay'
@@ -35,6 +36,7 @@ export function App() {
       {currentState === AppState.Gameplay && <Crosshair />}
       {currentState === AppState.Settings && <SettingsScreen />}
       {currentState === AppState.Victory && <VictoryScreen />}
+      <GunComparisonScreen />
       <PauseOverlay />
       <DeathScreen />
     </div>
