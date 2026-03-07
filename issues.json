@@ -49,7 +49,7 @@
       "TEMP-002"
     ],
     "body": "**Category:** config\n**Automation:** auto\n**Depends on:** TEMP-001, TEMP-002\n**Produces:** `config/design-params.json`, `src/config/designParams.ts`\n\n## Description\n\nCreate the centralized design parameters JSON file with all tunable values from `docs/tdd/config.md`. Create the typed loader in `src/config/designParams.ts` that validates enum-like string values against their TypeScript enums at load time.\n\n## Inputs\n\n- `docs/tdd/config.md` — all parameter definitions and values\n\n## Acceptance Criteria\n\n- [ ] `config/design-params.json` contains all values from TDD config.md\n- [ ] `src/config/designParams.ts` exports a typed `getDesignParams()` function\n- [ ] Loader validates all sections exist\n- [ ] No magic numbers — every tunable value is in the JSON\n- [ ] Tests verify loader rejects malformed JSON",
-    "test_spec": "test-specs/TEMP-004.md"
+    "test_spec": "test-specs/issue-006.md"
   },
   {
     "id": "TEMP-005",
@@ -76,7 +76,7 @@
       "TEMP-005"
     ],
     "body": "**Category:** component\n**Automation:** auto\n**Depends on:** TEMP-003, TEMP-005\n**Produces:** `src/ecs/world.ts`\n\n## Description\n\nImplement the lightweight ECS world: entity storage as sparse set of component maps keyed by EntityId. Supports creating/destroying entities, adding/removing/getting components, and querying entities by component set.\n\nSee `docs/tdd/entities.md` architecture section.\n\n## Acceptance Criteria\n\n- [ ] `createEntity()` returns unique EntityId\n- [ ] `destroyEntity(id)` removes all components for that entity\n- [ ] `addComponent(id, componentName, data)` attaches component\n- [ ] `removeComponent(id, componentName)` detaches component\n- [ ] `getComponent(id, componentName)` returns component or undefined\n- [ ] `hasComponent(id, componentName)` returns boolean\n- [ ] `query(componentNames[])` returns all entities with ALL listed components\n- [ ] Handles ~700 entities without perf issues\n- [ ] Tests cover create, destroy, add, remove, query\n- [ ] Tests verify query returns only entities with ALL requested components",
-    "test_spec": "test-specs/TEMP-006.md"
+    "test_spec": "test-specs/issue-014.md"
   },
   {
     "id": "TEMP-007",
@@ -90,7 +90,7 @@
       "TEMP-005"
     ],
     "body": "**Category:** component\n**Automation:** auto\n**Depends on:** TEMP-003, TEMP-005\n**Produces:** `src/gameloop/events.ts`\n\n## Description\n\nDefine all event interfaces (DamageEvent, ParticleEvent, AudioEvent, DamageNumberEvent, DoorInteractEvent) from `docs/tdd/systems.md` Event Types section. Implement a simple event queue that systems can push to and consume from within a single frame.\n\n## Acceptance Criteria\n\n- [ ] All event interfaces from systems.md defined\n- [ ] EventQueue class with `emit(event)`, `consume(type)` returning array, `clear()`\n- [ ] Queue is cleared at end of each frame (not automatically — caller clears)\n- [ ] Tests verify emit/consume/clear cycle\n- [ ] Events are typed — consumer gets correct type back",
-    "test_spec": "test-specs/TEMP-007.md"
+    "test_spec": "test-specs/issue-015.md"
   },
   {
     "id": "TEMP-008",
@@ -106,7 +106,7 @@
       "TEMP-006"
     ],
     "body": "**Category:** component\n**Automation:** auto\n**Depends on:** TEMP-003, TEMP-004, TEMP-005, TEMP-006\n**Produces:** `src/ecs/factories.ts`\n\n## Description\n\nImplement all entity factory functions from `docs/tdd/entities.md` Entity Factory Functions section. Each factory creates an entity with the correct component composition and default values from design params. `createGun` validates Piercing/Bouncing mutual exclusivity.\n\nFactories: createPlayer, createGun, createGunPickup, createPlayerBullet, createEnemyBullet, createEnemy, createBoss, createXPGem, createHealthPickup, createCurrency, createWall, createHazard, createDestructible, createDoor, createChest, createShop, createStairs, createSpawnZone.\n\n## Acceptance Criteria\n\n- [ ] All 18 factory functions implemented\n- [ ] Each factory attaches correct components per entity composition table\n- [ ] Base stats loaded from design params, not hardcoded\n- [ ] `createGun` throws if traits contain both Piercing and Bouncing\n- [ ] `createEnemy` applies depth scaling from design params\n- [ ] `createBoss` applies bossStatMultiplier\n- [ ] Tests verify component composition for each factory\n- [ ] Tests verify Piercing/Bouncing rejection\n- [ ] Tests verify depth scaling formula",
-    "test_spec": "test-specs/TEMP-008.md"
+    "test_spec": "test-specs/issue-021.md"
   },
   {
     "id": "TEMP-009",
@@ -120,7 +120,7 @@
       "TEMP-005"
     ],
     "body": "**Category:** system\n**Automation:** auto\n**Depends on:** TEMP-003, TEMP-005\n**Produces:** `src/input/inputManager.ts`, `src/input/inputMapping.ts`, `src/systems/inputSystem.ts`\n\n## Description\n\nImplement InputManager that captures raw keyboard/mouse/gamepad input and produces normalized InputState. InputState interface defined in `docs/tdd/systems.md` InputSystem section. Mouse position converted from screen to world space via camera raycasting onto ground plane (y=0). InputManager holds camera reference for this.\n\nData-driven input mapping: physical keys → logical actions.\n\n## Acceptance Criteria\n\n- [ ] InputState interface with all fields from systems.md\n- [ ] moveX/moveY clamped to [-1,1] and normalized for diagonal\n- [ ] Keyboard WASD → movement, mouse → aim, LMB/RMB → fire\n- [ ] Gamepad support (twin-stick)\n- [ ] Input mapping is data-driven (changeable without code edits)\n- [ ] Tests verify normalization (diagonal doesn't exceed magnitude 1)\n- [ ] Tests verify clamping\\n- [ ] `inputSystem(inputManager)` function in `src/systems/inputSystem.ts` returns InputState\\n- [ ] InputSystem is a thin wrapper calling InputManager methods",
-    "test_spec": "test-specs/TEMP-009.md"
+    "test_spec": "test-specs/issue-016.md"
   },
   {
     "id": "TEMP-010",
@@ -133,7 +133,7 @@
       "TEMP-005"
     ],
     "body": "**Category:** state\n**Automation:** auto\n**Depends on:** TEMP-005\n**Produces:** `src/store/appStore.ts`\n\n## Description\n\nImplement the Zustand app store with AppState FSM from `docs/tdd/states.md`. The `transition()` action validates against the transition map. Invalid transitions throw. Settings→X only valid when X===previousState. Store shape matches the AppStore interface in states.md.\n\n**States:** Loading, MainMenu, WeaponSelect, Gameplay, Paused, GunComparison, GunUpgrade, ForcedUpgrade, ShopBrowse, Death, Victory, Settings\n\n**Transitions:** See transition map in states.md.\n\n## Acceptance Criteria\n\n- [ ] All 12 states defined\n- [ ] `transition(to)` validates against transition map\n- [ ] Invalid transitions throw with `from → to` message\n- [ ] Settings→X validated: only valid when X===previousState\n- [ ] previousState tracked correctly\n- [ ] All per-state data fields (selectedLongArm, comparisonGunEntityId, etc.)\n- [ ] RunStats interface implemented\n- [ ] Tests cover every valid transition\n- [ ] Tests verify every invalid transition throws\n- [ ] Tests verify Settings→previousState validation",
-    "test_spec": "test-specs/TEMP-010.md"
+    "test_spec": "test-specs/issue-017.md"
   },
   {
     "id": "TEMP-011",
@@ -147,7 +147,7 @@
       "TEMP-002"
     ],
     "body": "**Category:** config\n**Automation:** auto\n**Depends on:** TEMP-001, TEMP-002\n**Produces:** `src/store/settingsStore.ts`\n\n## Description\n\nImplement the Zustand settings store from `docs/tdd/states.md`. Persisted to localStorage. Contains masterVolume, sfxVolume, mouseSensitivity with setters.\n\n## Acceptance Criteria\n\n- [ ] SettingsStore interface matches states.md\n- [ ] Values persisted to localStorage on change\n- [ ] Values loaded from localStorage on init\n- [ ] Default values if no localStorage entry\n- [ ] Tests verify persistence round-trip",
-    "test_spec": "test-specs/TEMP-011.md"
+    "test_spec": "test-specs/issue-007.md"
   },
   {
     "id": "TEMP-012",
@@ -161,7 +161,7 @@
       "TEMP-006"
     ],
     "body": "**Category:** system\n**Automation:** auto\n**Depends on:** TEMP-005, TEMP-006\n**Produces:** `src/systems/movementSystem.ts`\n\n## Description\n\nImplement MovementSystem from `docs/tdd/systems.md`. Copies Position to PreviousPosition, then integrates Velocity into Position.\n\n**Function signature:** `movementSystem(world: World, dt: number): void`\n\n**Properties:**\n- Before update: PreviousPosition = current Position\n- After update: position.x += velocity.x * dt (same for y, z)\n- Entities without Velocity are not moved\n\n**Test spec:** `test-specs/TEMP-012.md`\n\n## Acceptance Criteria\n\n- [ ] PreviousPosition copied before update\n- [ ] Position updated by velocity * dt\n- [ ] Entities without Velocity unchanged\n- [ ] Tests implementing test spec pass\n- [ ] No regressions",
-    "test_spec": "test-specs/TEMP-012.md"
+    "test_spec": "test-specs/issue-022.md"
   },
   {
     "id": "TEMP-013",
@@ -176,7 +176,7 @@
       "TEMP-006"
     ],
     "body": "**Category:** system\n**Automation:** auto\n**Depends on:** TEMP-003, TEMP-005, TEMP-006\n**Produces:** `src/systems/collisionDetectionSystem.ts`\n\n## Description\n\nImplement CollisionDetectionSystem with spatial hash grid from `docs/tdd/systems.md`. Static colliders inserted once at level load. Dynamic colliders re-inserted each frame. Produces CollisionPair array.\n\n**Function signature:** `collisionDetectionSystem(world: World): CollisionPair[]`\n\n**Properties:**\n- Spatial hash grid with cell size 2x largest dynamic collider\n- Every overlapping AABB pair appears in output (no false negatives)\n- Trigger colliders produce pairs (handled by response, not here)\n- Order: lower EntityId first in each pair\n- Static colliders only inserted on `rebuildStatics()` call\n\n**Performance:** ~3200 pair checks/frame at peak. See systems.md Performance Budget.\n\n**Test spec:** `test-specs/TEMP-013.md`\n\n## Acceptance Criteria\n\n- [ ] Spatial hash grid implemented\n- [ ] No false negatives for overlapping AABBs\n- [ ] Static vs dynamic entity separation\n- [ ] Deterministic pair ordering (lower ID first)\n- [ ] CollisionPair includes overlapX/overlapY\n- [ ] Tests implementing test spec pass\n- [ ] No regressions",
-    "test_spec": "test-specs/TEMP-013.md"
+    "test_spec": "test-specs/issue-023.md"
   },
   {
     "id": "TEMP-014",
@@ -190,7 +190,7 @@
       "TEMP-006"
     ],
     "body": "**Category:** system\n**Automation:** auto\n**Depends on:** TEMP-005, TEMP-006\n**Produces:** `src/systems/lifetimeSystem.ts`\n\n## Description\n\nImplement LifetimeSystem from `docs/tdd/systems.md`. Decrements `remaining` by dt. Destroys entity when <= 0.\n\n**Function signature:** `lifetimeSystem(world: World, dt: number): void`\n\n**Properties:**\n- remaining -= dt each frame\n- Entity destroyed when remaining <= 0\n- Used for projectiles, particles, temporary effects\n\n**Test spec:** `test-specs/TEMP-014.md`\n\n## Acceptance Criteria\n\n- [ ] Lifetime decremented by dt\n- [ ] Entity destroyed at <= 0\n- [ ] Tests implementing test spec pass",
-    "test_spec": "test-specs/TEMP-014.md"
+    "test_spec": "test-specs/issue-024.md"
   },
   {
     "id": "TEMP-015",
@@ -204,7 +204,7 @@
       "TEMP-006"
     ],
     "body": "**Category:** system\n**Automation:** auto\n**Depends on:** TEMP-005, TEMP-006\n**Produces:** `src/systems/expireModifiersSystem.ts`\n\n## Description\n\nImplement ExpireModifiersSystem from `docs/tdd/systems.md`. Removes DamageOverTime and SpeedModifier components where `refreshed === false`.\n\n**Function signature:** `expireModifiersSystem(world: World): void`\n\n**Properties:**\n- DamageOverTime with refreshed===false → remove component\n- SpeedModifier with refreshed===false → remove component\n- Runs AFTER CollisionResponse (refreshes) and AFTER HazardSystem (applies damage)\n\n**Test spec:** `test-specs/TEMP-015.md`\n\n## Acceptance Criteria\n\n- [ ] Un-refreshed DamageOverTime removed\n- [ ] Un-refreshed SpeedModifier removed\n- [ ] Refreshed modifiers kept\n- [ ] Tests implementing test spec pass",
-    "test_spec": "test-specs/TEMP-015.md"
+    "test_spec": "test-specs/issue-025.md"
   },
   {
     "id": "TEMP-016",
@@ -220,7 +220,7 @@
       "TEMP-004"
     ],
     "body": "**Category:** system\n**Automation:** auto\n**Depends on:** TEMP-005, TEMP-006, TEMP-009, TEMP-004\n**Produces:** `src/systems/playerControlSystem.ts`\n\n## Description\n\nImplement PlayerControlSystem from `docs/tdd/systems.md`. Translates InputState into player entity changes: velocity from movement, rotation from aim, fire requests, reload, dodge roll initiation, interact/upgrade/pause flags.\n\n**Function signature:** `playerControlSystem(world: World, input: InputState, dt: number): void`\n\n**Properties:**\n- Velocity = normalized(moveX,moveY) * movementSpeed\n- SpeedModifier multiplies velocity if present\n- Rotation.y = atan2(aimWorldY - pos.y, aimWorldX - pos.x)\n- fireSidearm → set activeSlot=Sidearm, fireRequested on sidearm gun (if ammo, not reloading, cooldown<=0)\n- fireLongArm → set activeSlot=LongArm, fireRequested on long arm gun\n- reload → start reload on active gun\n- dodgeRoll → initiate if cooldown<=0 and not rolling\n- Rolling overrides velocity with roll direction * roll speed\n- openUpgrade → transition to GunUpgrade if gun has XP for any trait\n- pause → transition to Paused\n\n**Test spec:** `test-specs/TEMP-016.md`\n\n## Acceptance Criteria\n\n- [ ] All input translations implemented per properties\n- [ ] Velocity normalized for diagonal movement\n- [ ] SpeedModifier applied\n- [ ] Fire requests set correctly\n- [ ] Tests implementing test spec pass",
-    "test_spec": "test-specs/TEMP-016.md"
+    "test_spec": "test-specs/issue-035.md"
   },
   {
     "id": "TEMP-017",
@@ -235,7 +235,7 @@
       "TEMP-004"
     ],
     "body": "**Category:** system\n**Automation:** auto\n**Depends on:** TEMP-005, TEMP-006, TEMP-004\n**Produces:** `src/systems/dodgeRollSystem.ts`\n\n## Description\n\nImplement DodgeRollSystem from `docs/tdd/systems.md`. Manages dodge roll state: rolling timer, cooldown, velocity override, invincibility.\n\n**Function signature:** `dodgeRollSystem(world: World, dt: number): void`\n\n**Properties:**\n- While rolling: velocity = rollDirection * rollSpeed, Invincible component added\n- rollTimer decrements by dt. When <=0: isRolling=false, remove Invincible\n- cooldownRemaining decrements by dt (always). Cannot roll while >0\n- On roll start: cooldownRemaining = dodgeRollCooldown, rollTimer = dodgeRollDuration\n- Roll direction = movement direction at initiation. If no movement, use facing direction\n\n**Test spec:** `test-specs/TEMP-017.md`\n\n## Acceptance Criteria\n\n- [ ] Roll state managed correctly\n- [ ] Invincible added/removed with roll\n- [ ] Cooldown prevents spam\n- [ ] Velocity overridden during roll\n- [ ] Tests implementing test spec pass",
-    "test_spec": "test-specs/TEMP-017.md"
+    "test_spec": "test-specs/issue-026.md"
   },
   {
     "id": "TEMP-018",
@@ -252,7 +252,7 @@
       "TEMP-004"
     ],
     "body": "**Category:** system\n**Automation:** auto\n**Depends on:** TEMP-005, TEMP-006, TEMP-007, TEMP-008, TEMP-004\n**Produces:** `src/systems/projectileSystem.ts`\n\n## Description\n\nImplement ProjectileSystem from `docs/tdd/systems.md`. Handles player gun firing, reload timers, projectile spawning. Enemy firing is in EnemyWeaponSystem.\n\n**Function signature:** `projectileSystem(world: World, dt: number): void`\n\n**Properties:**\n- fireCooldown -= dt per gun. Cannot fire while >0\n- Clear fireRequested each frame (one-frame signal). If was true and conditions met: fire\n- On fire: cooldown = 1/fireRate, ammo -= 1\n- Empty mag + fire attempt: empty click sound, start reload\n- Reload: reloadTimer -= dt. When <=0: ammo = magazineSize, isReloading = false\n- Spawn projectileCount bullets via createPlayerBullet with spread, crit roll\n- sourceGunSlot set on each bullet for XP attribution\n- Both guns reload simultaneously (passive background reload)\n\n**Test spec:** `test-specs/TEMP-018.md`\n\n## Acceptance Criteria\n\n- [ ] Fire cooldown mechanics correct\n- [ ] fireRequested consumed and cleared each frame\n- [ ] Reload timer and ammo restoration\n- [ ] Correct bullet count and spread\n- [ ] Crit roll using critChance/critMultiplier\n- [ ] Both guns tick reload independently\n- [ ] Tests implementing test spec pass",
-    "test_spec": "test-specs/TEMP-018.md"
+    "test_spec": "test-specs/issue-089.md"
   },
   {
     "id": "TEMP-019",
@@ -269,7 +269,7 @@
       "TEMP-004"
     ],
     "body": "**Category:** system\n**Automation:** auto\n**Depends on:** TEMP-005, TEMP-006, TEMP-007, TEMP-013, TEMP-004\n**Produces:** `src/systems/collisionResponseSystem.ts`\n\n## Description\n\nImplement CollisionResponseSystem from `docs/tdd/systems.md`. Interprets collision pairs based on component composition. The full response table is in systems.md — 15+ interaction types including: Player+Wall (push out), Player+Enemy (push apart, melee damage), Player+EnemyProjectile (damage), Player+Pickup (flags), Player+Hazard (DamageOverTime/SpeedModifier), PlayerProjectile+Enemy (damage, shield check, pierce, bounce), PlayerProjectile+Wall (destroy or bounce), SuicideBomber contact explosion, Player immune to own bouncing bullets.\n\n**Function signature:** `collisionResponseSystem(pairs: CollisionPair[], world: World, eventQueue: EventQueue): void`\n\n**Properties:**\n- Every pair handled exactly once\n- Push-out along axis of minimum overlap for solid colliders\n- Triggers never produce push-out\n- Piercing: decrement piercingRemaining, track alreadyHit\n- Bouncing: reflect velocity, decrement bouncesRemaining\n- Invincible entities take no damage\n- Bomber contact: set health=0, hasExploded=true, area damage query\n\n**Test spec:** `test-specs/TEMP-019.md`\n\n## Acceptance Criteria\n\n- [ ] All 15+ response types from table implemented\n- [ ] Push-out correct for solid colliders\n- [ ] Triggers don't push\n- [ ] Shield angle check correct\n- [ ] Piercing/bouncing mechanics\n- [ ] Bomber explosion with radius query\n- [ ] Player immune to own projectiles\n- [ ] Tests implementing test spec pass",
-    "test_spec": "test-specs/TEMP-019.md"
+    "test_spec": "test-specs/issue-097.md"
   },
   {
     "id": "TEMP-020",
@@ -284,7 +284,7 @@
       "TEMP-007"
     ],
     "body": "**Category:** system\n**Automation:** auto\n**Depends on:** TEMP-005, TEMP-006, TEMP-007\n**Produces:** `src/systems/damageSystem.ts`\n\n## Description\n\nImplement DamageSystem from `docs/tdd/systems.md`. Processes DamageEvents: reduces health, routes through shield→armor→health, writes lastDamageSourceGunSlot for kill attribution.\n\n**Function signature:** `damageSystem(world: World, eventQueue: EventQueue): void`\n\n**Properties:**\n- Damage reduces shield first (if >0), then armor, then health. Clamp at 0.\n- Shield hit: reset timeSinceLastHit to 0\n- If source is player projectile: write sourceGunSlot to target.health.lastDamageSourceGunSlot\n- Emit ParticleEvent (BloodSplat/Sparks)\n- Emit AudioEvent (EnemyHitFlesh/EnemyHitArmor)\n- Emit DamageNumberEvent\n- Crits pre-calculated by ProjectileSystem\n\n**Test spec:** `test-specs/TEMP-020.md`\n\n## Acceptance Criteria\n\n- [ ] Shield→armor→health damage routing\n- [ ] Shield timeSinceLastHit reset\n- [ ] lastDamageSourceGunSlot written for player projectile damage\n- [ ] Events emitted correctly\n- [ ] Tests implementing test spec pass",
-    "test_spec": "test-specs/TEMP-020.md"
+    "test_spec": "test-specs/issue-030.md"
   },
   {
     "id": "TEMP-021",
@@ -298,7 +298,7 @@
       "TEMP-006"
     ],
     "body": "**Category:** system\n**Automation:** auto\n**Depends on:** TEMP-005, TEMP-006\n**Produces:** `src/systems/shieldRegenSystem.ts`\n\n## Description\n\nImplement ShieldRegenSystem from `docs/tdd/systems.md`.\n\n**Function signature:** `shieldRegenSystem(world: World, dt: number): void`\n\n**Properties:**\n- timeSinceLastHit += dt\n- If timeSinceLastHit >= regenDelay and current < max: current += regenRate * dt, clamped to max\n\n**Test spec:** `test-specs/TEMP-021.md`\n\n## Acceptance Criteria\n\n- [ ] Timer increments\n- [ ] Regen starts after delay\n- [ ] Regen clamped to max\n- [ ] No regen while recently hit\n- [ ] Tests implementing test spec pass",
-    "test_spec": "test-specs/TEMP-021.md"
+    "test_spec": "test-specs/issue-027.md"
   },
   {
     "id": "TEMP-022",
@@ -313,7 +313,7 @@
       "TEMP-007"
     ],
     "body": "**Category:** system\n**Automation:** auto\n**Depends on:** TEMP-005, TEMP-006, TEMP-007\n**Produces:** `src/systems/hazardSystem.ts`\n\n## Description\n\nImplement HazardSystem from `docs/tdd/systems.md`. Emits DamageEvents for entities with DamageOverTime, routing fire damage through standard damage pipeline.\n\n**Function signature:** `hazardSystem(world: World, eventQueue: EventQueue, dt: number): void`\n\n**Properties:**\n- For entities with DamageOverTime: emit DamageEvent(amount = damagePerSecond * dt)\n- After emitting, set refreshed = false (CollisionResponse refreshes while overlapping)\n- ExpireModifiersSystem removes un-refreshed DamageOverTime\n\n**Test spec:** `test-specs/TEMP-022.md`\n\n## Acceptance Criteria\n\n- [ ] DamageEvent emitted for DamageOverTime entities\n- [ ] refreshed flag set to false after emit\n- [ ] Damage amount = dps * dt\n- [ ] Tests implementing test spec pass",
-    "test_spec": "test-specs/TEMP-022.md"
+    "test_spec": "test-specs/issue-031.md"
   },
   {
     "id": "TEMP-023",
@@ -330,7 +330,7 @@
       "TEMP-004"
     ],
     "body": "**Category:** system\n**Automation:** auto\n**Depends on:** TEMP-005, TEMP-006, TEMP-007, TEMP-008, TEMP-004\n**Produces:** `src/systems/deathSystem.ts`\n\n## Description\n\nImplement DeathSystem from `docs/tdd/systems.md`. Handles entity death: enemy loot drops (XP gems, currency, health), bomber explosion (with hasExploded check), boss victory, player death.\n\n**Function signature:** `deathSystem(world: World, eventQueue: EventQueue): void`\n\n**Properties:**\n- Enemy health<=0: read lastDamageSourceGunSlot, spawn XP gem for that gun entity, roll currency/health drops, emit particles/audio, destroy entity\n- SuicideBomber health<=0: if !hasExploded → trigger explosion (area damage). If hasExploded → skip explosion. Both cases: standard loot drops, destroy\n- Boss health<=0: transition to Victory\n- Player health<=0: transition to Death\n\n**Test spec:** `test-specs/TEMP-023.md`\n\n## Acceptance Criteria\n\n- [ ] XP gems spawned with correct gun entity attribution\n- [ ] Currency/health drops rolled per design params\n- [ ] Bomber explosion only if !hasExploded\n- [ ] Boss death → Victory state\n- [ ] Player death → Death state\n- [ ] Tests implementing test spec pass",
-    "test_spec": "test-specs/TEMP-023.md"
+    "test_spec": "test-specs/issue-090.md"
   },
   {
     "id": "TEMP-024",
@@ -345,7 +345,7 @@
       "TEMP-004"
     ],
     "body": "**Category:** system\n**Automation:** auto\n**Depends on:** TEMP-005, TEMP-006, TEMP-004\n**Produces:** `src/systems/aiSystem.ts`\n\n## Description\n\nImplement AISystem from `docs/tdd/systems.md`. Per-type AI behavior: KnifeRusher (chase→melee), ShieldGun (chase→ranged behind shield), Shotgunner (chase→spread shot), Rifleman (chase→snipe), SuicideBomber (chase always). Sets Velocity on enemies — MovementSystem integrates.\n\n**Function signature:** `aiSystem(world: World, dt: number): void`\n\n**Properties:**\n- Every enemy gets exactly one state update per frame\n- No AI targets dead entities\n- Detection/attack ranges from design params, scaled by depth\n- AI transitions deterministic given same inputs\n- attackCooldown decrements by dt\n- Enemies ignore hazards\n\n**Test spec:** `test-specs/TEMP-024.md`\n\n## Acceptance Criteria\n\n- [ ] All 5 enemy type behaviors implemented\n- [ ] State machine: Idle→Chase→Attack transitions\n- [ ] Velocity set (not position)\n- [ ] Cooldowns respected\n- [ ] Tests implementing test spec pass",
-    "test_spec": "test-specs/TEMP-024.md"
+    "test_spec": "test-specs/issue-028.md"
   },
   {
     "id": "TEMP-025",
@@ -361,7 +361,7 @@
       "TEMP-004"
     ],
     "body": "**Category:** system\n**Automation:** auto\n**Depends on:** TEMP-005, TEMP-006, TEMP-008\n**Produces:** `src/systems/enemyWeaponSystem.ts`\n\n## Description\n\nImplement EnemyWeaponSystem from `docs/tdd/systems.md`. Fires enemy projectiles when AI state is Attack and cooldown allows.\n\n**Function signature:** `enemyWeaponSystem(world: World, dt: number): void`\n\n**Properties:**\n- fireCooldown -= dt per enemy weapon\n- When Attack state and cooldown<=0: spawn enemy bullet(s)\n- Shotgunner: multiple bullets with spread\n- Rifleman/ShieldGun: single accurate bullet\n- fireCooldown reset to 1/fireRate\n- Uses createEnemyBullet factory\n\n**Test spec:** `test-specs/TEMP-025.md`\n\n## Acceptance Criteria\n\n- [ ] Cooldown mechanics correct\n- [ ] Correct bullet count per enemy type\n- [ ] Spread applied for shotgunners\n- [ ] Bullets get EnemyProjectileTag\n- [ ] Tests implementing test spec pass",
-    "test_spec": "test-specs/TEMP-025.md"
+    "test_spec": "test-specs/issue-091.md"
   },
   {
     "id": "TEMP-026",
@@ -379,7 +379,7 @@
       "TEMP-004"
     ],
     "body": "**Category:** system\n**Automation:** auto\n**Depends on:** TEMP-005, TEMP-006, TEMP-007, TEMP-009, TEMP-010, TEMP-004\n**Produces:** `src/systems/pickupSystem.ts`\n\n## Description\n\nImplement PickupSystem from `docs/tdd/systems.md`. Handles pickup collection: XP gems fly to player and add to gun XP, health/currency on interact, gun pickup triggers comparison screen.\n\n**Function signature:** `pickupSystem(world: World, input: InputState, eventQueue: EventQueue, dt: number): void`\n\n**Properties:**\n- XP gems (isFlying=true): move toward player. On contact: find sourceGunEntityId gun, fallback to same-slot gun if swapped. Add XP, destroy gem, emit audio\n- Health: near + interact → heal, destroy, emit audio\n- Currency: near + interact → add to player.currency, destroy, emit audio\n- Gun: near + interact → transition to GunComparison\n\n**Test spec:** `test-specs/TEMP-026.md`\n\n## Acceptance Criteria\n\n- [ ] XP gem flying and collection\n- [ ] XP gem fallback when gun swapped\n- [ ] Health/currency/gun pickup on interact\n- [ ] Audio events emitted\n- [ ] Tests implementing test spec pass",
-    "test_spec": "test-specs/TEMP-026.md"
+    "test_spec": "test-specs/issue-036.md"
   },
   {
     "id": "TEMP-027",
@@ -395,7 +395,7 @@
       "TEMP-009"
     ],
     "body": "**Category:** system\n**Automation:** auto\n**Depends on:** TEMP-005, TEMP-006, TEMP-008, TEMP-009\n**Produces:** `src/systems/chestSystem.ts`\n\n## Description\n\nImplement ChestSystem from `docs/tdd/systems.md`. Opens chests on interact, spawns gun pickup.\n\n**Function signature:** `chestSystem(world: World, input: InputState, eventQueue: EventQueue): void`\n\n**Properties:**\n- Near chest + interact + !isOpen: set isOpen=true, spawn GunPickup at chest position, emit ChestOpen audio\n\n**Test spec:** `test-specs/TEMP-027.md`\n\n## Acceptance Criteria\n\n- [ ] Chest opens on interact\n- [ ] GunPickup spawned with correct gunType\n- [ ] Cannot re-open\n- [ ] Audio emitted\n- [ ] Tests implementing test spec pass",
-    "test_spec": "test-specs/TEMP-027.md"
+    "test_spec": "test-specs/issue-092.md"
   },
   {
     "id": "TEMP-028",
@@ -411,7 +411,7 @@
       "TEMP-010"
     ],
     "body": "**Category:** system\n**Automation:** auto\n**Depends on:** TEMP-005, TEMP-006, TEMP-009, TEMP-010\n**Produces:** `src/systems/shopSystem.ts`\n\n## Description\n\nImplement ShopSystem from `docs/tdd/systems.md`. Near shop + interact → transition to ShopBrowse. Purchase logic runs in ShopBrowse UI.\n\n**Function signature:** `shopSystem(world: World, input: InputState): void`\n\n**Properties:**\n- Near shop + interact → transition to ShopBrowse, store activeShopEntityId\n- v1 shops only sell health pickups\n\n**Test spec:** `test-specs/TEMP-028.md`\n\n## Acceptance Criteria\n\n- [ ] Transition to ShopBrowse on interact\n- [ ] activeShopEntityId stored\n- [ ] Tests implementing test spec pass",
-    "test_spec": "test-specs/TEMP-028.md"
+    "test_spec": "test-specs/issue-037.md"
   },
   {
     "id": "TEMP-029",
@@ -427,7 +427,7 @@
       "TEMP-004"
     ],
     "body": "**Category:** system\n**Automation:** auto\n**Depends on:** TEMP-005, TEMP-006, TEMP-010, TEMP-004\n**Produces:** `src/systems/gunXPSystem.ts`\n\n## Description\n\nImplement GunXPSystem from `docs/tdd/systems.md`. Checks if any gun has enough XP for forced upgrade.\n\n**Function signature:** `gunXPSystem(world: World): void`\n\n**Properties:**\n- For each gun: calculate max trait upgrade cost. If xp >= maxCost and !forcedUpgradeTriggered: set flag, transition to ForcedUpgrade\n- After spending XP (done by UI), forcedUpgradeTriggered reset to false\n\n**Test spec:** `test-specs/TEMP-029.md`\n\n## Acceptance Criteria\n\n- [ ] Forced upgrade triggered at correct XP threshold\n- [ ] forcedUpgradeTriggered flag prevents re-trigger\n- [ ] Tests implementing test spec pass",
-    "test_spec": "test-specs/TEMP-029.md"
+    "test_spec": "test-specs/issue-038.md"
   },
   {
     "id": "TEMP-030",
@@ -442,7 +442,7 @@
       "TEMP-006"
     ],
     "body": "**Category:** system\n**Automation:** auto\n**Depends on:** TEMP-005, TEMP-004\n**Produces:** `src/systems/gunStatSystem.ts`\n\n## Description\n\nImplement GunStatSystem from `docs/tdd/systems.md`. Recalculates computed gun stats from base + trait bonuses. Called on-demand after upgrades, not every frame.\n\n**Function signature:** `gunStatSystem(world: World): void`\n\n**Properties:**\n- damage = baseDamage + traitBonus(Damage, level) if Damage is a gun trait\n- Stats not covered by a trait use base value\n- magazineSize rounded to nearest integer\n- reloadTime clamped to minimum 0.2s\n- All bonuses from design params bonusPerLevel arrays\n\n**Test spec:** `test-specs/TEMP-030.md`\n\n## Acceptance Criteria\n\n- [ ] Stats recalculated from base + trait bonuses\n- [ ] magazineSize rounded\n- [ ] reloadTime clamped to 0.2\n- [ ] Only traits the gun has affect stats\n- [ ] Tests implementing test spec pass",
-    "test_spec": "test-specs/TEMP-030.md"
+    "test_spec": "test-specs/issue-029.md"
   },
   {
     "id": "TEMP-031",
@@ -457,7 +457,7 @@
       "TEMP-007"
     ],
     "body": "**Category:** system\n**Automation:** auto\n**Depends on:** TEMP-005, TEMP-006, TEMP-007\n**Produces:** `src/systems/destructibleSystem.ts`\n\n## Description\n\nImplement DestructibleSystem from `docs/tdd/systems.md`. Destroys destructibles at health<=0, emits debris particles and break sounds.\n\n**Function signature:** `destructibleSystem(world: World, eventQueue: EventQueue): void`\n\n**Properties:**\n- health<=0: destroy entity, emit ParticleEvent (Wood/Stone/Metal based on MeshId), emit AudioEvent (Break sound), remove from spatial hash\n\n**Test spec:** `test-specs/TEMP-031.md`\n\n## Acceptance Criteria\n\n- [ ] Destruction at health<=0\n- [ ] Correct particle type based on mesh\n- [ ] Correct audio based on mesh\n- [ ] Entity destroyed\n- [ ] Tests implementing test spec pass",
-    "test_spec": "test-specs/TEMP-031.md"
+    "test_spec": "test-specs/issue-032.md"
   },
   {
     "id": "TEMP-032",
@@ -472,7 +472,7 @@
       "TEMP-007"
     ],
     "body": "**Category:** system\n**Automation:** auto\n**Depends on:** TEMP-005, TEMP-006, TEMP-007\n**Produces:** `src/systems/doorSystem.ts`\n\n## Description\n\nImplement DoorSystem from `docs/tdd/systems.md`. Opens doors on DoorInteract event.\n\n**Function signature:** `doorSystem(world: World, eventQueue: EventQueue): void`\n\n**Properties:**\n- On DoorInteract for closed door: isOpen=true, collider becomes trigger, emit DoorOpen audio\n- Doors stay open permanently\n\n**Test spec:** `test-specs/TEMP-032.md`\n\n## Acceptance Criteria\n\n- [ ] Door opens on event\n- [ ] Collider becomes trigger (no longer blocks)\n- [ ] Cannot re-open\n- [ ] Audio emitted\n- [ ] Tests implementing test spec pass",
-    "test_spec": "test-specs/TEMP-032.md"
+    "test_spec": "test-specs/issue-033.md"
   },
   {
     "id": "TEMP-033",
@@ -488,7 +488,7 @@
       "TEMP-004"
     ],
     "body": "**Category:** system\n**Automation:** auto\n**Depends on:** TEMP-005, TEMP-006, TEMP-008, TEMP-004\n**Produces:** `src/systems/spawnSystem.ts`\n\n## Description\n\nImplement SpawnSystem from `docs/tdd/systems.md`. Spawns enemies when SpawnZone activated by player overlap.\n\n**Function signature:** `spawnSystem(world: World, depth: number): void`\n\n**Properties:**\n- Activated zone with empty spawnedEnemies: create enemies at random positions within zone bounds. Store IDs in spawnedEnemies.\n- Stats scaled by depth via design params formula\n- Mini-boss roll: random < miniBossChancePerRoom → one enemy isMini=true\n- Each frame: check if all spawnedEnemies dead → set cleared=true\n\n**Test spec:** `test-specs/TEMP-033.md`\n\n## Acceptance Criteria\n\n- [ ] Enemies spawned on zone activation\n- [ ] Correct enemy types and count from zone data\n- [ ] Depth scaling applied\n- [ ] Mini-boss roll works\n- [ ] cleared flag set when all dead\n- [ ] Tests implementing test spec pass",
-    "test_spec": "test-specs/TEMP-033.md"
+    "test_spec": "test-specs/issue-093.md"
   },
   {
     "id": "TEMP-034",
@@ -506,7 +506,7 @@
       "TEMP-004"
     ],
     "body": "**Category:** system\n**Automation:** auto\n**Depends on:** TEMP-005, TEMP-006, TEMP-008, TEMP-009, TEMP-010, TEMP-004\n**Produces:** `src/systems/floorTransitionSystem.ts`\n\n## Description\n\nImplement FloorTransitionSystem from `docs/tdd/systems.md`. Handles descending to next floor via stairs.\n\n**Function signature:** `floorTransitionSystem(world: World, input: InputState, depth: { current: number }): void`\n\n**Properties:**\n- Near stairs + interact: destroy all entities except player, increment depth, generate new dungeon, spawn entities, place player at start\n- If depth === bossFloorDepth: generate boss floor with Boss entity\n- Boss killed (detected by DeathSystem) → Victory\n\n**Test spec:** `test-specs/TEMP-034.md`\n\n## Acceptance Criteria\n\n- [ ] Floor transition destroys non-player entities\n- [ ] Depth incremented\n- [ ] Boss floor at correct depth\n- [ ] Player preserved across floors\n- [ ] Tests implementing test spec pass",
-    "test_spec": "test-specs/TEMP-034.md"
+    "test_spec": "test-specs/issue-094.md"
   },
   {
     "id": "TEMP-035",
@@ -533,7 +533,7 @@
       "TEMP-004"
     ],
     "body": "**Category:** system\n**Automation:** auto\n**Depends on:** TEMP-035, TEMP-004\n**Produces:** `src/dungeon/roomTemplates.ts`\n\n## Description\n\nDefine room shape templates for procedural generation. Templates define room dimensions (20-50 units per config), enemy spawn zones, hazard placements, cover object positions. Templates are data — no runtime logic.\n\n## Acceptance Criteria\n\n- [ ] At least 5 room templates of varying sizes\n- [ ] Templates specify dimensions within roomMinSize/roomMaxSize bounds\n- [ ] Templates include spawn zone definitions\n- [ ] Templates include optional hazard, destructible, chest, shop placements\n- [ ] Room sizes appropriate for twin-stick shooter (20-50 units per side)\n- [ ] Tests verify templates are within config bounds",
-    "test_spec": "test-specs/TEMP-036.md"
+    "test_spec": "test-specs/issue-020.md"
   },
   {
     "id": "TEMP-037",
@@ -549,7 +549,7 @@
       "TEMP-004"
     ],
     "body": "**Category:** system\n**Automation:** auto\n**Depends on:** TEMP-035, TEMP-036, TEMP-008, TEMP-004\n**Produces:** `src/dungeon/generator.ts`\n\n## Description\n\nImplement procedural dungeon generation. Produces DungeonData: places rooms (8 per floor from config), connects with corridors (7 units wide from config), assigns enemy spawn zones, places hazards/destructibles/chests/shops, places stairs to next floor.\n\n**Properties:**\n- roomsPerFloor rooms placed without overlap\n- Corridors connect adjacent rooms, width from config (7 units)\n- enemiesPerRoom from config (3-8)\n- chestChancePerRoom, shopChancePerFloor, miniBossChancePerRoom from config\n- Boss floor at bossFloorDepth: single boss room\n\n**Test spec:** `test-specs/TEMP-037.md`\n\n## Acceptance Criteria\n\n- [ ] Generates roomsPerFloor rooms\n- [ ] No room overlap\n- [ ] All rooms connected via corridors\n- [ ] Corridors are 7 units wide\n- [ ] Rooms are 20-50 units per side\n- [ ] Enemy spawn zones placed per room\n- [ ] Chests/shops placed per config probabilities\n- [ ] Stairs placed in last room\n- [ ] Boss floor generates correctly\n- [ ] Tests implementing test spec pass\\n- [ ] Chests contain a random GunType selected uniformly from all 5 gun types",
-    "test_spec": "test-specs/TEMP-037.md"
+    "test_spec": "test-specs/issue-095.md"
   },
   {
     "id": "TEMP-038",
@@ -674,7 +674,7 @@
       "TEMP-007"
     ],
     "body": "**Category:** system\n**Automation:** auto\n**Depends on:** TEMP-005, TEMP-006, TEMP-007\n**Produces:** `src/systems/particleSystem.ts`\n\n## Description\n\nImplement ParticleSystem from `docs/tdd/systems.md`. Processes ParticleEvents, spawns particles per manifest definition, updates active particles per frame.\n\n**Function signature:** `particleSystem(world: World, eventQueue: EventQueue, dt: number): void`\n\n**Properties:**\n- ParticleEvent specifies effect type + position\n- Spawn particles per manifest (count, lifetime, speed, spread, size, color, gravity)\n- Update position, size, opacity per frame\n- Remove expired particles\n\n**Test spec:** `test-specs/TEMP-046.md`\n\n## Acceptance Criteria\n\n- [ ] Particles spawned from events\n- [ ] Manifest-driven particle properties\n- [ ] Particles update and expire\n- [ ] Tests implementing test spec pass",
-    "test_spec": "test-specs/TEMP-046.md"
+    "test_spec": "test-specs/issue-034.md"
   },
   {
     "id": "TEMP-047",
@@ -688,7 +688,7 @@
       "TEMP-005"
     ],
     "body": "**Category:** integration\n**Automation:** auto\n**Depends on:** TEMP-001, TEMP-005\n**Produces:** `src/audio/audioManager.ts`\n\n## Description\n\nImplement Howler.js audio manager from `docs/tdd/overview.md`. Wraps Howler.js for sound playback. Loads sounds from sound manifest. Handles pooling, volume (from settings store), pitch variation, max instances per sound.\n\nLooping sounds (FireAmbient, WaterAmbient) started/stopped based on proximity.\n\n## Acceptance Criteria\n\n- [ ] `play(soundId)` plays correct sound\n- [ ] Volume respects settings store (masterVolume * sfxVolume)\n- [ ] Pitch variation per manifest (pitchMin/pitchMax)\n- [ ] maxInstances prevents sound stacking\n- [ ] Looping sounds support (start/stop)\n- [ ] Loads from sound manifest JSON\n- [ ] Tests verify play/stop API\\n- [ ] Create `src/audio/sounds.ts` that re-exports SoundId from `src/ecs/components.ts`",
-    "test_spec": "test-specs/TEMP-047.md"
+    "test_spec": "test-specs/issue-019.md"
   },
   {
     "id": "TEMP-048",
@@ -703,7 +703,7 @@
       "TEMP-047"
     ],
     "body": "**Category:** system\n**Automation:** auto\n**Depends on:** TEMP-005, TEMP-007, TEMP-047\n**Produces:** `src/systems/audioEventSystem.ts`\n\n## Description\n\nImplement AudioEventSystem from `docs/tdd/systems.md`. Consumes AudioEvents from event queue and calls audioManager.play().\n\n**Function signature:** `audioEventSystem(eventQueue: EventQueue, audioManager: AudioManager): void`\n\n**Properties:**\n- Each AudioEvent has SoundId + optional position\n- Calls audioManager.play(soundId)\n- Looping sounds started/stopped by proximity, not re-triggered per frame\n\n**Test spec:** `test-specs/TEMP-048.md`\n\n## Acceptance Criteria\n\n- [ ] Events consumed and played\n- [ ] Looping sound management\n- [ ] Tests implementing test spec pass",
-    "test_spec": "test-specs/TEMP-048.md"
+    "test_spec": "test-specs/issue-087.md"
   },
   {
     "id": "TEMP-049",
@@ -926,7 +926,7 @@
       "TEMP-010"
     ],
     "body": "**Category:** integration\n**Automation:** auto\n**Depends on:** All system tickets (TEMP-012 through TEMP-034, TEMP-046, TEMP-048), TEMP-006, TEMP-007, TEMP-004\n**Produces:** `src/gameloop/gameLoop.ts`\n\n## Description\n\nImplement the fixed-timestep game loop from `docs/tdd/overview.md` and `docs/tdd/systems.md`. Calls all 26 systems in the correct execution order at 60Hz. Handles delta time accumulation, spiral-of-death protection (maxFrameTime cap). Provides start/stop/freeze/resume API for state transitions.\n\n**Execution order:** Input → PlayerControl → DodgeRoll → AI → Projectile → EnemyWeapon → Movement → CollisionDetection → CollisionResponse → Damage → ShieldRegen → Hazard → Lifetime → Pickup → Chest → Shop → GunXP → Destructible → Door → Spawn → FloorTransition → Death → ExpireModifiers → Particle → Audio\n\nGunStatSystem called on-demand, not in loop.\n\n**Test spec:** `test-specs/TEMP-062.md`\n\n## Acceptance Criteria\n\n- [ ] Fixed timestep at 60Hz (0.01667s)\n- [ ] All systems called in correct order\n- [ ] Spiral-of-death protection: excess time discarded at maxFrameTime\n- [ ] start/stop/freeze/resume API\n- [ ] Event queue cleared each frame\n- [ ] Tests implementing test spec pass",
-    "test_spec": "test-specs/TEMP-062.md"
+    "test_spec": "test-specs/issue-176.md"
   },
   {
     "id": "TEMP-063",
@@ -947,7 +947,7 @@
       "TEMP-045"
     ],
     "body": "**Category:** integration\n**Automation:** auto\n**Depends on:** TEMP-062, TEMP-038, TEMP-039, TEMP-040, TEMP-041, TEMP-042, TEMP-043, TEMP-044, TEMP-045\n**Produces:** Render system wiring in `src/rendering/renderer.ts`\n\n## Description\n\nWire the render system to the game loop and ECS. The render loop (RAF, variable timestep) reads entity positions (interpolated between PreviousPosition and Position using alpha), updates Three.js mesh transforms, updates instanced mesh matrices, applies screen effects, renders the scene.\n\nSee `docs/tdd/rendering.md` Rendering System section.\n\n**Test spec:** `test-specs/TEMP-063.md`\n\n## Acceptance Criteria\n\n- [ ] Render loop runs on RAF (variable timestep)\n- [ ] Positions interpolated using alpha\n- [ ] Mesh positions synced from ECS each frame\n- [ ] Instanced meshes updated for bullets/enemies/pickups/particles\n- [ ] Camera follows player\n- [ ] Screen effects applied\n- [ ] Game renders visually when started\n- [ ] Tests implementing test spec pass",
-    "test_spec": "test-specs/TEMP-063.md"
+    "test_spec": "test-specs/issue-223.md"
   },
   {
     "id": "TEMP-064",
@@ -963,7 +963,7 @@
       "TEMP-034"
     ],
     "body": "**Category:** integration\n**Automation:** auto\n**Depends on:** TEMP-037, TEMP-008, TEMP-033, TEMP-034\n**Produces:** Dungeon-to-world wiring\n\n## Description\n\nWire dungeon generator output (DungeonData) to entity creation. When a new floor starts: generate dungeon, create wall/floor/hazard/destructible/door/chest/shop/stairs entities from dungeon data, create spawn zones from room definitions.\n\n**Test spec:** `test-specs/TEMP-064.md`\n\n## Acceptance Criteria\n\n- [ ] DungeonData rooms produce wall entities at boundaries\n- [ ] Floor tiles created\n- [ ] Hazards, destructibles, chests, shops placed per dungeon data\n- [ ] Spawn zones created per room\n- [ ] Stairs entity created\n- [ ] Player placed at dungeon start position\n- [ ] Tests implementing test spec pass",
-    "test_spec": "test-specs/TEMP-064.md"
+    "test_spec": "test-specs/issue-175.md"
   },
   {
     "id": "TEMP-065",
@@ -991,7 +991,7 @@
       "TEMP-063"
     ],
     "body": "**Category:** integration\n**Automation:** auto\n**Depends on:** TEMP-010, all UI tickets (TEMP-049 through TEMP-061), TEMP-062, TEMP-063\n**Produces:** `src/App.tsx`, `src/main.tsx`\n\n## Description\n\nWire the top-level React app to the Zustand app state machine. App.tsx reads currentState and renders the correct component tree. Mount Three.js canvas during gameplay-related states, unmount during menu states. Handle state entry/exit effects (start game loop, freeze, resume, stop, etc.).\n\n**Test spec:** `test-specs/TEMP-065.md`\n\n## Acceptance Criteria\n\n- [ ] App.tsx renders correct component per AppState\n- [ ] Three.js canvas mounted for Gameplay/Paused/GunComparison/GunUpgrade/ForcedUpgrade/ShopBrowse\n- [ ] Three.js canvas unmounted for Loading/MainMenu/WeaponSelect/Death/Victory/Settings\n- [ ] Game loop started on Gameplay entry from WeaponSelect\n- [ ] Game loop frozen on Paused/overlay states\n- [ ] Game loop resumed on return to Gameplay\n- [ ] Game loop stopped on MainMenu transition\n- [ ] Full flow: Loading → MainMenu → WeaponSelect → Gameplay → Death → MainMenu works\n- [ ] Tests implementing test spec pass",
-    "test_spec": "test-specs/TEMP-065.md"
+    "test_spec": "test-specs/issue-234.md"
   },
   {
     "id": "TEMP-066",
@@ -1011,7 +1011,7 @@
       "TEMP-063"
     ],
     "body": "**Category:** integration\n**Automation:** auto\n**Depends on:** TEMP-043, TEMP-044, TEMP-045, TEMP-046, TEMP-047, TEMP-048, TEMP-062, TEMP-063\n**Produces:** Effects and audio wiring\n\n## Description\n\nWire particle system events to particle renderer. Wire audio events to audio manager. Wire damage number events to damage number renderer. Wire screen shake/flash triggers to screen effects manager. Ensure all event producers (DamageSystem, DeathSystem, CollisionResponse, etc.) correctly flow through to visual/audio output.\n\n**Test spec:** `test-specs/TEMP-066.md`\n\n## Acceptance Criteria\n\n- [ ] ParticleEvents produce visible particles\n- [ ] AudioEvents produce sounds\n- [ ] DamageNumberEvents produce floating numbers\n- [ ] Screen shake triggers on player damage/explosions\n- [ ] Hit flash on crits/explosions\n- [ ] Damage vignette at low health\n- [ ] Tests implementing test spec pass",
-    "test_spec": "test-specs/TEMP-066.md"
+    "test_spec": "test-specs/issue-235.md"
   },
   {
     "id": "TEMP-067",

@@ -7,7 +7,7 @@
     "tdd": "docs/tdd/",
     "tddReview": "docs/tdd-review.md",
     "issueManifest": "issues.json",
-    "issueMap": null
+    "issueMap": "issue-map.json"
   },
   "notes": {
     "interviewSkipped": true,
