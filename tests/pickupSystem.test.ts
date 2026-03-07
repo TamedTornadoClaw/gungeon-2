@@ -126,11 +126,12 @@ function createXPGemEntity(
   sourceGunEntityId: number,
   amount: number,
   isFlying: boolean,
+  sourceCategory: GunCategory = GunCategory.Sidearm,
 ): number {
   const id = world.createEntity();
   world.addComponent<Position>(id, 'Position', { ...pos });
   world.addComponent<Pickup>(id, 'Pickup', { pickupType: PickupType.XPGem });
-  world.addComponent<XPGem>(id, 'XPGem', { sourceGunEntityId, amount, isFlying });
+  world.addComponent<XPGem>(id, 'XPGem', { sourceGunEntityId, sourceCategory, amount, isFlying });
   world.addComponent(id, 'PickupTag', {});
   return id;
 }
@@ -302,6 +303,28 @@ describe('XP gem flying and collection', () => {
     const gun = world.getComponent<Gun>(longArmId, 'Gun')!;
     expect(gun.xp).toBe(20);
     expect(world.query(['XPGem']).length).toBe(0);
+  });
+
+  it('falls back to same-category slot, not cross-category', () => {
+    // Source gun was a LongArm — fallback should go to longArm slot, not sidearm
+    const originalLongArmId = createGunEntity(world, { category: GunCategory.LongArm, gunType: GunType.AssaultRifle });
+    const sidearmId = createGunEntity(world);
+    const newLongArmId = createGunEntity(world, { category: GunCategory.LongArm, gunType: GunType.Shotgun });
+    createPlayerEntity(world, { sidearmId, longArmId: newLongArmId });
+
+    // Destroy the original long arm (simulating gun swap)
+    world.destroyEntity(originalLongArmId);
+
+    // Gem references the destroyed LongArm entity with LongArm category
+    createXPGemEntity(world, { x: 0, y: 0, z: 0 }, originalLongArmId, 40, true, GunCategory.LongArm);
+
+    pickupSystem(world, defaultInput(), eventQueue, 1 / 60);
+
+    // XP should go to the new long arm, NOT the sidearm
+    const longArmGun = world.getComponent<Gun>(newLongArmId, 'Gun')!;
+    const sidearmGun = world.getComponent<Gun>(sidearmId, 'Gun')!;
+    expect(longArmGun.xp).toBe(40);
+    expect(sidearmGun.xp).toBe(0);
   });
 
   it('does not collect XP gems when player is dead', () => {

@@ -47,7 +47,7 @@ export function pickupSystem(
 
   const params = getDesignParams();
   const flySpeed = params.player.xpGemFlySpeed;
-  const collectionThreshold = 0.5;
+  const collectionThreshold = params.player.xpGemCollectionThreshold;
 
   // Process XP gems (flying ones move toward player, collected on contact)
   processXPGems(world, eventQueue, player, playerPos, flySpeed, collectionThreshold, dt);
@@ -86,7 +86,7 @@ function processXPGems(
 
     if (dist <= collectionThreshold) {
       // Collect the gem
-      const gunEntityId = resolveXPTarget(world, player, xpGem.sourceGunEntityId);
+      const gunEntityId = resolveXPTarget(world, player, xpGem.sourceGunEntityId, xpGem.sourceCategory);
       if (gunEntityId !== null) {
         const gun = world.getComponent<Gun>(gunEntityId, 'Gun');
         if (gun) {
@@ -120,6 +120,7 @@ function resolveXPTarget(
   world: World,
   player: Player,
   sourceGunEntityId: EntityId,
+  sourceCategory: GunCategory,
 ): EntityId | null {
   // Try the original gun entity first
   if (world.hasEntity(sourceGunEntityId)) {
@@ -127,15 +128,23 @@ function resolveXPTarget(
     if (gun) return sourceGunEntityId;
   }
 
-  // Fallback: find the gun in the same category slot
-  // We need to determine which slot the original gun was in by checking its category
-  // Since the entity is gone, we check both slots and pick the one that exists
-  const sidearmGun = world.getComponent<Gun>(player.sidearmSlot, 'Gun');
-  const longArmGun = world.getComponent<Gun>(player.longArmSlot, 'Gun');
+  // Fallback: try the gun currently in the same-category slot
+  const sameCategorySlot = sourceCategory === GunCategory.Sidearm
+    ? player.sidearmSlot
+    : player.longArmSlot;
+  if (world.hasEntity(sameCategorySlot)) {
+    const gun = world.getComponent<Gun>(sameCategorySlot, 'Gun');
+    if (gun) return sameCategorySlot;
+  }
 
-  // Try sidearm first, then long arm — return first valid gun
-  if (sidearmGun && world.hasEntity(player.sidearmSlot)) return player.sidearmSlot;
-  if (longArmGun && world.hasEntity(player.longArmSlot)) return player.longArmSlot;
+  // Last resort: try the other slot
+  const otherSlot = sourceCategory === GunCategory.Sidearm
+    ? player.longArmSlot
+    : player.sidearmSlot;
+  if (world.hasEntity(otherSlot)) {
+    const gun = world.getComponent<Gun>(otherSlot, 'Gun');
+    if (gun) return otherSlot;
+  }
 
   return null;
 }

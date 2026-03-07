@@ -10,6 +10,7 @@
     },
     "xpCollectionRange": 3.0,
     "xpGemFlySpeed": 15.0,
+    "xpGemCollectionThreshold": 0.5,
     "interactRange": 2.0
   },
   "guns": {

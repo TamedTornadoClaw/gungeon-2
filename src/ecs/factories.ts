@@ -572,8 +572,11 @@ export function createXPGem(
   world.addComponent<Position>(id, 'Position', pos(position));
   world.addComponent<Velocity>(id, 'Velocity', zeroVelocity());
   world.addComponent<Pickup>(id, 'Pickup', { pickupType: PickupType.XPGem });
+  const sourceGun = world.getComponent<Gun>(sourceGunEntityId, 'Gun');
+  const sourceCategory = sourceGun ? sourceGun.category : GunCategory.Sidearm;
   world.addComponent<XPGem>(id, 'XPGem', {
     sourceGunEntityId,
+    sourceCategory,
     amount,
     isFlying: false,
   });
