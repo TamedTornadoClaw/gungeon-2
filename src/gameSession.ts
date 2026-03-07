@@ -1,5 +1,6 @@
 import { World } from './ecs/world';
 import { createGameLoop, type GameLoop } from './gameloop/gameLoop';
+import { createEffectsBuffer } from './systems/effectsPipelineSystem';
 import { createRenderSystem, type RenderSystem } from './rendering/renderer';
 import { initRenderer, mountRenderer, disposeRenderer, type RendererContext } from './rendering/renderer';
 import { InputManager } from './input/inputManager';
@@ -42,6 +43,8 @@ export function createGameSession(canvasContainer: HTMLElement): GameSession {
   inputManager.attach(document);
 
   const audioManager = getAudioManager();
+  const effectsBuffer = createEffectsBuffer();
+
   const effectsBuffer = createEffectsBuffer();
 
   const gameLoop = createGameLoop({
