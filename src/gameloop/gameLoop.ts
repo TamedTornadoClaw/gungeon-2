@@ -62,3 +62,12 @@ export { movementSystem } from '../systems/movementSystem';
 //   damageSystem(world, eventQueue);
 //
 export { damageSystem } from '../systems/damageSystem';
+
+// ── Stub integration point for hazardSystem ──────────────────────────────
+// hazardSystem runs at position 12 (after shieldRegenSystem, before expireModifiersSystem).
+// When the game loop body is implemented, call:
+//
+//   import { hazardSystem } from '../systems/hazardSystem';
+//   hazardSystem(world, eventQueue, dt);
+//
+export { hazardSystem } from '../systems/hazardSystem';
