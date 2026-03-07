@@ -57,7 +57,7 @@ describe('Core Verification', () => {
 
     it('creates entities from dungeon data', () => {
       const dungeon = generateDungeon(42, 1);
-      createDungeonEntities(world, dungeon, 1);
+      const result = createDungeonEntities(world, dungeon, 1);
 
       expect(result.wallIds.length).toBeGreaterThan(0);
       expect(result.floorIds.length).toBeGreaterThan(0);
