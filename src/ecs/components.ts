@@ -79,6 +79,12 @@ export enum HazardType {
   Water,
 }
 
+export enum DestructibleType {
+  Crate = 'Crate',
+  Pillar = 'Pillar',
+  Barrel = 'Barrel',
+}
+
 export enum ColliderShape {
   AABB,
 }
