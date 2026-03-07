@@ -169,6 +169,17 @@ export { pickupSystem } from '../systems/pickupSystem';
 //
 export { chestSystem } from '../systems/chestSystem';
 
+// ── Stub integration point for shopSystem ──────────────────────────
+// shopSystem runs at position 16 (after chestSystem, reads nearShop
+// proximity flag set by collisionResponseSystem).
+// When the game loop body is implemented, call:
+//
+//   import { shopSystem } from '../systems/shopSystem';
+//   shopSystem(world, input, eventQueue);
+//
+// purchaseShopItem is called from the shop UI, not the game loop.
+export { shopSystem, purchaseShopItem } from '../systems/shopSystem';
+
 // ── Stub integration point for gunXPSystem ──────────────────────────
 // gunXPSystem runs at position 17 (after pickupSystem/chestSystem, before destructibleSystem).
 // When the game loop body is implemented, call:
