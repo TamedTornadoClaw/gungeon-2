@@ -1,0 +1,290 @@
+{
+  "PistolFire": {
+    "path": "assets/audio/pistol_fire.ogg",
+    "volume": 0.7,
+    "pitchMin": 0.9,
+    "pitchMax": 1.1,
+    "maxInstances": 3,
+    "loop": false
+  },
+  "SMGFire": {
+    "path": "assets/audio/smg_fire.ogg",
+    "volume": 0.6,
+    "pitchMin": 0.9,
+    "pitchMax": 1.1,
+    "maxInstances": 4,
+    "loop": false
+  },
+  "AssaultRifleFire": {
+    "path": "assets/audio/assault_rifle_fire.ogg",
+    "volume": 0.7,
+    "pitchMin": 0.9,
+    "pitchMax": 1.1,
+    "maxInstances": 4,
+    "loop": false
+  },
+  "ShotgunFire": {
+    "path": "assets/audio/shotgun_fire.ogg",
+    "volume": 0.8,
+    "pitchMin": 0.85,
+    "pitchMax": 1.05,
+    "maxInstances": 2,
+    "loop": false
+  },
+  "LMGFire": {
+    "path": "assets/audio/lmg_fire.ogg",
+    "volume": 0.65,
+    "pitchMin": 0.9,
+    "pitchMax": 1.1,
+    "maxInstances": 5,
+    "loop": false
+  },
+  "Reload": {
+    "path": "assets/audio/reload.ogg",
+    "volume": 0.6,
+    "pitchMin": 0.95,
+    "pitchMax": 1.05,
+    "maxInstances": 1,
+    "loop": false
+  },
+  "EmptyClipClick": {
+    "path": "assets/audio/empty_clip_click.ogg",
+    "volume": 0.5,
+    "pitchMin": 0.95,
+    "pitchMax": 1.05,
+    "maxInstances": 1,
+    "loop": false
+  },
+  "Footstep": {
+    "path": "assets/audio/footstep.ogg",
+    "volume": 0.4,
+    "pitchMin": 0.85,
+    "pitchMax": 1.15,
+    "maxInstances": 3,
+    "loop": false
+  },
+  "DodgeRollWhoosh": {
+    "path": "assets/audio/dodge_roll_whoosh.ogg",
+    "volume": 0.5,
+    "pitchMin": 0.9,
+    "pitchMax": 1.1,
+    "maxInstances": 1,
+    "loop": false
+  },
+  "PlayerHitGrunt": {
+    "path": "assets/audio/player_hit_grunt.ogg",
+    "volume": 0.7,
+    "pitchMin": 0.9,
+    "pitchMax": 1.1,
+    "maxInstances": 2,
+    "loop": false
+  },
+  "PlayerDeath": {
+    "path": "assets/audio/player_death.ogg",
+    "volume": 0.8,
+    "pitchMin": 1.0,
+    "pitchMax": 1.0,
+    "maxInstances": 1,
+    "loop": false
+  },
+  "EnemyHitFlesh": {
+    "path": "assets/audio/enemy_hit_flesh.ogg",
+    "volume": 0.5,
+    "pitchMin": 0.85,
+    "pitchMax": 1.15,
+    "maxInstances": 3,
+    "loop": false
+  },
+  "EnemyHitArmor": {
+    "path": "assets/audio/enemy_hit_armor.ogg",
+    "volume": 0.5,
+    "pitchMin": 0.9,
+    "pitchMax": 1.1,
+    "maxInstances": 3,
+    "loop": false
+  },
+  "EnemyDeath": {
+    "path": "assets/audio/enemy_death.ogg",
+    "volume": 0.6,
+    "pitchMin": 0.85,
+    "pitchMax": 1.15,
+    "maxInstances": 4,
+    "loop": false
+  },
+  "KnifeSwing": {
+    "path": "assets/audio/knife_swing.ogg",
+    "volume": 0.5,
+    "pitchMin": 0.85,
+    "pitchMax": 1.15,
+    "maxInstances": 3,
+    "loop": false
+  },
+  "EnemyGunshot": {
+    "path": "assets/audio/enemy_gunshot.ogg",
+    "volume": 0.5,
+    "pitchMin": 0.9,
+    "pitchMax": 1.1,
+    "maxInstances": 4,
+    "loop": false
+  },
+  "Explosion": {
+    "path": "assets/audio/explosion.ogg",
+    "volume": 0.9,
+    "pitchMin": 0.85,
+    "pitchMax": 1.05,
+    "maxInstances": 1,
+    "loop": false
+  },
+  "XPGemPickup": {
+    "path": "assets/audio/xp_gem_pickup.ogg",
+    "volume": 0.4,
+    "pitchMin": 0.9,
+    "pitchMax": 1.2,
+    "maxInstances": 5,
+    "loop": false
+  },
+  "HealthPickup": {
+    "path": "assets/audio/health_pickup.ogg",
+    "volume": 0.6,
+    "pitchMin": 1.0,
+    "pitchMax": 1.0,
+    "maxInstances": 1,
+    "loop": false
+  },
+  "CurrencyPickup": {
+    "path": "assets/audio/currency_pickup.ogg",
+    "volume": 0.5,
+    "pitchMin": 0.9,
+    "pitchMax": 1.2,
+    "maxInstances": 5,
+    "loop": false
+  },
+  "GunPickup": {
+    "path": "assets/audio/gun_pickup.ogg",
+    "volume": 0.7,
+    "pitchMin": 1.0,
+    "pitchMax": 1.0,
+    "maxInstances": 1,
+    "loop": false
+  },
+  "MenuClick": {
+    "path": "assets/audio/menu_click.ogg",
+    "volume": 0.5,
+    "pitchMin": 1.0,
+    "pitchMax": 1.0,
+    "maxInstances": 2,
+    "loop": false
+  },
+  "MenuHover": {
+    "path": "assets/audio/menu_hover.ogg",
+    "volume": 0.3,
+    "pitchMin": 1.0,
+    "pitchMax": 1.0,
+    "maxInstances": 2,
+    "loop": false
+  },
+  "ComparisonScreenOpen": {
+    "path": "assets/audio/comparison_screen_open.ogg",
+    "volume": 0.6,
+    "pitchMin": 1.0,
+    "pitchMax": 1.0,
+    "maxInstances": 1,
+    "loop": false
+  },
+  "GunSwapConfirm": {
+    "path": "assets/audio/gun_swap_confirm.ogg",
+    "volume": 0.6,
+    "pitchMin": 1.0,
+    "pitchMax": 1.0,
+    "maxInstances": 1,
+    "loop": false
+  },
+  "LevelUpNotification": {
+    "path": "assets/audio/level_up_notification.ogg",
+    "volume": 0.7,
+    "pitchMin": 1.0,
+    "pitchMax": 1.0,
+    "maxInstances": 1,
+    "loop": false
+  },
+  "UpgradeSpent": {
+    "path": "assets/audio/upgrade_spent.ogg",
+    "volume": 0.6,
+    "pitchMin": 1.0,
+    "pitchMax": 1.0,
+    "maxInstances": 1,
+    "loop": false
+  },
+  "Pause": {
+    "path": "assets/audio/pause.ogg",
+    "volume": 0.5,
+    "pitchMin": 1.0,
+    "pitchMax": 1.0,
+    "maxInstances": 1,
+    "loop": false
+  },
+  "Unpause": {
+    "path": "assets/audio/unpause.ogg",
+    "volume": 0.5,
+    "pitchMin": 1.0,
+    "pitchMax": 1.0,
+    "maxInstances": 1,
+    "loop": false
+  },
+  "ChestOpen": {
+    "path": "assets/audio/chest_open.ogg",
+    "volume": 0.6,
+    "pitchMin": 0.95,
+    "pitchMax": 1.05,
+    "maxInstances": 1,
+    "loop": false
+  },
+  "DoorOpen": {
+    "path": "assets/audio/door_open.ogg",
+    "volume": 0.6,
+    "pitchMin": 0.95,
+    "pitchMax": 1.05,
+    "maxInstances": 1,
+    "loop": false
+  },
+  "DestructibleBreakWood": {
+    "path": "assets/audio/destructible_break_wood.ogg",
+    "volume": 0.6,
+    "pitchMin": 0.85,
+    "pitchMax": 1.15,
+    "maxInstances": 3,
+    "loop": false
+  },
+  "DestructibleBreakStone": {
+    "path": "assets/audio/destructible_break_stone.ogg",
+    "volume": 0.6,
+    "pitchMin": 0.85,
+    "pitchMax": 1.15,
+    "maxInstances": 3,
+    "loop": false
+  },
+  "DestructibleBreakMetal": {
+    "path": "assets/audio/destructible_break_metal.ogg",
+    "volume": 0.7,
+    "pitchMin": 0.85,
+    "pitchMax": 1.15,
+    "maxInstances": 3,
+    "loop": false
+  },
+  "FireAmbient": {
+    "path": "assets/audio/fire_ambient.ogg",
+    "volume": 0.4,
+    "pitchMin": 1.0,
+    "pitchMax": 1.0,
+    "maxInstances": 1,
+    "loop": true
+  },
+  "WaterAmbient": {
+    "path": "assets/audio/water_ambient.ogg",
+    "volume": 0.3,
+    "pitchMin": 1.0,
+    "pitchMax": 1.0,
+    "maxInstances": 1,
+    "loop": true
+  }
+}
