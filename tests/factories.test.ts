@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
+import * as fc from 'fast-check';
 import { World } from '../src/ecs/world';
 import {
   createPlayer,
@@ -19,6 +20,7 @@ import {
   createShop,
   createStairs,
   createSpawnZone,
+  validateTraitExclusivity,
 } from '../src/ecs/factories';
 import {
   GunType,
@@ -28,7 +30,6 @@ import {
   AIBehaviorState,
   PickupType,
   HazardType,
-  ColliderShape,
   MeshId,
   WeaponSlot,
 } from '../src/ecs/components';
@@ -36,11 +37,9 @@ import type {
   Position,
   Health,
   Player,
-  DodgeRoll,
   Gun,
   Projectile,
   Lifetime,
-  Enemy,
   AIState,
   EnemyWeapon,
   EnemyShield,
@@ -59,8 +58,6 @@ import type {
   SpawnZone,
   Renderable,
   Velocity,
-  Rotation,
-  PreviousPosition,
 } from '../src/ecs/components';
 import { getDesignParams } from '../src/config/designParams';
 
@@ -194,15 +191,36 @@ describe('createGun', () => {
 // ── Piercing/Bouncing mutual exclusivity ────────────────────────────────
 
 describe('Piercing/Bouncing mutual exclusivity', () => {
-  it('throws if gun traits contain both Piercing and Bouncing', () => {
-    // We can't test via design params (they're valid), so we test the validation
-    // logic indirectly. The real design params don't have this combo, so we
-    // verify the existing guns all pass without error.
+  it('existing guns do not throw', () => {
     expect(() => createGun(world, GunType.Pistol)).not.toThrow();
     expect(() => createGun(world, GunType.SMG)).not.toThrow();
     expect(() => createGun(world, GunType.AssaultRifle)).not.toThrow();
     expect(() => createGun(world, GunType.Shotgun)).not.toThrow();
     expect(() => createGun(world, GunType.LMG)).not.toThrow();
+  });
+
+  it('throws when both Piercing and Bouncing are present', () => {
+    expect(() =>
+      validateTraitExclusivity([GunTrait.Piercing, GunTrait.Bouncing, GunTrait.Damage]),
+    ).toThrow('Gun cannot have both Piercing and Bouncing traits');
+  });
+
+  it('does not throw when only Piercing is present', () => {
+    expect(() =>
+      validateTraitExclusivity([GunTrait.Piercing, GunTrait.Damage, GunTrait.FireRate]),
+    ).not.toThrow();
+  });
+
+  it('does not throw when only Bouncing is present', () => {
+    expect(() =>
+      validateTraitExclusivity([GunTrait.Bouncing, GunTrait.Damage, GunTrait.FireRate]),
+    ).not.toThrow();
+  });
+
+  it('does not throw when neither is present', () => {
+    expect(() =>
+      validateTraitExclusivity([GunTrait.Damage, GunTrait.FireRate, GunTrait.Spread]),
+    ).not.toThrow();
   });
 });
 
@@ -427,10 +445,11 @@ describe('createEnemy', () => {
   });
 
   it('uses mini boss mesh when isMini is true', () => {
+    const params = getDesignParams();
     const id = createEnemy(world, EnemyType.KnifeRusher, origin, 0, true);
     const r = world.getComponent<Renderable>(id, 'Renderable')!;
     expect(r.meshId).toBe(MeshId.MiniBossKnifeRusher);
-    expect(r.scale).toBe(1.5);
+    expect(r.scale).toBe(params.enemies.depthScaling.miniBossScale);
   });
 
   it('uses regular mesh when isMini is false', () => {
@@ -509,11 +528,19 @@ describe('createBoss', () => {
     expect(health.max).toBeCloseTo(expected);
   });
 
-  it('uses Boss mesh', () => {
+  it('uses Boss mesh with scale from design params', () => {
+    const params = getDesignParams();
     const id = createBoss(world, origin, 0);
     const r = world.getComponent<Renderable>(id, 'Renderable')!;
     expect(r.meshId).toBe(MeshId.Boss);
-    expect(r.scale).toBe(2);
+    expect(r.scale).toBe(params.enemies.depthScaling.bossScale);
+  });
+
+  it('uses bossProjectileSpeed from design params (not movement speed)', () => {
+    const params = getDesignParams();
+    const id = createBoss(world, origin, 0);
+    const weapon = world.getComponent<EnemyWeapon>(id, 'EnemyWeapon')!;
+    expect(weapon.projectileSpeed).toBe(params.enemies.depthScaling.bossProjectileSpeed);
   });
 });
 
@@ -761,5 +788,116 @@ describe('Depth scaling formula', () => {
     const id = createEnemy(world, EnemyType.Shotgunner, origin, 0, false);
     const health = world.getComponent<Health>(id, 'Health')!;
     expect(health.current).toBe(params.enemies.Shotgunner.baseHealth);
+  });
+});
+
+// ── Property-based tests ────────────────────────────────────────────────
+
+describe('Property-based: createEnemy health scaling', () => {
+  it('health equals base * (1 + depth * multiplier) for arbitrary depth >= 0', () => {
+    const params = getDesignParams();
+    const scaling = params.enemies.depthScaling;
+
+    fc.assert(
+      fc.property(fc.nat(100), (depth) => {
+        const w = new World();
+        const id = createEnemy(w, EnemyType.KnifeRusher, origin, depth, false);
+        const health = w.getComponent<Health>(id, 'Health')!;
+        const expected =
+          params.enemies.KnifeRusher.baseHealth *
+          (1 + depth * scaling.healthMultiplierPerDepth);
+        expect(health.current).toBeCloseTo(expected, 5);
+        expect(health.max).toBeCloseTo(expected, 5);
+      }),
+    );
+  });
+
+  it('mini boss health equals scaled base * miniBossStatMultiplier', () => {
+    const params = getDesignParams();
+    const scaling = params.enemies.depthScaling;
+
+    fc.assert(
+      fc.property(fc.nat(50), (depth) => {
+        const w = new World();
+        const id = createEnemy(w, EnemyType.Rifleman, origin, depth, true);
+        const health = w.getComponent<Health>(id, 'Health')!;
+        const expected =
+          params.enemies.Rifleman.baseHealth *
+          (1 + depth * scaling.healthMultiplierPerDepth) *
+          scaling.miniBossStatMultiplier;
+        expect(health.current).toBeCloseTo(expected, 5);
+      }),
+    );
+  });
+});
+
+describe('Property-based: factory component counts', () => {
+  it('createPlayer always has exactly 10 components', () => {
+    const gunTypes = [GunType.Pistol, GunType.SMG, GunType.AssaultRifle, GunType.Shotgun, GunType.LMG];
+
+    fc.assert(
+      fc.property(
+        fc.constantFrom(...gunTypes),
+        fc.integer({ min: -100, max: 100 }),
+        fc.integer({ min: -100, max: 100 }),
+        (gunType, x, z) => {
+          const w = new World();
+          const id = createPlayer(w, { x, y: 0, z }, gunType);
+          const expectedComponents = [
+            'Position', 'PreviousPosition', 'Velocity', 'Rotation',
+            'Health', 'Player', 'DodgeRoll', 'Collider', 'Renderable', 'PlayerTag',
+          ];
+          for (const comp of expectedComponents) {
+            expect(w.hasComponent(id, comp), `missing ${comp}`).toBe(true);
+          }
+        },
+      ),
+    );
+  });
+
+  it('createEnemy always has core components for all enemy types', () => {
+    const enemyTypes = [
+      EnemyType.KnifeRusher,
+      EnemyType.ShieldGun,
+      EnemyType.Shotgunner,
+      EnemyType.Rifleman,
+      EnemyType.SuicideBomber,
+    ];
+
+    fc.assert(
+      fc.property(
+        fc.constantFrom(...enemyTypes),
+        fc.nat(20),
+        fc.boolean(),
+        (enemyType, depth, isMini) => {
+          const w = new World();
+          const id = createEnemy(w, enemyType, origin, depth, isMini);
+          const coreComponents = [
+            'Position', 'PreviousPosition', 'Velocity', 'Rotation',
+            'Health', 'Enemy', 'AIState', 'Collider', 'Renderable', 'EnemyTag',
+          ];
+          for (const comp of coreComponents) {
+            expect(w.hasComponent(id, comp), `missing ${comp}`).toBe(true);
+          }
+        },
+      ),
+    );
+  });
+
+  it('createBoss always has exactly 12 components', () => {
+    fc.assert(
+      fc.property(fc.nat(20), (depth) => {
+        const w = new World();
+        const id = createBoss(w, origin, depth);
+        const expectedComponents = [
+          'Position', 'PreviousPosition', 'Velocity', 'Rotation',
+          'Health', 'Enemy', 'AIState', 'EnemyWeapon', 'Collider',
+          'Renderable', 'EnemyTag', 'BossTag',
+        ];
+        for (const comp of expectedComponents) {
+          expect(w.hasComponent(id, comp), `missing ${comp}`).toBe(true);
+        }
+      }),
+    );
   });
 });

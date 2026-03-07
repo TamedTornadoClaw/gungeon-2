@@ -125,6 +125,14 @@ function applyDepthScaling(base: number, depth: number, multiplierPerDepth: numb
   return base * (1 + depth * multiplierPerDepth);
 }
 
+export function validateTraitExclusivity(traits: GunTrait[]): void {
+  const hasPiercing = traits.includes(GunTrait.Piercing);
+  const hasBouncing = traits.includes(GunTrait.Bouncing);
+  if (hasPiercing && hasBouncing) {
+    throw new Error('Gun cannot have both Piercing and Bouncing traits');
+  }
+}
+
 // ── Factory Functions ──────────────────────────────────────────────────────
 
 export function createPlayer(world: World, position: Vec3, longArmType: GunType): EntityId {
@@ -153,11 +161,12 @@ export function createPlayer(world: World, position: Vec3, longArmType: GunType)
     rollDirectionX: 0,
     rollDirectionY: 0,
   });
+  const playerCollider = params.entityColliders.player;
   world.addComponent<Collider>(id, 'Collider', {
     type: ColliderShape.AABB,
-    width: 1,
-    height: 1,
-    depth: 1,
+    width: playerCollider.width,
+    height: playerCollider.height,
+    depth: playerCollider.depth,
     isStatic: false,
     isTrigger: false,
   });
@@ -187,12 +196,7 @@ export function createGun(world: World, gunType: GunType): EntityId {
     return trait;
   }) as [GunTrait, GunTrait, GunTrait];
 
-  // Validate Piercing/Bouncing mutual exclusivity
-  const hasPiercing = traits.includes(GunTrait.Piercing);
-  const hasBouncing = traits.includes(GunTrait.Bouncing);
-  if (hasPiercing && hasBouncing) {
-    throw new Error('Gun cannot have both Piercing and Bouncing traits');
-  }
+  validateTraitExclusivity(traits);
 
   const category = GUN_CATEGORY_MAP[gunParams.category];
   if (category === undefined) {
@@ -244,14 +248,16 @@ export function createGunPickup(world: World, position: Vec3, gunType: GunType):
 
   // Copy the Gun component from the gun entity to this pickup entity
   const gunData = world.getComponent<Gun>(gunEntityId, 'Gun')!;
+  const pickupParams = getDesignParams();
+  const gpCollider = pickupParams.entityColliders.gunPickup;
   world.addComponent<Position>(id, 'Position', pos(position));
   world.addComponent<Gun>(id, 'Gun', { ...gunData });
   world.addComponent<Pickup>(id, 'Pickup', { pickupType: PickupType.GunPickup });
   world.addComponent<Collider>(id, 'Collider', {
     type: ColliderShape.AABB,
-    width: 1,
-    height: 1,
-    depth: 1,
+    width: gpCollider.width,
+    height: gpCollider.height,
+    depth: gpCollider.depth,
     isStatic: true,
     isTrigger: true,
   });
@@ -472,18 +478,19 @@ export function createEnemy(
     });
   }
 
+  const enemyCollider = params.entityColliders.enemy;
   world.addComponent<Collider>(id, 'Collider', {
     type: ColliderShape.AABB,
-    width: 1,
-    height: 1,
-    depth: 1,
+    width: enemyCollider.width,
+    height: enemyCollider.height,
+    depth: enemyCollider.depth,
     isStatic: false,
     isTrigger: false,
   });
   world.addComponent<Renderable>(id, 'Renderable', {
     meshId: isMini ? MINI_BOSS_MESH_MAP[enemyType] : ENEMY_MESH_MAP[enemyType],
     visible: true,
-    scale: isMini ? 1.5 : 1,
+    scale: isMini ? scaling.miniBossScale : 1,
   });
   world.addComponent(id, 'EnemyTag', {});
 
@@ -502,9 +509,6 @@ export function createBoss(world: World, position: Vec3, depth: number): EntityI
     scaling.bossStatMultiplier;
   const scaledDamage =
     applyDepthScaling(bossBase.baseDamage, depth, scaling.damageMultiplierPerDepth) *
-    scaling.bossStatMultiplier;
-  const scaledSpeed =
-    applyDepthScaling(bossBase.baseSpeed, depth, scaling.speedMultiplierPerDepth) *
     scaling.bossStatMultiplier;
 
   world.addComponent<Position>(id, 'Position', pos(position));
@@ -530,23 +534,24 @@ export function createBoss(world: World, position: Vec3, depth: number): EntityI
   world.addComponent<EnemyWeapon>(id, 'EnemyWeapon', {
     damage: scaledDamage,
     fireRate: 1 / bossBase.attackCooldown,
-    projectileSpeed: scaledSpeed,
+    projectileSpeed: scaling.bossProjectileSpeed,
     projectileCount: 1,
     spread: 0,
     fireCooldown: 0,
   });
+  const bossCollider = params.entityColliders.boss;
   world.addComponent<Collider>(id, 'Collider', {
     type: ColliderShape.AABB,
-    width: 2,
-    height: 2,
-    depth: 2,
+    width: bossCollider.width,
+    height: bossCollider.height,
+    depth: bossCollider.depth,
     isStatic: false,
     isTrigger: false,
   });
   world.addComponent<Renderable>(id, 'Renderable', {
     meshId: MeshId.Boss,
     visible: true,
-    scale: 2,
+    scale: scaling.bossScale,
   });
   world.addComponent(id, 'EnemyTag', {});
   world.addComponent(id, 'BossTag', {});
@@ -560,6 +565,8 @@ export function createXPGem(
   sourceGunEntityId: EntityId,
   amount: number,
 ): EntityId {
+  const params = getDesignParams();
+  const xpCollider = params.entityColliders.xpGem;
   const id = world.createEntity();
 
   world.addComponent<Position>(id, 'Position', pos(position));
@@ -572,9 +579,9 @@ export function createXPGem(
   });
   world.addComponent<Collider>(id, 'Collider', {
     type: ColliderShape.AABB,
-    width: 0.5,
-    height: 0.5,
-    depth: 0.5,
+    width: xpCollider.width,
+    height: xpCollider.height,
+    depth: xpCollider.depth,
     isStatic: false,
     isTrigger: true,
   });
@@ -589,6 +596,8 @@ export function createXPGem(
 }
 
 export function createHealthPickup(world: World, position: Vec3, healAmount: number): EntityId {
+  const params = getDesignParams();
+  const hpCollider = params.entityColliders.healthPickup;
   const id = world.createEntity();
 
   world.addComponent<Position>(id, 'Position', pos(position));
@@ -596,9 +605,9 @@ export function createHealthPickup(world: World, position: Vec3, healAmount: num
   world.addComponent<HealthPickupData>(id, 'HealthPickupData', { healAmount });
   world.addComponent<Collider>(id, 'Collider', {
     type: ColliderShape.AABB,
-    width: 0.5,
-    height: 0.5,
-    depth: 0.5,
+    width: hpCollider.width,
+    height: hpCollider.height,
+    depth: hpCollider.depth,
     isStatic: true,
     isTrigger: true,
   });
@@ -613,6 +622,8 @@ export function createHealthPickup(world: World, position: Vec3, healAmount: num
 }
 
 export function createCurrency(world: World, position: Vec3, amount: number): EntityId {
+  const params = getDesignParams();
+  const curCollider = params.entityColliders.currency;
   const id = world.createEntity();
 
   world.addComponent<Position>(id, 'Position', pos(position));
@@ -620,9 +631,9 @@ export function createCurrency(world: World, position: Vec3, amount: number): En
   world.addComponent<CurrencyData>(id, 'CurrencyData', { amount });
   world.addComponent<Collider>(id, 'Collider', {
     type: ColliderShape.AABB,
-    width: 0.5,
-    height: 0.5,
-    depth: 0.5,
+    width: curCollider.width,
+    height: curCollider.height,
+    depth: curCollider.depth,
     isStatic: true,
     isTrigger: true,
   });
@@ -718,15 +729,17 @@ export function createDestructible(
 }
 
 export function createDoor(world: World, position: Vec3): EntityId {
+  const params = getDesignParams();
+  const doorCollider = params.entityColliders.door;
   const id = world.createEntity();
 
   world.addComponent<Position>(id, 'Position', pos(position));
   world.addComponent<Door>(id, 'Door', { isOpen: false });
   world.addComponent<Collider>(id, 'Collider', {
     type: ColliderShape.AABB,
-    width: 2,
-    height: 2,
-    depth: 1,
+    width: doorCollider.width,
+    height: doorCollider.height,
+    depth: doorCollider.depth,
     isStatic: true,
     isTrigger: false,
   });
@@ -741,15 +754,17 @@ export function createDoor(world: World, position: Vec3): EntityId {
 }
 
 export function createChest(world: World, position: Vec3, gunType: GunType): EntityId {
+  const params = getDesignParams();
+  const chestCollider = params.entityColliders.chest;
   const id = world.createEntity();
 
   world.addComponent<Position>(id, 'Position', pos(position));
   world.addComponent<Chest>(id, 'Chest', { isOpen: false, gunType });
   world.addComponent<Collider>(id, 'Collider', {
     type: ColliderShape.AABB,
-    width: 1,
-    height: 1,
-    depth: 1,
+    width: chestCollider.width,
+    height: chestCollider.height,
+    depth: chestCollider.depth,
     isStatic: true,
     isTrigger: false,
   });
@@ -764,15 +779,17 @@ export function createChest(world: World, position: Vec3, gunType: GunType): Ent
 }
 
 export function createShop(world: World, position: Vec3, inventory: ShopItem[]): EntityId {
+  const params = getDesignParams();
+  const shopCollider = params.entityColliders.shop;
   const id = world.createEntity();
 
   world.addComponent<Position>(id, 'Position', pos(position));
   world.addComponent<Shop>(id, 'Shop', { inventory });
   world.addComponent<Collider>(id, 'Collider', {
     type: ColliderShape.AABB,
-    width: 3,
-    height: 2,
-    depth: 3,
+    width: shopCollider.width,
+    height: shopCollider.height,
+    depth: shopCollider.depth,
     isStatic: true,
     isTrigger: true,
   });
@@ -787,15 +804,17 @@ export function createShop(world: World, position: Vec3, inventory: ShopItem[]):
 }
 
 export function createStairs(world: World, position: Vec3, targetDepth: number): EntityId {
+  const params = getDesignParams();
+  const stairsCollider = params.entityColliders.stairs;
   const id = world.createEntity();
 
   world.addComponent<Position>(id, 'Position', pos(position));
   world.addComponent<Stairs>(id, 'Stairs', { targetDepth });
   world.addComponent<Collider>(id, 'Collider', {
     type: ColliderShape.AABB,
-    width: 2,
-    height: 1,
-    depth: 2,
+    width: stairsCollider.width,
+    height: stairsCollider.height,
+    depth: stairsCollider.depth,
     isStatic: true,
     isTrigger: true,
   });
