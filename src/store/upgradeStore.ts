@@ -4,63 +4,95 @@ import type { Gun } from '../ecs/components';
 import type { World } from '../ecs/world';
 import type { EntityId } from '../types';
 import { getDesignParams } from '../config/designParams';
+import { gunStatSystem } from '../systems/gunStatSystem';
+
+export interface UpgradeTraitData {
+  trait: GunTrait;
+  level: number;
+  maxLevel: number;
+  cost: number | null;
+}
 
 export interface UpgradeStore {
   gunEntityId: EntityId | null;
+  gunXP: number;
+  traits: UpgradeTraitData[];
+  upgradesSpent: number;
   worldRef: World | null;
-  xp: number;
-  traits: [GunTrait, GunTrait, GunTrait];
-  traitLevels: [number, number, number];
 
   openUpgrade: (gunEntityId: EntityId, world: World) => void;
-  spendXP: (traitIndex: number) => boolean;
+  spendUpgrade: (traitIndex: number) => boolean;
   closeUpgrade: () => void;
+}
+
+function readGunData(world: World, gunEntityId: EntityId) {
+  const gun = world.getComponent<Gun>(gunEntityId, 'Gun');
+  if (!gun) return null;
+
+  const params = getDesignParams();
+  const { xpCosts, maxLevel } = params.traits;
+
+  const traits: UpgradeTraitData[] = gun.traits.map((trait, i) => {
+    const level = gun.traitLevels[i];
+    const cost = level < maxLevel ? xpCosts[level] : null;
+    return { trait, level, maxLevel, cost };
+  });
+
+  return { xp: gun.xp, traits };
 }
 
 export const useUpgradeStore = create<UpgradeStore>()((set, get) => ({
   gunEntityId: null,
+  gunXP: 0,
+  traits: [],
+  upgradesSpent: 0,
   worldRef: null,
-  xp: 0,
-  traits: [GunTrait.Damage, GunTrait.Damage, GunTrait.Damage],
-  traitLevels: [0, 0, 0],
 
   openUpgrade: (gunEntityId, world) => {
-    const gun = world.getComponent<Gun>(gunEntityId, 'Gun');
-    if (!gun) return;
+    const data = readGunData(world, gunEntityId);
+    if (!data) return;
+
     set({
       gunEntityId,
       worldRef: world,
-      xp: gun.xp,
-      traits: [...gun.traits] as [GunTrait, GunTrait, GunTrait],
-      traitLevels: [...gun.traitLevels] as [number, number, number],
+      gunXP: data.xp,
+      traits: data.traits,
+      upgradesSpent: 0,
     });
   },
 
-  spendXP: (traitIndex) => {
-    const { gunEntityId, worldRef, xp, traitLevels } = get();
+  spendUpgrade: (traitIndex) => {
+    const { gunEntityId, worldRef } = get();
     if (!worldRef || gunEntityId === null) return false;
 
     const gun = worldRef.getComponent<Gun>(gunEntityId, 'Gun');
     if (!gun) return false;
 
     const params = getDesignParams();
-    const level = traitLevels[traitIndex];
-    if (level >= params.traits.maxLevel) return false;
+    const { xpCosts, maxLevel } = params.traits;
 
-    const cost = params.traits.xpCosts[level];
-    if (xp < cost) return false;
+    const level = gun.traitLevels[traitIndex];
+    if (level >= maxLevel) return false;
 
-    // Update ECS component
+    const cost = xpCosts[level];
+    if (gun.xp < cost) return false;
+
+    // Apply upgrade
     gun.xp -= cost;
     gun.traitLevels[traitIndex] = level + 1;
 
-    // Update store
-    const newLevels = [...traitLevels] as [number, number, number];
-    newLevels[traitIndex] = level + 1;
-    set({
-      xp: gun.xp,
-      traitLevels: newLevels,
-    });
+    // Recalculate gun stats
+    gunStatSystem(worldRef);
+
+    // Re-read gun data for UI
+    const data = readGunData(worldRef, gunEntityId);
+    if (!data) return false;
+
+    set((state) => ({
+      gunXP: data.xp,
+      traits: data.traits,
+      upgradesSpent: state.upgradesSpent + 1,
+    }));
 
     return true;
   },
@@ -68,9 +100,9 @@ export const useUpgradeStore = create<UpgradeStore>()((set, get) => ({
   closeUpgrade: () =>
     set({
       gunEntityId: null,
+      gunXP: 0,
+      traits: [],
+      upgradesSpent: 0,
       worldRef: null,
-      xp: 0,
-      traits: [GunTrait.Damage, GunTrait.Damage, GunTrait.Damage],
-      traitLevels: [0, 0, 0],
     }),
 }));

@@ -1,22 +1,7 @@
-import { AppState, GunTrait, SoundId } from '../ecs/components';
+import { AppState, GunTrait, WeaponSlot } from '../ecs/components';
+import type { Gun } from '../ecs/components';
 import { useAppStore } from '../store/appStore';
 import { useUpgradeStore } from '../store/upgradeStore';
-import { getAudioManager } from '../audio/audioManager';
-
-const TRAIT_LABELS: Record<GunTrait, string> = {
-  [GunTrait.Damage]: 'Damage',
-  [GunTrait.FireRate]: 'Fire Rate',
-  [GunTrait.MagazineSize]: 'Magazine Size',
-  [GunTrait.ReloadTime]: 'Reload Time',
-  [GunTrait.Spread]: 'Spread',
-  [GunTrait.ProjectileCount]: 'Projectile Count',
-  [GunTrait.ProjectileSpeed]: 'Projectile Speed',
-  [GunTrait.Knockback]: 'Knockback',
-  [GunTrait.CriticalChance]: 'Critical Chance',
-  [GunTrait.CriticalMultiplier]: 'Critical Multiplier',
-  [GunTrait.Piercing]: 'Piercing',
-  [GunTrait.Bouncing]: 'Bouncing',
-};
 
 const OVERLAY_STYLE: React.CSSProperties = {
   position: 'fixed',
@@ -87,60 +72,76 @@ const CLOSE_BUTTON_STYLE: React.CSSProperties = {
   cursor: 'pointer',
 };
 
-export function GunUpgradeMenu() {
+export function ForcedUpgradeScreen() {
   const currentState = useAppStore((s) => s.currentState);
   const transition = useAppStore((s) => s.transition);
+  const forcedUpgradeGunSlot = useAppStore((s) => s.forcedUpgradeGunSlot);
   const gunXP = useUpgradeStore((s) => s.gunXP);
   const traits = useUpgradeStore((s) => s.traits);
+  const upgradesSpent = useUpgradeStore((s) => s.upgradesSpent);
   const spendUpgrade = useUpgradeStore((s) => s.spendUpgrade);
   const closeUpgrade = useUpgradeStore((s) => s.closeUpgrade);
+  const worldRef = useUpgradeStore((s) => s.worldRef);
+  const gunEntityId = useUpgradeStore((s) => s.gunEntityId);
 
-  if (currentState !== AppState.GunUpgrade) return null;
+  if (currentState !== AppState.ForcedUpgrade) return null;
 
-  const handleUpgrade = (index: number) => {
-    const success = spendUpgrade(index);
-    if (success) {
-      getAudioManager().play(SoundId.UpgradeSpent);
-    }
+  const handleUpgrade = (traitIndex: number) => {
+    spendUpgrade(traitIndex);
   };
 
   const handleClose = () => {
+    // Reset forcedUpgradeTriggered on the gun
+    if (worldRef && gunEntityId !== null) {
+      const gun = worldRef.getComponent<Gun>(gunEntityId, 'Gun');
+      if (gun) {
+        gun.forcedUpgradeTriggered = false;
+      }
+    }
+
     closeUpgrade();
+    useAppStore.setState({ forcedUpgradeGunSlot: null });
     transition(AppState.Gameplay);
   };
 
+  const slotLabel =
+    forcedUpgradeGunSlot === WeaponSlot.Sidearm
+      ? 'Sidearm'
+      : forcedUpgradeGunSlot === WeaponSlot.LongArm
+        ? 'Long Arm'
+        : 'Gun';
+
   return (
-    <div data-testid="gun-upgrade-menu" style={OVERLAY_STYLE}>
+    <div data-testid="forced-upgrade-screen" style={OVERLAY_STYLE}>
       <div style={PANEL_STYLE}>
-        <div style={TITLE_STYLE}>Upgrade Gun</div>
-        <div data-testid="gun-xp" style={XP_STYLE}>
+        <div style={TITLE_STYLE}>Upgrade {slotLabel}</div>
+        <div data-testid="forced-upgrade-xp" style={XP_STYLE}>
           XP: {gunXP}
         </div>
 
-        <div data-testid="trait-list">
+        <div data-testid="forced-upgrade-traits">
           {traits.map((traitData, index) => {
-            const { trait, level, maxLevel, cost } = traitData;
-            const maxed = cost === null;
-            const canAfford = cost !== null && gunXP >= cost;
-            const disabled = maxed || !canAfford;
+            const canAfford = traitData.cost !== null && gunXP >= traitData.cost;
+            const isMaxed = traitData.cost === null;
+            const disabled = isMaxed || !canAfford;
 
             return (
-              <div key={index} style={TRAIT_STYLE} data-testid={`trait-${index}`}>
+              <div key={index} style={TRAIT_STYLE} data-testid={`forced-upgrade-trait-${index}`}>
                 <div>
                   <div style={{ fontSize: 14, fontWeight: 'bold' }}>
-                    {TRAIT_LABELS[trait]}
+                    {GunTrait[traitData.trait]}
                   </div>
                   <div style={{ fontSize: 11, opacity: 0.7 }}>
-                    Lv {level} / {maxLevel}
+                    Lv {traitData.level} / {traitData.maxLevel}
                   </div>
                 </div>
                 <button
-                  data-testid={`upgrade-${index}`}
+                  data-testid={`forced-upgrade-buy-${index}`}
                   disabled={disabled}
                   onClick={() => handleUpgrade(index)}
                   style={{
                     ...UPGRADE_BUTTON_BASE,
-                    backgroundColor: maxed
+                    backgroundColor: isMaxed
                       ? '#333'
                       : canAfford
                         ? '#2a7a2a'
@@ -150,20 +151,22 @@ export function GunUpgradeMenu() {
                     opacity: disabled ? 0.6 : 1,
                   }}
                 >
-                  {maxed ? 'MAX' : `${cost} XP`}
+                  {isMaxed ? 'MAX' : `${traitData.cost} XP`}
                 </button>
               </div>
             );
           })}
         </div>
 
-        <button
-          data-testid="upgrade-close"
-          onClick={handleClose}
-          style={CLOSE_BUTTON_STYLE}
-        >
-          Close
-        </button>
+        {upgradesSpent > 0 && (
+          <button
+            data-testid="forced-upgrade-close"
+            onClick={handleClose}
+            style={CLOSE_BUTTON_STYLE}
+          >
+            Close
+          </button>
+        )}
       </div>
     </div>
   );

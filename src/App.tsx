@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { Crosshair } from './ui/Crosshair'
 import { DeathScreen } from './ui/DeathScreen'
+import { ForcedUpgradeScreen } from './ui/ForcedUpgradeScreen'
 import { GameplayHUD } from './ui/GameplayHUD'
 import { GunComparisonScreen } from './ui/GunComparisonScreen'
 import { GunUpgradeMenu } from './ui/GunUpgradeMenu'
@@ -39,6 +40,7 @@ export function App() {
       {currentState === AppState.Settings && <SettingsScreen />}
       {currentState === AppState.ShopBrowse && <ShopUI />}
       {currentState === AppState.GunUpgrade && <GunUpgradeMenu />}
+      {currentState === AppState.ForcedUpgrade && <ForcedUpgradeScreen />}
       {currentState === AppState.Victory && <VictoryScreen />}
       <GunComparisonScreen />
       <PauseOverlay />
