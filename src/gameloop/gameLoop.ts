@@ -31,6 +31,16 @@ export { lifetimeSystem } from '../systems/lifetimeSystem';
 // It must run AFTER playerControlSystem and BEFORE movementSystem.
 export { dodgeRollSystem } from '../systems/dodgeRollSystem';
 
+// ── Stub integration point for aiSystem ─────────────────────────────────
+// aiSystem runs at position 3.5 in the system execution order.
+// Once the game loop body is implemented, call it as:
+//
+//   import { aiSystem } from '../systems/aiSystem';
+//   aiSystem(world, dt, currentDepth);
+//
+// It must run AFTER dodgeRollSystem and BEFORE movementSystem.
+export { aiSystem } from '../systems/aiSystem';
+
 // ── Stub integration point for movementSystem ──────────────────────────────
 // movementSystem runs at position 4 in the system execution order.
 // Once the game loop body is implemented, call it as:
