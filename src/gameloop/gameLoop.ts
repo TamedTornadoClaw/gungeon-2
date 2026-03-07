@@ -64,6 +64,17 @@ export { movementSystem } from '../systems/movementSystem';
 //
 // Call rebuildStatics() once per room load with all static collider entities.
 
+// ── Stub integration point for collisionResponseSystem ───────────────────
+// collisionResponseSystem runs at position 5.5 (after collisionDetectionSystem,
+// before damageSystem). When the game loop body is implemented, call:
+//
+//   import { collisionResponseSystem, updateSpikeCooldowns } from '../systems/collisionResponseSystem';
+//   const pairs = collisionDetectionSystem(collisionEntities);
+//   updateSpikeCooldowns(dt, world);
+//   collisionResponseSystem(pairs, world, eventQueue);
+//
+export { collisionResponseSystem, updateSpikeCooldowns } from '../systems/collisionResponseSystem';
+
 // ── Stub integration point for damageSystem ──────────────────────────────
 // damageSystem runs at position 6 (after collisionResponseSystem, before lifetimeSystem).
 // When the game loop body is implemented, call:

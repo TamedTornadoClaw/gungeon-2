@@ -283,6 +283,10 @@ export interface Invincible {
   remaining: number;
 }
 
+export interface SpikeCooldown {
+  remaining: number;
+}
+
 export interface SpeedModifier {
   multiplier: number;
   /** Refreshed each frame while overlapping source. Expires if not refreshed. */
