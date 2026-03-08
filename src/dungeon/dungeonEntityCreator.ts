@@ -32,14 +32,6 @@ export interface DungeonEntityResult {
   bossId: EntityId | null;
 }
 
-/** Represents a gap in a wall segment where a corridor connects */
-interface WallGap {
-  /** Start position along the wall axis */
-  start: number;
-  /** End position along the wall axis */
-  end: number;
-}
-
 /** Check if a point is inside a room's bounds */
 function pointInsideRoom(px: number, pz: number, room: Room): boolean {
   return (
@@ -51,170 +43,6 @@ function pointInsideRoom(px: number, pz: number, room: Room): boolean {
 }
 
 /**
- * Find where corridors intersect a given wall of a room.
- * Returns gaps (in the wall's lateral axis) where doors connect.
- */
-function findWallGaps(
-  room: Room,
-  wall: 'north' | 'south' | 'east' | 'west',
-  corridors: Corridor[],
-): WallGap[] {
-  const min = room.bounds.min;
-  const max = room.bounds.max;
-  const gaps: WallGap[] = [];
-
-  for (const corridor of corridors) {
-    const cStartX = Math.min(corridor.start.x, corridor.end.x);
-    const cEndX = Math.max(corridor.start.x, corridor.end.x);
-    const cStartZ = Math.min(corridor.start.z, corridor.end.z);
-    const cEndZ = Math.max(corridor.start.z, corridor.end.z);
-
-    switch (wall) {
-      case 'north': {
-        // North wall is at min.z, horizontal wall. Corridor must touch this z and overlap in x.
-        if (cStartZ <= min.z && cEndZ >= min.z) {
-          const overlapStart = Math.max(cStartX, min.x);
-          const overlapEnd = Math.min(cEndX, max.x);
-          if (overlapStart < overlapEnd) {
-            gaps.push({ start: overlapStart, end: overlapEnd });
-          }
-        }
-        break;
-      }
-      case 'south': {
-        // South wall is at max.z
-        if (cStartZ <= max.z && cEndZ >= max.z) {
-          const overlapStart = Math.max(cStartX, min.x);
-          const overlapEnd = Math.min(cEndX, max.x);
-          if (overlapStart < overlapEnd) {
-            gaps.push({ start: overlapStart, end: overlapEnd });
-          }
-        }
-        break;
-      }
-      case 'west': {
-        // West wall is at min.x, vertical wall
-        if (cStartX <= min.x && cEndX >= min.x) {
-          const overlapStart = Math.max(cStartZ, min.z);
-          const overlapEnd = Math.min(cEndZ, max.z);
-          if (overlapStart < overlapEnd) {
-            gaps.push({ start: overlapStart, end: overlapEnd });
-          }
-        }
-        break;
-      }
-      case 'east': {
-        // East wall is at max.x
-        if (cStartX <= max.x && cEndX >= max.x) {
-          const overlapStart = Math.max(cStartZ, min.z);
-          const overlapEnd = Math.min(cEndZ, max.z);
-          if (overlapStart < overlapEnd) {
-            gaps.push({ start: overlapStart, end: overlapEnd });
-          }
-        }
-        break;
-      }
-    }
-  }
-
-  // Sort gaps by start position
-  gaps.sort((a, b) => a.start - b.start);
-  return gaps;
-}
-
-/**
- * Create wall segments along a wall axis, leaving gaps where corridors connect.
- */
-function createWallWithGaps(
-  wallStart: number,
-  wallEnd: number,
-  fixedCoord: number,
-  orientation: 'horizontal' | 'vertical',
-  gaps: WallGap[],
-  wt: number,
-  wh: number,
-  addWallFn: (position: Vec3, size: Vec3) => EntityId | null,
-): void {
-  if (gaps.length === 0) {
-    const length = wallEnd - wallStart;
-    const mid = wallStart + length / 2;
-    if (orientation === 'horizontal') {
-      addWallFn({ x: mid, y: 0, z: fixedCoord }, { x: length, y: wh, z: wt });
-    } else {
-      addWallFn({ x: fixedCoord, y: 0, z: mid }, { x: wt, y: wh, z: length });
-    }
-    return;
-  }
-
-  let cursor = wallStart;
-  for (const gap of gaps) {
-    if (gap.start > cursor) {
-      const segLen = gap.start - cursor;
-      const segMid = cursor + segLen / 2;
-      if (orientation === 'horizontal') {
-        addWallFn({ x: segMid, y: 0, z: fixedCoord }, { x: segLen, y: wh, z: wt });
-      } else {
-        addWallFn({ x: fixedCoord, y: 0, z: segMid }, { x: wt, y: wh, z: segLen });
-      }
-    }
-    cursor = gap.end;
-  }
-
-  if (cursor < wallEnd) {
-    const segLen = wallEnd - cursor;
-    const segMid = cursor + segLen / 2;
-    if (orientation === 'horizontal') {
-      addWallFn({ x: segMid, y: 0, z: fixedCoord }, { x: segLen, y: wh, z: wt });
-    } else {
-      addWallFn({ x: fixedCoord, y: 0, z: segMid }, { x: wt, y: wh, z: segLen });
-    }
-  }
-}
-
-/**
- * Clip corridor wall endpoints to stop at room boundaries.
- */
-function clipCorridorToRoomEdges(
-  corridorStart: number,
-  corridorEnd: number,
-  crossStart: number,
-  crossEnd: number,
-  isHorizontal: boolean,
-  rooms: Room[],
-): { clippedStart: number; clippedEnd: number } {
-  let clippedStart = corridorStart;
-  let clippedEnd = corridorEnd;
-  const crossMid = (crossStart + crossEnd) / 2;
-
-  for (const room of rooms) {
-    const rMin = room.bounds.min;
-    const rMax = room.bounds.max;
-
-    if (isHorizontal) {
-      if (crossMid >= rMin.z && crossMid <= rMax.z) {
-        if (clippedStart >= rMin.x && clippedStart <= rMax.x) {
-          clippedStart = rMax.x;
-        }
-        if (clippedEnd >= rMin.x && clippedEnd <= rMax.x) {
-          clippedEnd = rMin.x;
-        }
-      }
-    } else {
-      if (crossMid >= rMin.x && crossMid <= rMax.x) {
-        if (clippedStart >= rMin.z && clippedStart <= rMax.z) {
-          clippedStart = rMax.z;
-        }
-        if (clippedEnd >= rMin.z && clippedEnd <= rMax.z) {
-          clippedEnd = rMin.z;
-        }
-      }
-    }
-  }
-
-  return { clippedStart, clippedEnd };
-}
-
-/**
  * Find positions where doors should be placed at room wall boundaries.
  */
 function findDoorPositions(corridor: Corridor, rooms: Room[]): Vec3[] {
@@ -223,9 +51,8 @@ function findDoorPositions(corridor: Corridor, rooms: Room[]): Vec3[] {
   const cEndX = Math.max(corridor.start.x, corridor.end.x);
   const cStartZ = Math.min(corridor.start.z, corridor.end.z);
   const cEndZ = Math.max(corridor.start.z, corridor.end.z);
-  const corW = cEndX - cStartX;
   const corH = cEndZ - cStartZ;
-  const isHorizontal = corW > corH;
+  const isHorizontal = Math.abs(corH - corridor.width) < 0.01;
 
   for (const room of rooms) {
     const rMin = room.bounds.min;
@@ -301,28 +128,39 @@ export function createDungeonEntities(
     pointInsideRoom(dungeonData.playerStart.x, dungeonData.playerStart.z, room),
   );
 
-  // Create room entities
+  // ── Step 1: Build floor coverage grid ────────────────────────────────────
+  const floorCoverage = new Set<string>();
+
+  // Add room tiles to grid
+  for (const room of dungeonData.rooms) {
+    const min = room.bounds.min;
+    const max = room.bounds.max;
+    for (let x = Math.floor(min.x); x < Math.ceil(max.x); x++) {
+      for (let z = Math.floor(min.z); z < Math.ceil(max.z); z++) {
+        floorCoverage.add(`${x},${z}`);
+      }
+    }
+  }
+
+  // Add corridor tiles to grid
+  for (const corridor of dungeonData.corridors) {
+    const startX = Math.min(corridor.start.x, corridor.end.x);
+    const endX = Math.max(corridor.start.x, corridor.end.x);
+    const startZ = Math.min(corridor.start.z, corridor.end.z);
+    const endZ = Math.max(corridor.start.z, corridor.end.z);
+    for (let x = Math.floor(startX); x < Math.ceil(endX); x++) {
+      for (let z = Math.floor(startZ); z < Math.ceil(endZ); z++) {
+        floorCoverage.add(`${x},${z}`);
+      }
+    }
+  }
+
+  // ── Step 2: Create room entities (floors, contents) ────────────────────
   for (const room of dungeonData.rooms) {
     const min = room.bounds.min;
     const max = room.bounds.max;
     const roomW = max.x - min.x;
     const roomH = max.z - min.z;
-
-    // Find wall gaps from corridors for each wall side (#404)
-    const northGaps = findWallGaps(room, 'north', dungeonData.corridors);
-    const southGaps = findWallGaps(room, 'south', dungeonData.corridors);
-    const westGaps = findWallGaps(room, 'west', dungeonData.corridors);
-    const eastGaps = findWallGaps(room, 'east', dungeonData.corridors);
-
-    // Room walls with gaps where corridors connect (#403: roomW not roomW+wt*2, #404: gaps for doors)
-    // North wall (at min.z)
-    createWallWithGaps(min.x, max.x, min.z, 'horizontal', northGaps, wt, wh, addWall);
-    // South wall (at max.z)
-    createWallWithGaps(min.x, max.x, max.z, 'horizontal', southGaps, wt, wh, addWall);
-    // West wall (at min.x)
-    createWallWithGaps(min.z, max.z, min.x, 'vertical', westGaps, wt, wh, addWall);
-    // East wall (at max.x)
-    createWallWithGaps(min.z, max.z, max.x, 'vertical', eastGaps, wt, wh, addWall);
 
     // Floor tile for room
     const floorId = createFloor(
@@ -385,35 +223,29 @@ export function createDungeonEntities(
     }
   }
 
-  // Build a set of all floor-covered areas (rooms) to avoid corridor overlap
-  const floorCoverage = new Set<string>();
+  // ── Step 3: Create corridor floor tiles ────────────────────────────────
+  // Track which tiles already have room floors to avoid double-creating
+  const roomFloorCoverage = new Set<string>();
   for (const room of dungeonData.rooms) {
     const min = room.bounds.min;
     const max = room.bounds.max;
-    // Mark 1x1 tiles covered by this room
     for (let x = Math.floor(min.x); x < Math.ceil(max.x); x++) {
       for (let z = Math.floor(min.z); z < Math.ceil(max.z); z++) {
-        floorCoverage.add(`${x},${z}`);
+        roomFloorCoverage.add(`${x},${z}`);
       }
     }
   }
-
-  // Corridor walls and floor tiles
+  const corridorFloorCreated = new Set<string>();
   for (const corridor of dungeonData.corridors) {
     const startX = Math.min(corridor.start.x, corridor.end.x);
     const endX = Math.max(corridor.start.x, corridor.end.x);
     const startZ = Math.min(corridor.start.z, corridor.end.z);
     const endZ = Math.max(corridor.start.z, corridor.end.z);
-    const corW = endX - startX;
-    const corH = endZ - startZ;
-    const isHorizontal = corW > corH;
-
-    // Create individual 1x1 corridor floor tiles, skipping already-covered areas
     for (let x = Math.floor(startX); x < Math.ceil(endX); x++) {
       for (let z = Math.floor(startZ); z < Math.ceil(endZ); z++) {
         const key = `${x},${z}`;
-        if (!floorCoverage.has(key)) {
-          floorCoverage.add(key);
+        if (!roomFloorCoverage.has(key) && !corridorFloorCreated.has(key)) {
+          corridorFloorCreated.add(key);
           const fId = createFloor(
             world,
             { x: x + 0.5, y: 0, z: z + 0.5 },
@@ -423,38 +255,96 @@ export function createDungeonEntities(
         }
       }
     }
+  }
 
-    // Corridor walls clipped to room boundaries (#407)
-    if (isHorizontal) {
-      const { clippedStart, clippedEnd } = clipCorridorToRoomEdges(
-        startX, endX, startZ, endZ, true, dungeonData.rooms,
-      );
-      if (clippedEnd > clippedStart) {
-        const clippedW = clippedEnd - clippedStart;
-        const cx = clippedStart + clippedW / 2;
-        addWall({ x: cx, y: 0, z: startZ }, { x: clippedW, y: wh, z: wt });
-        addWall({ x: cx, y: 0, z: endZ }, { x: clippedW, y: wh, z: wt });
-      }
-    } else {
-      const { clippedStart, clippedEnd } = clipCorridorToRoomEdges(
-        startZ, endZ, startX, endX, false, dungeonData.rooms,
-      );
-      if (clippedEnd > clippedStart) {
-        const clippedH = clippedEnd - clippedStart;
-        const cz = clippedStart + clippedH / 2;
-        addWall({ x: startX, y: 0, z: cz }, { x: wt, y: wh, z: clippedH });
-        addWall({ x: endX, y: 0, z: cz }, { x: wt, y: wh, z: clippedH });
+  // ── Step 4: Generate walls from grid boundaries ────────────────────────
+  // Scan every floor tile and find edges adjacent to non-floor.
+  // Collect edge segments grouped by fixed coordinate for merging.
+  const hEdges = new Map<number, number[]>(); // z-coord → sorted x positions
+  const vEdges = new Map<number, number[]>(); // x-coord → sorted z positions
+
+  for (const key of floorCoverage) {
+    const [xStr, zStr] = key.split(',');
+    const x = parseInt(xStr, 10);
+    const z = parseInt(zStr, 10);
+
+    // North edge: tile (x,z) is floor, (x,z-1) is not → wall at z boundary
+    if (!floorCoverage.has(`${x},${z - 1}`)) {
+      const arr = hEdges.get(z) ?? [];
+      arr.push(x);
+      hEdges.set(z, arr);
+    }
+    // South edge: tile (x,z) is floor, (x,z+1) is not → wall at z+1 boundary
+    if (!floorCoverage.has(`${x},${z + 1}`)) {
+      const arr = hEdges.get(z + 1) ?? [];
+      arr.push(x);
+      hEdges.set(z + 1, arr);
+    }
+    // West edge: tile (x,z) is floor, (x-1,z) is not → wall at x boundary
+    if (!floorCoverage.has(`${x - 1},${z}`)) {
+      const arr = vEdges.get(x) ?? [];
+      arr.push(z);
+      vEdges.set(x, arr);
+    }
+    // East edge: tile (x,z) is floor, (x+1,z) is not → wall at x+1 boundary
+    if (!floorCoverage.has(`${x + 1},${z}`)) {
+      const arr = vEdges.get(x + 1) ?? [];
+      arr.push(z);
+      vEdges.set(x + 1, arr);
+    }
+  }
+
+  // Merge adjacent edge tiles into wall segments and create entities
+  for (const [z, xArr] of hEdges) {
+    xArr.sort((a, b) => a - b);
+    // Deduplicate (a tile could be added twice from both sides)
+    const xs = [...new Set(xArr)].sort((a, b) => a - b);
+    let segStart = xs[0];
+    let segEnd = segStart + 1;
+    for (let i = 1; i < xs.length; i++) {
+      if (xs[i] === segEnd) {
+        segEnd = xs[i] + 1;
+      } else {
+        const len = segEnd - segStart;
+        const mid = segStart + len / 2;
+        addWall({ x: mid, y: 0, z }, { x: len, y: wh, z: wt });
+        segStart = xs[i];
+        segEnd = segStart + 1;
       }
     }
+    const len = segEnd - segStart;
+    const mid = segStart + len / 2;
+    addWall({ x: mid, y: 0, z }, { x: len, y: wh, z: wt });
+  }
 
-    // Doors placed at room boundary exits, not corridor midpoint (#404)
+  for (const [x, zArr] of vEdges) {
+    zArr.sort((a, b) => a - b);
+    const zs = [...new Set(zArr)].sort((a, b) => a - b);
+    let segStart = zs[0];
+    let segEnd = segStart + 1;
+    for (let i = 1; i < zs.length; i++) {
+      if (zs[i] === segEnd) {
+        segEnd = zs[i] + 1;
+      } else {
+        const len = segEnd - segStart;
+        const mid = segStart + len / 2;
+        addWall({ x, y: 0, z: mid }, { x: wt, y: wh, z: len });
+        segStart = zs[i];
+        segEnd = segStart + 1;
+      }
+    }
+    const len = segEnd - segStart;
+    const mid = segStart + len / 2;
+    addWall({ x, y: 0, z: mid }, { x: wt, y: wh, z: len });
+  }
+
+  // ── Step 5: Create doors at room/corridor boundaries ───────────────────
+  for (const corridor of dungeonData.corridors) {
     const doorPositions = findDoorPositions(corridor, dungeonData.rooms);
     for (const doorPos of doorPositions) {
       const doorId = createDoor(world, doorPos);
       result.doorIds.push(doorId);
     }
-
-    // Fallback: if no room boundaries found, place door at midpoint
     if (doorPositions.length === 0) {
       const midX = (corridor.start.x + corridor.end.x) / 2;
       const midZ = (corridor.start.z + corridor.end.z) / 2;
