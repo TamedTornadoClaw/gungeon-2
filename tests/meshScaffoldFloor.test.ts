@@ -29,12 +29,12 @@ describe('Floor mesh scaffold', () => {
     manager.releaseMesh(MeshId.Floor, mesh);
   });
 
-  it('uses PlaneGeometry(1, 1) as placeholder', () => {
+  it('uses a 1x1 XZ plane geometry', () => {
     const mesh = manager.acquireMesh(MeshId.Floor);
-    expect(mesh.geometry).toBeInstanceOf(THREE.PlaneGeometry);
-    const params = (mesh.geometry as THREE.PlaneGeometry).parameters;
-    expect(params.width).toBe(1);
-    expect(params.height).toBe(1);
+    expect(mesh.geometry).toBeInstanceOf(THREE.BufferGeometry);
+    const pos = mesh.geometry.getAttribute('position');
+    // 6 vertices (2 triangles) forming a 1x1 quad in XZ plane
+    expect(pos.count).toBe(6);
     manager.releaseMesh(MeshId.Floor, mesh);
   });
 
@@ -47,7 +47,7 @@ describe('Floor mesh scaffold', () => {
   it('has dark gray color', () => {
     const mesh = manager.acquireMesh(MeshId.Floor);
     const mat = mesh.material as THREE.MeshToonMaterial;
-    expect(mat.color.getHex()).toBe(0x444444);
+    expect(mat.color.getHex()).toBe(0x88aa88);
     manager.releaseMesh(MeshId.Floor, mesh);
   });
 

@@ -22,6 +22,7 @@ import type {
 import { WeaponSlot, AppState } from '../ecs/components';
 import { getDesignParams } from '../config/designParams';
 import { useAppStore } from '../store/appStore';
+import { useUpgradeStore } from '../store/upgradeStore';
 
 /**
  * Check whether a gun has enough XP to upgrade any trait by at least one level.
@@ -143,8 +144,10 @@ export function playerControlSystem(world: World, input: InputState, _dt: number
 
     // ── Open Upgrade ───────────────────────────────────────────────────
     if (input.openUpgrade) {
-      const activeGun = player.activeSlot === WeaponSlot.Sidearm ? sidearmGun : longArmGun;
+      const activeGunId = player.activeSlot === WeaponSlot.Sidearm ? player.sidearmSlot : player.longArmSlot;
+      const activeGun = world.getComponent<Gun>(activeGunId, 'Gun');
       if (activeGun && canUpgradeGun(activeGun)) {
+        useUpgradeStore.getState().openUpgrade(activeGunId, world);
         useAppStore.getState().transition(AppState.GunUpgrade);
       }
     }

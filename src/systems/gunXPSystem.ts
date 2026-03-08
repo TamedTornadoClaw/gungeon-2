@@ -3,6 +3,7 @@ import { AppState, WeaponSlot } from '../ecs/components';
 import type { Player, Gun } from '../ecs/components';
 import { getDesignParams } from '../config/designParams';
 import { useAppStore } from '../store/appStore';
+import { useUpgradeStore } from '../store/upgradeStore';
 
 /**
  * Checks each gun's XP against the forced upgrade threshold.
@@ -50,6 +51,7 @@ export function gunXPSystem(world: World): void {
 
     if (gun.xp >= maxCost) {
       gun.forcedUpgradeTriggered = true;
+      useUpgradeStore.getState().openUpgrade(gunEntityId, world);
       const store = useAppStore.getState();
       store.transition(AppState.ForcedUpgrade);
       useAppStore.setState({ forcedUpgradeGunSlot: slot });

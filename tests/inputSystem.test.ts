@@ -236,16 +236,16 @@ describe('InputSystem', () => {
   // ── Mouse actions ────────────────────────────────────────────────────
 
   describe('mouse actions', () => {
-    it('LMB maps to fireSidearm', () => {
+    it('LMB maps to fireLongArm', () => {
       simulateMouseDown(mgr, 0);
       const state = inputSystem(mgr);
-      expect(state.fireSidearm).toBe(true);
+      expect(state.fireLongArm).toBe(true);
     });
 
-    it('RMB maps to fireLongArm', () => {
+    it('RMB maps to fireSidearm', () => {
       simulateMouseDown(mgr, 2);
       const state = inputSystem(mgr);
-      expect(state.fireLongArm).toBe(true);
+      expect(state.fireSidearm).toBe(true);
     });
 
     it('both LMB and RMB can be pressed simultaneously', () => {

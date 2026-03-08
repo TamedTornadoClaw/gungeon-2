@@ -1,5 +1,20 @@
 import { AppState, GunTrait, WeaponSlot } from '../ecs/components';
 import type { Gun } from '../ecs/components';
+
+const TRAIT_LABELS: Record<GunTrait, string> = {
+  [GunTrait.Damage]: 'Damage',
+  [GunTrait.FireRate]: 'Fire Rate',
+  [GunTrait.MagazineSize]: 'Magazine Size',
+  [GunTrait.ReloadTime]: 'Reload Time',
+  [GunTrait.Spread]: 'Spread',
+  [GunTrait.ProjectileCount]: 'Projectile Count',
+  [GunTrait.ProjectileSpeed]: 'Projectile Speed',
+  [GunTrait.Knockback]: 'Knockback',
+  [GunTrait.CriticalChance]: 'Critical Chance',
+  [GunTrait.CriticalMultiplier]: 'Critical Multiplier',
+  [GunTrait.Piercing]: 'Piercing',
+  [GunTrait.Bouncing]: 'Bouncing',
+};
 import { useAppStore } from '../store/appStore';
 import { useUpgradeStore } from '../store/upgradeStore';
 
@@ -129,7 +144,7 @@ export function ForcedUpgradeScreen() {
               <div key={index} style={TRAIT_STYLE} data-testid={`forced-upgrade-trait-${index}`}>
                 <div>
                   <div style={{ fontSize: 14, fontWeight: 'bold' }}>
-                    {GunTrait[traitData.trait]}
+                    {TRAIT_LABELS[traitData.trait]}
                   </div>
                   <div style={{ fontSize: 11, opacity: 0.7 }}>
                     Lv {traitData.level} / {traitData.maxLevel}

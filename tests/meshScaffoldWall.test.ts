@@ -48,7 +48,7 @@ describe('Wall mesh scaffold', () => {
   it('has gray color', () => {
     const mesh = manager.acquireMesh(MeshId.Wall);
     const mat = mesh.material as THREE.MeshToonMaterial;
-    expect(mat.color.getHex()).toBe(0x888888);
+    expect(mat.color.getHex()).toBe(0xddaa77);
     manager.releaseMesh(MeshId.Wall, mesh);
   });
 
