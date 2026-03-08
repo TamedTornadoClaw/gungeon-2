@@ -43,7 +43,7 @@ export class InputManager {
 
   private mapping: InputMapping;
   private camera: THREE.Camera | null = null;
-  private domElement: { width: number; height: number } | null = null;
+  private domElement: HTMLElement | null = null;
 
   // Reusable Three.js objects to avoid per-frame allocation
   private readonly raycaster = new THREE.Raycaster();
@@ -63,7 +63,7 @@ export class InputManager {
     return this.mapping;
   }
 
-  setCamera(camera: THREE.Camera, domElement: { width: number; height: number }): void {
+  setCamera(camera: THREE.Camera, domElement: HTMLElement): void {
     this.camera = camera;
     this.domElement = domElement;
   }
@@ -246,13 +246,14 @@ export class InputManager {
 
   private updateAimFromMouse(): void {
     if (!this.camera || !this.domElement) return;
-    const { width, height } = this.domElement;
-    if (width === 0 || height === 0) return;
+    const rect = this.domElement.getBoundingClientRect();
+    if (rect.width === 0 || rect.height === 0) return;
 
-    // Convert screen coords to NDC [-1, 1]
+    // Convert screen coords to NDC [-1, 1] using CSS layout rect
+    // (clientX/Y are in CSS pixels, so we must use clientRect not canvas pixel buffer)
     this.ndcVec.set(
-      (this.mouseScreenX / width) * 2 - 1,
-      -(this.mouseScreenY / height) * 2 + 1,
+      ((this.mouseScreenX - rect.left) / rect.width) * 2 - 1,
+      -((this.mouseScreenY - rect.top) / rect.height) * 2 + 1,
     );
 
     this.raycaster.setFromCamera(this.ndcVec, this.camera);
