@@ -132,8 +132,8 @@ describe('DungeonEntityCreator', () => {
       // Corridor should produce a floor tile
       expect(result.floorIds.length).toBeGreaterThanOrEqual(3); // 2 rooms + 1 corridor
 
-      // Corridor should produce a door
-      expect(result.doorIds.length).toBe(1);
+      // Corridor should produce doors at room boundaries
+      expect(result.doorIds.length).toBeGreaterThanOrEqual(1);
     });
   });
 
@@ -350,6 +350,7 @@ describe('DungeonEntityCreator', () => {
             enemyCount: 5,
           }],
         })],
+        playerStart: { x: -100, y: 0, z: -100 },
       });
 
       const result = createDungeonEntities(world, dungeon, 1);
@@ -446,6 +447,7 @@ describe('DungeonEntityCreator', () => {
           end: { x: 30, y: 0, z: 14 },
           width: 7,
         }],
+        playerStart: { x: -100, y: 0, z: -100 },
       });
 
       const result = createDungeonEntities(world, dungeon, 4);
@@ -491,7 +493,7 @@ describe('DungeonEntityCreator', () => {
   });
 
   describe('Door entities created between rooms', () => {
-    it('creates door entity at corridor midpoint with correct components', () => {
+    it('creates door entities at room boundaries with correct components', () => {
       const world = new World();
       const dungeon = makeDungeonData({
         rooms: [
@@ -507,7 +509,8 @@ describe('DungeonEntityCreator', () => {
 
       const result = createDungeonEntities(world, dungeon, 1);
 
-      expect(result.doorIds).toHaveLength(1);
+      // Doors placed at each room boundary where corridor exits
+      expect(result.doorIds.length).toBeGreaterThanOrEqual(1);
       const doorId = result.doorIds[0];
       const door = world.getComponent<Door>(doorId, 'Door')!;
       const collider = world.getComponent<Collider>(doorId, 'Collider')!;
@@ -590,6 +593,7 @@ describe('DungeonEntityCreator', () => {
             enemyCount: 3,
           }],
         })],
+        playerStart: { x: -100, y: 0, z: -100 },
       });
 
       const result = createDungeonEntities(world, dungeon, 1);
@@ -729,6 +733,7 @@ describe('DungeonEntityCreator', () => {
                   { position: { x: 15, y: 0, z: 15 }, width: 2, height: 2, depth: 2, health: 30 },
                 ],
               })],
+              playerStart: { x: -100, y: 0, z: -100 },
             });
 
             const result = createDungeonEntities(world, dungeon, depth);
