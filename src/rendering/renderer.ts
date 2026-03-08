@@ -51,25 +51,26 @@ export function initRenderer(): RendererContext {
   renderer.outputColorSpace = THREE.SRGBColorSpace;
 
   const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x111118);
 
   const cameraController = createCameraController();
   const camera = cameraController.camera;
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
 
-  const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+  const ambientLight = new THREE.AmbientLight(0xffffff, 2.5);
   scene.add(ambientLight);
 
   const directionalLight = new THREE.DirectionalLight(0xffffff, 1.0);
-  directionalLight.position.set(10, 20, 10);
+  directionalLight.position.set(10, 30, 15);
   directionalLight.castShadow = true;
   directionalLight.shadow.mapSize.set(2048, 2048);
   directionalLight.shadow.camera.near = 0.5;
-  directionalLight.shadow.camera.far = 100;
-  directionalLight.shadow.camera.left = -30;
-  directionalLight.shadow.camera.right = 30;
-  directionalLight.shadow.camera.top = 30;
-  directionalLight.shadow.camera.bottom = -30;
+  directionalLight.shadow.camera.far = 200;
+  directionalLight.shadow.camera.left = -50;
+  directionalLight.shadow.camera.right = 50;
+  directionalLight.shadow.camera.top = 50;
+  directionalLight.shadow.camera.bottom = -50;
   scene.add(directionalLight);
 
   const sceneManager = createSceneManager(scene);
@@ -142,8 +143,19 @@ export interface RenderSystem {
 export function createRenderSystem(ctx: RendererContext): RenderSystem {
   const meshMap = new Map<EntityId, THREE.Mesh>();
   const meshIdMap = new Map<EntityId, MeshId>();
+  let lastFrameTime = -1;
 
-  function update(world: World, alpha: number, dt: number): void {
+  function update(world: World, alpha: number, _dt: number): void {
+    // Compute real frame dt from timestamps
+    const now = performance.now();
+    let frameDt: number;
+    if (lastFrameTime < 0) {
+      frameDt = 1 / 60; // default first frame
+    } else {
+      frameDt = Math.min((now - lastFrameTime) / 1000, 0.1);
+    }
+    lastFrameTime = now;
+
     // 1. Update instanced meshes (bullets, enemies, pickups, dungeon tiles)
     ctx.instancedRenderer.update(world, alpha);
 
@@ -151,7 +163,7 @@ export function createRenderSystem(ctx: RendererContext): RenderSystem {
     syncIndividualMeshes(world, alpha);
 
     // 3. Update camera to follow player
-    updateCameraFollow(world, alpha, dt);
+    updateCameraFollow(world, alpha, frameDt);
 
     // 4. Render
     ctx.renderer.render(ctx.scene, ctx.camera);
@@ -206,8 +218,12 @@ export function createRenderSystem(ctx: RendererContext): RenderSystem {
         mesh.rotation.y = rotation.y;
       }
 
-      // Sync scale
-      mesh.scale.set(renderable.scale, renderable.scale, renderable.scale);
+      // Sync scale (support non-uniform scaleX/scaleZ)
+      mesh.scale.set(
+        renderable.scaleX ?? renderable.scale,
+        renderable.scale,
+        renderable.scaleZ ?? renderable.scale,
+      );
 
       // Handle weapon visibility for player
       if (renderable.meshId === MeshId.Player) {
@@ -261,6 +277,11 @@ export function createRenderSystem(ctx: RendererContext): RenderSystem {
     const z = prev ? prev.z + (pos.z - prev.z) * alpha : pos.z;
 
     updateCamera(ctx.cameraController, x, y, z, dt);
+
+    // Move directional light to follow player so shadows cover visible area
+    ctx.directionalLight.position.set(x + 10, 30, z + 15);
+    ctx.directionalLight.target.position.set(x, 0, z);
+    ctx.directionalLight.target.updateMatrixWorld();
   }
 
   function releaseAll(): void {

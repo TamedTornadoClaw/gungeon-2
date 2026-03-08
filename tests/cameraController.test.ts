@@ -45,10 +45,21 @@ describe('cameraController', () => {
   });
 
   describe('updateCamera', () => {
-    it('smoothly interpolates toward player position', () => {
+    it('snaps to player position on first call', () => {
       updateCamera(ctrl, 10, 0, 5, 1 / 60);
 
-      // After one frame, target should have moved toward player but not reached it
+      // First call snaps directly to player position
+      expect(ctrl.targetPosition.x).toBe(10);
+      expect(ctrl.targetPosition.z).toBe(5);
+      expect(ctrl.hasSnapped).toBe(true);
+    });
+
+    it('smoothly interpolates toward player position after snap', () => {
+      // First call snaps
+      updateCamera(ctrl, 0, 0, 0, 1 / 60);
+
+      // Second call should smoothly interpolate
+      updateCamera(ctrl, 10, 0, 5, 1 / 60);
       expect(ctrl.targetPosition.x).toBeGreaterThan(0);
       expect(ctrl.targetPosition.x).toBeLessThan(10);
       expect(ctrl.targetPosition.z).toBeGreaterThan(0);

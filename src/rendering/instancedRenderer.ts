@@ -242,7 +242,7 @@ export function createInstancedRenderer(sceneManager: SceneManager): InstancedRe
     const entities = world.query(['Position', 'Renderable']);
 
     // Group entities by meshId
-    const groups = new Map<MeshId, Array<{ x: number; y: number; z: number; scale: number }>>();
+    const groups = new Map<MeshId, Array<{ x: number; y: number; z: number; scaleX: number; scaleY: number; scaleZ: number }>>();
     for (const meshId of INSTANCED_MESH_IDS) {
       groups.set(meshId, []);
     }
@@ -263,7 +263,12 @@ export function createInstancedRenderer(sceneManager: SceneManager): InstancedRe
 
       const group = groups.get(renderable.meshId);
       if (group) {
-        group.push({ x, y, z, scale: renderable.scale });
+        group.push({
+          x, y, z,
+          scaleX: renderable.scaleX ?? renderable.scale,
+          scaleY: renderable.scale,
+          scaleZ: renderable.scaleZ ?? renderable.scale,
+        });
       }
     }
 
@@ -275,7 +280,7 @@ export function createInstancedRenderer(sceneManager: SceneManager): InstancedRe
 
       for (let i = 0; i < count; i++) {
         const data = entityData[i];
-        tempMatrix.makeScale(data.scale, data.scale, data.scale);
+        tempMatrix.makeScale(data.scaleX, data.scaleY, data.scaleZ);
         tempMatrix.setPosition(data.x, data.y, data.z);
         instancedMesh.setMatrixAt(i, tempMatrix);
       }

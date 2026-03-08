@@ -23,6 +23,8 @@ export interface CameraController {
   shakeIntensity: number;
   /** Scratch vector for shake offset — avoids allocation */
   shakeOffset: THREE.Vector3;
+  /** Whether the camera has snapped to its first target */
+  hasSnapped: boolean;
 }
 
 export function createCameraController(): CameraController {
@@ -41,6 +43,7 @@ export function createCameraController(): CameraController {
     targetPosition: new THREE.Vector3(0, 0, 0),
     shakeIntensity: 0,
     shakeOffset: new THREE.Vector3(),
+    hasSnapped: false,
   };
 }
 
@@ -59,11 +62,16 @@ export function updateCamera(
   const { angle, distance, followSmoothing } = params.camera;
   const angleRad = (angle * Math.PI) / 180;
 
-  // Smoothly interpolate target toward player position
-  const t = 1 - Math.pow(1 - followSmoothing, dt * 60);
-  ctrl.targetPosition.x += (playerX - ctrl.targetPosition.x) * t;
-  ctrl.targetPosition.y += (playerY - ctrl.targetPosition.y) * t;
-  ctrl.targetPosition.z += (playerZ - ctrl.targetPosition.z) * t;
+  // Snap to player on first call, then smoothly interpolate
+  if (!ctrl.hasSnapped) {
+    ctrl.targetPosition.set(playerX, playerY, playerZ);
+    ctrl.hasSnapped = true;
+  } else {
+    const t = 1 - Math.pow(1 - followSmoothing, dt * 60);
+    ctrl.targetPosition.x += (playerX - ctrl.targetPosition.x) * t;
+    ctrl.targetPosition.y += (playerY - ctrl.targetPosition.y) * t;
+    ctrl.targetPosition.z += (playerZ - ctrl.targetPosition.z) * t;
+  }
 
   // Camera position = target + offset from angle/distance
   ctrl.camera.position.set(

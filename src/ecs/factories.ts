@@ -666,14 +666,16 @@ export function createWall(world: World, position: Vec3, size: Vec3): EntityId {
   world.addComponent<Renderable>(id, 'Renderable', {
     meshId: MeshId.Wall,
     visible: true,
-    scale: 1,
+    scale: size.y / 3,
+    scaleX: size.x,
+    scaleZ: size.z,
   });
   world.addComponent(id, 'WallTag', {});
 
   return id;
 }
 
-export function createFloor(world: World, position: Vec3, _size: Vec3): EntityId {
+export function createFloor(world: World, position: Vec3, size: Vec3): EntityId {
   const id = world.createEntity();
 
   world.addComponent<Position>(id, 'Position', pos(position));
@@ -682,6 +684,8 @@ export function createFloor(world: World, position: Vec3, _size: Vec3): EntityId
     meshId: MeshId.Floor,
     visible: true,
     scale: 1,
+    scaleX: size.x,
+    scaleZ: size.z,
   });
 
   return id;
@@ -710,6 +714,8 @@ export function createHazard(
     meshId: HAZARD_MESH_MAP[hazardType],
     visible: true,
     scale: 1,
+    scaleX: size.x,
+    scaleZ: size.z,
   });
   world.addComponent(id, 'HazardTag', {});
 

@@ -512,6 +512,8 @@ export interface Renderable {
   meshId: MeshId;
   visible: boolean;
   scale: number;
+  scaleX?: number;
+  scaleZ?: number;
 }
 
 // ── Tags (marker components — no data) ─────────────────────────────────────

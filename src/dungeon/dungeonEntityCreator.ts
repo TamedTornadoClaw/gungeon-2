@@ -385,6 +385,19 @@ export function createDungeonEntities(
     }
   }
 
+  // Build a set of all floor-covered areas (rooms) to avoid corridor overlap
+  const floorCoverage = new Set<string>();
+  for (const room of dungeonData.rooms) {
+    const min = room.bounds.min;
+    const max = room.bounds.max;
+    // Mark 1x1 tiles covered by this room
+    for (let x = Math.floor(min.x); x < Math.ceil(max.x); x++) {
+      for (let z = Math.floor(min.z); z < Math.ceil(max.z); z++) {
+        floorCoverage.add(`${x},${z}`);
+      }
+    }
+  }
+
   // Corridor walls and floor tiles
   for (const corridor of dungeonData.corridors) {
     const startX = Math.min(corridor.start.x, corridor.end.x);
@@ -395,14 +408,20 @@ export function createDungeonEntities(
     const corH = endZ - startZ;
     const isHorizontal = corW > corH;
 
-    // Floor tile for corridor
-    if (corW > 0 || corH > 0) {
-      const fId = createFloor(
-        world,
-        { x: startX + corW / 2, y: 0, z: startZ + corH / 2 },
-        { x: corW, y: 0, z: corH },
-      );
-      result.floorIds.push(fId);
+    // Create individual 1x1 corridor floor tiles, skipping already-covered areas
+    for (let x = Math.floor(startX); x < Math.ceil(endX); x++) {
+      for (let z = Math.floor(startZ); z < Math.ceil(endZ); z++) {
+        const key = `${x},${z}`;
+        if (!floorCoverage.has(key)) {
+          floorCoverage.add(key);
+          const fId = createFloor(
+            world,
+            { x: x + 0.5, y: 0, z: z + 0.5 },
+            { x: 1, y: 0, z: 1 },
+          );
+          result.floorIds.push(fId);
+        }
+      }
     }
 
     // Corridor walls clipped to room boundaries (#407)
