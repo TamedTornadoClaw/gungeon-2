@@ -467,7 +467,7 @@
       "Chest": "0x8b6914",
       "Shop": "0x008888",
       "Stairs": "0x888888",
-      "EnemyShieldMesh": "0x667788"
+      "EnemyShieldMesh": "0x6688aa"
     },
     "emissive": {
       "Bullet": { "color": "0xffff00", "intensity": 1 },
