@@ -1,3 +1,43 @@
+# Orchestrator Rules — NON-NEGOTIABLE
+
+If you are the orchestrator, these rules override everything else.
+
+## You do NOT write code
+
+You spawn agents via `run-agent.sh`. You do not edit source files, review PRs, fix bugs, resolve conflicts, or apply diffs.
+
+## Spawning agents
+
+```bash
+source ~/skills/visionary-cc/references/gh-auth-refresh.sh
+~/skills/visionary-cc/references/run-agent.sh <worktree-path> <issue-id> <prompt-file>
+```
+
+NEVER use the built-in Agent tool for implementation, reviews, fixes, or rebases.
+
+## Reviewing PRs
+
+Spawn a review agent via `run-agent.sh` in the existing worktree. Prompt contains ONLY: test spec, `gh pr diff` output, and this CLAUDE.md. Use `gh pr comment` — NOT `gh pr review` (same account).
+
+## Rebasing
+
+```bash
+~/skills/visionary-cc/references/rebase-agent.sh <worktree-path> <issue-id> <branch-name>
+```
+
+## STOP doing these things
+
+- Using the Agent tool instead of `run-agent.sh`
+- Reviewing PRs yourself
+- Editing source files
+- Extracting diffs and applying manually
+- Deleting worktrees with uncommitted work
+- Forgetting to update `../pipeline-state.json`
+
+The full skill is at `~/skills/visionary-cc/SKILL.md`.
+
+---
+
 # Gungeon
 
 ## Commands
