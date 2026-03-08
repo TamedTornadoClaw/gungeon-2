@@ -17,12 +17,16 @@ export interface GameplayStore {
   floorDepth: number;
   activeSlot: WeaponSlot;
   activeGun: GunHUDData | null;
+  sidearmGun: GunHUDData | null;
+  longArmGun: GunHUDData | null;
 
   setHealth: (current: number, max: number) => void;
   setCurrency: (amount: number) => void;
   setFloorDepth: (depth: number) => void;
   setActiveSlot: (slot: WeaponSlot) => void;
   setActiveGun: (gun: GunHUDData | null) => void;
+  setSidearmGun: (gun: GunHUDData | null) => void;
+  setLongArmGun: (gun: GunHUDData | null) => void;
 }
 
 export const useGameplayStore = create<GameplayStore>()((set) => ({
@@ -32,10 +36,14 @@ export const useGameplayStore = create<GameplayStore>()((set) => ({
   floorDepth: 1,
   activeSlot: WeaponSlot.Sidearm,
   activeGun: null,
+  sidearmGun: null,
+  longArmGun: null,
 
   setHealth: (current, max) => set({ currentHealth: current, maxHealth: max }),
   setCurrency: (amount) => set({ currency: amount }),
   setFloorDepth: (depth) => set({ floorDepth: depth }),
   setActiveSlot: (slot) => set({ activeSlot: slot }),
   setActiveGun: (gun) => set({ activeGun: gun }),
+  setSidearmGun: (gun) => set({ sidearmGun: gun }),
+  setLongArmGun: (gun) => set({ longArmGun: gun }),
 }));

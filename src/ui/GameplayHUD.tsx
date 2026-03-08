@@ -1,6 +1,6 @@
 import { AppState, GunType, WeaponSlot } from '../ecs/components';
 import { useAppStore } from '../store/appStore';
-import { useGameplayStore } from '../store/gameplayStore';
+import { useGameplayStore, type GunHUDData } from '../store/gameplayStore';
 
 const SLOT_LABELS: Record<WeaponSlot, string> = {
   [WeaponSlot.Sidearm]: 'Sidearm',
@@ -76,6 +76,54 @@ const MINIMAP_PLACEHOLDER: React.CSSProperties = {
   color: 'rgba(255,255,255,0.5)',
 };
 
+function WeaponSlotDisplay({
+  gun,
+  slot,
+  isActive,
+  testId,
+}: {
+  gun: GunHUDData | null;
+  slot: WeaponSlot;
+  isActive: boolean;
+  testId: string;
+}) {
+  if (!gun) {
+    return (
+      <div style={{ fontSize: 14, opacity: 0.4, marginBottom: slot === WeaponSlot.Sidearm ? 4 : 0 }}>
+        {SLOT_LABELS[slot]}: —
+      </div>
+    );
+  }
+
+  return (
+    <div
+      data-testid={testId}
+      style={{
+        fontSize: 14,
+        fontWeight: isActive ? 'bold' : 'normal',
+        opacity: isActive ? 1 : 0.4,
+        marginBottom: slot === WeaponSlot.Sidearm ? 4 : 0,
+      }}
+    >
+      <span>
+        {SLOT_LABELS[slot]}: {GUN_TYPE_LABELS[gun.gunType]}
+      </span>
+      {isActive && gun.isReloading ? (
+        <span data-testid="reload-indicator" style={{ color: '#ff9800', marginLeft: 8 }}>
+          RELOADING
+        </span>
+      ) : (
+        <span
+          data-testid={isActive ? 'ammo-display' : undefined}
+          style={{ marginLeft: 8 }}
+        >
+          {gun.currentAmmo} / {gun.magazineSize}
+        </span>
+      )}
+    </div>
+  );
+}
+
 export function GameplayHUD() {
   const currentState = useAppStore((s) => s.currentState);
   const currentHealth = useGameplayStore((s) => s.currentHealth);
@@ -83,7 +131,8 @@ export function GameplayHUD() {
   const currency = useGameplayStore((s) => s.currency);
   const floorDepth = useGameplayStore((s) => s.floorDepth);
   const activeSlot = useGameplayStore((s) => s.activeSlot);
-  const activeGun = useGameplayStore((s) => s.activeGun);
+  const sidearmGun = useGameplayStore((s) => s.sidearmGun);
+  const longArmGun = useGameplayStore((s) => s.longArmGun);
 
   if (currentState !== AppState.Gameplay) return null;
 
@@ -115,25 +164,20 @@ export function GameplayHUD() {
         </div>
       </div>
 
-      {/* Bottom-right: Gun info */}
+      {/* Bottom-right: Both weapon slots */}
       <div style={BOTTOM_RIGHT}>
-        <div style={{ fontSize: 12, opacity: 0.7 }}>{SLOT_LABELS[activeSlot]}</div>
-        {activeGun && (
-          <>
-            <div style={{ fontSize: 14, fontWeight: 'bold' }}>
-              {GUN_TYPE_LABELS[activeGun.gunType]}
-            </div>
-            {activeGun.isReloading ? (
-              <div data-testid="reload-indicator" style={{ fontSize: 14, color: '#ff9800' }}>
-                RELOADING
-              </div>
-            ) : (
-              <div data-testid="ammo-display" style={{ fontSize: 14 }}>
-                {activeGun.currentAmmo} / {activeGun.magazineSize}
-              </div>
-            )}
-          </>
-        )}
+        <WeaponSlotDisplay
+          gun={sidearmGun}
+          slot={WeaponSlot.Sidearm}
+          isActive={activeSlot === WeaponSlot.Sidearm}
+          testId="weapon-slot-sidearm"
+        />
+        <WeaponSlotDisplay
+          gun={longArmGun}
+          slot={WeaponSlot.LongArm}
+          isActive={activeSlot === WeaponSlot.LongArm}
+          testId="weapon-slot-longarm"
+        />
       </div>
 
       {/* Top-right: Floor depth + Minimap */}

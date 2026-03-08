@@ -35,6 +35,22 @@ describe('GameplayHUD', () => {
         reloadTimer: 0,
         reloadTime: 1.5,
       },
+      sidearmGun: {
+        gunType: GunType.Pistol,
+        currentAmmo: 8,
+        magazineSize: 12,
+        isReloading: false,
+        reloadTimer: 0,
+        reloadTime: 1.5,
+      },
+      longArmGun: {
+        gunType: GunType.Shotgun,
+        currentAmmo: 4,
+        magazineSize: 6,
+        isReloading: false,
+        reloadTimer: 0,
+        reloadTime: 2.0,
+      },
     });
   });
 
@@ -105,15 +121,15 @@ describe('GameplayHUD', () => {
     expect(depth.textContent).toBe('Floor 3');
   });
 
-  it('displays ammo when not reloading', () => {
+  it('displays ammo for active weapon when not reloading', () => {
     render(<GameplayHUD />);
     const ammo = screen.getByTestId('ammo-display');
     expect(ammo.textContent).toBe('8 / 12');
   });
 
-  it('displays reload indicator when reloading', () => {
+  it('displays reload indicator when active weapon is reloading', () => {
     useGameplayStore.setState({
-      activeGun: {
+      sidearmGun: {
         gunType: GunType.Pistol,
         currentAmmo: 0,
         magazineSize: 12,
@@ -127,31 +143,53 @@ describe('GameplayHUD', () => {
     expect(screen.getByTestId('reload-indicator').textContent).toBe('RELOADING');
   });
 
-  it('displays gun type name', () => {
+  it('displays both weapon slots', () => {
     render(<GameplayHUD />);
-    expect(screen.getByText('Pistol')).toBeDefined();
+    expect(screen.getByTestId('weapon-slot-sidearm')).toBeDefined();
+    expect(screen.getByTestId('weapon-slot-longarm')).toBeDefined();
   });
 
-  it('displays active slot label', () => {
+  it('active weapon slot is bold and full opacity', () => {
     render(<GameplayHUD />);
-    expect(screen.getByText('Sidearm')).toBeDefined();
+    const sidearm = screen.getByTestId('weapon-slot-sidearm');
+    expect(sidearm.style.fontWeight).toBe('bold');
+    expect(sidearm.style.opacity).toBe('1');
   });
 
-  it('displays Long Arm slot label when active', () => {
+  it('inactive weapon slot is dimmed', () => {
+    render(<GameplayHUD />);
+    const longarm = screen.getByTestId('weapon-slot-longarm');
+    expect(longarm.style.fontWeight).toBe('normal');
+    expect(longarm.style.opacity).toBe('0.4');
+  });
+
+  it('displays gun type name for sidearm', () => {
+    render(<GameplayHUD />);
+    const sidearm = screen.getByTestId('weapon-slot-sidearm');
+    expect(sidearm.textContent).toContain('Pistol');
+  });
+
+  it('displays gun type name for long arm', () => {
+    render(<GameplayHUD />);
+    const longarm = screen.getByTestId('weapon-slot-longarm');
+    expect(longarm.textContent).toContain('Shotgun');
+  });
+
+  it('displays active slot label in weapon display', () => {
+    render(<GameplayHUD />);
+    const sidearm = screen.getByTestId('weapon-slot-sidearm');
+    expect(sidearm.textContent).toContain('Sidearm');
+  });
+
+  it('displays Long Arm slot when active', () => {
     useGameplayStore.setState({
       activeSlot: WeaponSlot.LongArm,
-      activeGun: {
-        gunType: GunType.Shotgun,
-        currentAmmo: 4,
-        magazineSize: 6,
-        isReloading: false,
-        reloadTimer: 0,
-        reloadTime: 2.0,
-      },
     });
     render(<GameplayHUD />);
-    expect(screen.getByText('Long Arm')).toBeDefined();
-    expect(screen.getByText('Shotgun')).toBeDefined();
+    const longarm = screen.getByTestId('weapon-slot-longarm');
+    expect(longarm.style.fontWeight).toBe('bold');
+    expect(longarm.style.opacity).toBe('1');
+    expect(longarm.textContent).toContain('Shotgun');
   });
 
   it('displays minimap placeholder', () => {
@@ -167,8 +205,8 @@ describe('GameplayHUD', () => {
     expect(fill.style.width).toBe('0%');
   });
 
-  it('handles null activeGun gracefully', () => {
-    useGameplayStore.setState({ activeGun: null });
+  it('handles null guns gracefully', () => {
+    useGameplayStore.setState({ activeGun: null, sidearmGun: null, longArmGun: null });
     render(<GameplayHUD />);
     expect(screen.getByTestId('gameplay-hud')).toBeDefined();
     expect(screen.queryByTestId('ammo-display')).toBeNull();
@@ -185,6 +223,8 @@ describe('gameplayStore', () => {
       floorDepth: 1,
       activeSlot: WeaponSlot.Sidearm,
       activeGun: null,
+      sidearmGun: null,
+      longArmGun: null,
     });
   });
 
@@ -221,5 +261,31 @@ describe('gameplayStore', () => {
     };
     useGameplayStore.getState().setActiveGun(gun);
     expect(useGameplayStore.getState().activeGun).toEqual(gun);
+  });
+
+  it('setSidearmGun updates sidearm data', () => {
+    const gun = {
+      gunType: GunType.Pistol,
+      currentAmmo: 10,
+      magazineSize: 12,
+      isReloading: false,
+      reloadTimer: 0,
+      reloadTime: 1.5,
+    };
+    useGameplayStore.getState().setSidearmGun(gun);
+    expect(useGameplayStore.getState().sidearmGun).toEqual(gun);
+  });
+
+  it('setLongArmGun updates long arm data', () => {
+    const gun = {
+      gunType: GunType.AssaultRifle,
+      currentAmmo: 28,
+      magazineSize: 30,
+      isReloading: false,
+      reloadTimer: 0,
+      reloadTime: 2.0,
+    };
+    useGameplayStore.getState().setLongArmGun(gun);
+    expect(useGameplayStore.getState().longArmGun).toEqual(gun);
   });
 });
