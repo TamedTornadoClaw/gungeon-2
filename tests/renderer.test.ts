@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import * as fc from 'fast-check';
 import * as THREE from 'three';
 import {
@@ -19,7 +19,7 @@ import type {
 import { World } from '../src/ecs/world';
 import { createSceneManager, type SceneManager } from '../src/rendering/sceneManager';
 import { createInstancedRenderer, type InstancedRenderer } from '../src/rendering/instancedRenderer';
-import { createRenderSystem, type RenderSystem, type RendererContext } from '../src/rendering/renderer';
+import { createRenderSystem, mountRenderer, unmountRenderer, type RenderSystem, type RendererContext } from '../src/rendering/renderer';
 import { createCameraController } from '../src/rendering/cameraController';
 import type { EntityId } from '../src/types';
 
@@ -61,6 +61,7 @@ beforeEach(() => {
     instancedRenderer,
     ambientLight: new THREE.AmbientLight(),
     directionalLight: new THREE.DirectionalLight(),
+    _resizeCleanup: null,
   };
 
   renderSystem = createRenderSystem(ctx);
@@ -245,6 +246,7 @@ describe('position interpolation', () => {
             instancedRenderer: ir,
             ambientLight: new THREE.AmbientLight(),
             directionalLight: new THREE.DirectionalLight(),
+            _resizeCleanup: null,
           };
           const rs = createRenderSystem(testCtx);
 
@@ -584,5 +586,122 @@ describe('edge cases', () => {
 
     renderSystem.releaseAll();
     expect(renderSystem.getMeshMap().size).toBe(0);
+  });
+});
+
+// ── Window resize handling ──────────────────────────────────────────────────
+
+describe('window resize handling', () => {
+  let resizeListeners: Array<() => void>;
+  let origAddEventListener: typeof globalThis.window.addEventListener;
+  let origRemoveEventListener: typeof globalThis.window.removeEventListener;
+
+  function createMockContainer(width: number, height: number): HTMLElement {
+    let w = width;
+    let h = height;
+    const el = {
+      getBoundingClientRect: () => ({
+        width: w, height: h, x: 0, y: 0, top: 0, right: w, bottom: h, left: 0,
+        toJSON: () => ({}),
+      }),
+      appendChild: () => {},
+      setDimensions: (nw: number, nh: number) => { w = nw; h = nh; },
+    } as unknown as HTMLElement & { setDimensions: (w: number, h: number) => void };
+    return el;
+  }
+
+  beforeEach(() => {
+    resizeListeners = [];
+    // Mock window.addEventListener/removeEventListener for resize events
+    const mockWindow = {
+      addEventListener: (event: string, handler: EventListener) => {
+        if (event === 'resize') resizeListeners.push(handler as () => void);
+      },
+      removeEventListener: (event: string, handler: EventListener) => {
+        if (event === 'resize') {
+          resizeListeners = resizeListeners.filter((h) => h !== handler);
+        }
+      },
+    };
+    origAddEventListener = globalThis.window?.addEventListener;
+    origRemoveEventListener = globalThis.window?.removeEventListener;
+    if (!globalThis.window) {
+      (globalThis as Record<string, unknown>).window = {};
+    }
+    globalThis.window.addEventListener = mockWindow.addEventListener as typeof window.addEventListener;
+    globalThis.window.removeEventListener = mockWindow.removeEventListener as typeof window.removeEventListener;
+  });
+
+  afterEach(() => {
+    if (origAddEventListener) {
+      globalThis.window.addEventListener = origAddEventListener;
+      globalThis.window.removeEventListener = origRemoveEventListener;
+    }
+  });
+
+  function fireResize(): void {
+    for (const handler of resizeListeners) handler();
+  }
+
+  it('mountRenderer registers a resize listener', () => {
+    const container = createMockContainer(800, 600);
+
+    mountRenderer(ctx, container);
+
+    expect(resizeListeners.length).toBe(1);
+    expect(ctx._resizeCleanup).toBeTypeOf('function');
+
+    unmountRenderer(ctx);
+  });
+
+  it('resize handler calls renderer.setSize and updates camera.aspect', () => {
+    const setSizeSpy = vi.spyOn(ctx.renderer, 'setSize');
+    const updateProjSpy = vi.spyOn(ctx.camera, 'updateProjectionMatrix');
+
+    const container = createMockContainer(800, 600) as HTMLElement & { setDimensions: (w: number, h: number) => void };
+    mountRenderer(ctx, container);
+
+    // Change container dimensions and fire resize
+    container.setDimensions(1024, 768);
+    fireResize();
+
+    expect(setSizeSpy).toHaveBeenCalledWith(1024, 768);
+    expect(ctx.camera.aspect).toBeCloseTo(1024 / 768, 5);
+    expect(updateProjSpy).toHaveBeenCalled();
+
+    setSizeSpy.mockRestore();
+    updateProjSpy.mockRestore();
+    unmountRenderer(ctx);
+  });
+
+  it('unmountRenderer removes the resize listener', () => {
+    const container = createMockContainer(800, 600);
+
+    mountRenderer(ctx, container);
+    expect(resizeListeners.length).toBe(1);
+    expect(ctx._resizeCleanup).not.toBeNull();
+
+    unmountRenderer(ctx);
+
+    expect(resizeListeners.length).toBe(0);
+    expect(ctx._resizeCleanup).toBeNull();
+  });
+
+  it('zero-dimension container skips resize', () => {
+    const setSizeSpy = vi.spyOn(ctx.renderer, 'setSize');
+    const container = createMockContainer(800, 600) as HTMLElement & { setDimensions: (w: number, h: number) => void };
+    mountRenderer(ctx, container);
+
+    // Clear calls from mountRenderer itself
+    setSizeSpy.mockClear();
+
+    // Simulate zero-width container
+    container.setDimensions(0, 0);
+    fireResize();
+
+    expect(setSizeSpy).not.toHaveBeenCalled();
+
+    setSizeSpy.mockRestore();
+    unmountRenderer(ctx);
   });
 });
