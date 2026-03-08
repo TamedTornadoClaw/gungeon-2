@@ -38,6 +38,7 @@ import {
   effectsPipelineSystem,
   type EffectsBuffer,
 } from '../systems/effectsPipelineSystem';
+import { syncHUDSystem } from '../systems/syncHUDSystem';
 import type { Position, Collider } from '../ecs/components';
 
 export { gunStatSystem } from '../systems/gunStatSystem';
@@ -201,6 +202,9 @@ export function createGameLoop(deps: GameLoopDeps): GameLoop {
 
     // 26. Effects Pipeline (buffer DamageNumber, ScreenShake, HitFlash for render)
     effectsPipelineSystem(eventQueue, deps.effectsBuffer);
+
+    // 27. Sync HUD
+    syncHUDSystem(world);
 
     // Clear event queue for next step
     eventQueue.clear();
