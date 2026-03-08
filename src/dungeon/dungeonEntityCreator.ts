@@ -155,20 +155,12 @@ export function createDungeonEntities(
     }
   }
 
-  // ── Step 2: Create room entities (floors, contents) ────────────────────
+  // ── Step 2: Create room contents (hazards, destructibles, chests, etc.) ─
   for (const room of dungeonData.rooms) {
     const min = room.bounds.min;
     const max = room.bounds.max;
     const roomW = max.x - min.x;
     const roomH = max.z - min.z;
-
-    // Floor tile for room
-    const floorId = createFloor(
-      world,
-      { x: min.x + roomW / 2, y: 0, z: min.z + roomH / 2 },
-      { x: roomW, y: 0, z: roomH },
-    );
-    result.floorIds.push(floorId);
 
     // Spawn zones — skip in starting room to prevent instant player death (#396)
     const isStartingRoom = startingRoom === room;
@@ -223,38 +215,63 @@ export function createDungeonEntities(
     }
   }
 
-  // ── Step 3: Create corridor floor tiles ────────────────────────────────
-  // Track which tiles already have room floors to avoid double-creating
-  const roomFloorCoverage = new Set<string>();
-  for (const room of dungeonData.rooms) {
-    const min = room.bounds.min;
-    const max = room.bounds.max;
-    for (let x = Math.floor(min.x); x < Math.ceil(max.x); x++) {
-      for (let z = Math.floor(min.z); z < Math.ceil(max.z); z++) {
-        roomFloorCoverage.add(`${x},${z}`);
-      }
+  // ── Step 3: Create floor entities via flood-fill + greedy rect merge ────
+  // Flood-fill finds connected floor regions, then greedily merges tiles
+  // into maximal-width rectangles (up to MAX_FLOOR_RECT tiles per side).
+  // This produces ~1 entity per room + a few for corridors, with no seams.
+  const MAX_FLOOR_RECT = 64;
+  const visited = new Set<string>();
+
+  for (const key of floorCoverage) {
+    if (visited.has(key)) continue;
+
+    // Parse seed tile
+    const [xStr, zStr] = key.split(',');
+    const seedX = parseInt(xStr, 10);
+    const seedZ = parseInt(zStr, 10);
+
+    // Greedy rectangle expansion from this tile:
+    // 1. Expand width (x) as far as possible
+    let maxX = seedX;
+    while (
+      maxX - seedX < MAX_FLOOR_RECT &&
+      floorCoverage.has(`${maxX + 1},${seedZ}`) &&
+      !visited.has(`${maxX + 1},${seedZ}`)
+    ) {
+      maxX++;
     }
-  }
-  const corridorFloorCreated = new Set<string>();
-  for (const corridor of dungeonData.corridors) {
-    const startX = Math.min(corridor.start.x, corridor.end.x);
-    const endX = Math.max(corridor.start.x, corridor.end.x);
-    const startZ = Math.min(corridor.start.z, corridor.end.z);
-    const endZ = Math.max(corridor.start.z, corridor.end.z);
-    for (let x = Math.floor(startX); x < Math.ceil(endX); x++) {
-      for (let z = Math.floor(startZ); z < Math.ceil(endZ); z++) {
-        const key = `${x},${z}`;
-        if (!roomFloorCoverage.has(key) && !corridorFloorCreated.has(key)) {
-          corridorFloorCreated.add(key);
-          const fId = createFloor(
-            world,
-            { x: x + 0.5, y: 0, z: z + 0.5 },
-            { x: 1, y: 0, z: 1 },
-          );
-          result.floorIds.push(fId);
+
+    // 2. Expand height (z) as far as all columns in the row are present
+    let maxZ = seedZ;
+    let canExpand = true;
+    while (canExpand && maxZ - seedZ < MAX_FLOOR_RECT) {
+      const nextZ = maxZ + 1;
+      for (let x = seedX; x <= maxX; x++) {
+        const k = `${x},${nextZ}`;
+        if (!floorCoverage.has(k) || visited.has(k)) {
+          canExpand = false;
+          break;
         }
       }
+      if (canExpand) maxZ = nextZ;
     }
+
+    // Mark all tiles in this rect as visited
+    for (let x = seedX; x <= maxX; x++) {
+      for (let z = seedZ; z <= maxZ; z++) {
+        visited.add(`${x},${z}`);
+      }
+    }
+
+    // Create floor entity for this rect
+    const w = maxX - seedX + 1;
+    const h = maxZ - seedZ + 1;
+    const fId = createFloor(
+      world,
+      { x: seedX + w / 2, y: 0, z: seedZ + h / 2 },
+      { x: w, y: 0, z: h },
+    );
+    result.floorIds.push(fId);
   }
 
   // ── Step 4: Generate walls from grid boundaries ────────────────────────

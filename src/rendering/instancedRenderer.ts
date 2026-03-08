@@ -224,7 +224,23 @@ export function createInstancedRenderer(sceneManager: SceneManager): InstancedRe
       }
     }
 
-    return new THREE.MeshToonMaterial(params);
+    const mat = new THREE.MeshToonMaterial(params);
+
+    // Floor uses world-space UV projection so texture tiles seamlessly
+    // across all floor entities regardless of size or position.
+    if (meshId === MeshId.Floor) {
+      mat.onBeforeCompile = (shader) => {
+        // Replace UV lookup with world-space xz projection
+        shader.vertexShader = shader.vertexShader.replace(
+          '#include <uv_vertex>',
+          `#include <uv_vertex>
+           vec4 floorWorldPos = modelMatrix * instanceMatrix * vec4(position, 1.0);
+           vMapUv = floorWorldPos.xz;`,
+        );
+      };
+    }
+
+    return mat;
   }
 
   function isDungeonMesh(meshId: MeshId): boolean {

@@ -424,8 +424,8 @@
       "Shotgunner": 10,
       "Rifleman": 10,
       "SuicideBomber": 10,
-      "Wall": 200,
-      "Floor": 200,
+      "Wall": 500,
+      "Floor": 2000,
       "Crate": 20,
       "Pillar": 10,
       "Barrel": 10
