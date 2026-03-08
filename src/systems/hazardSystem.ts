@@ -1,14 +1,14 @@
 import { World } from '../ecs/world';
 import { EventQueue } from '../gameloop/events';
 import { EventType } from '../ecs/components';
-import type { DamageOverTime, Position } from '../ecs/components';
+import type { DamageOverTime, Position, SpeedModifier } from '../ecs/components';
 
 /**
  * HazardSystem — Position 12 in game loop.
  *
  * Emits DamageEvents for entities with DamageOverTime + Health,
- * then sets refreshed = false so ExpireModifiersSystem can clean up
- * un-refreshed modifiers.
+ * then sets refreshed = false on both DamageOverTime and SpeedModifier
+ * so ExpireModifiersSystem can clean up un-refreshed modifiers.
  */
 export function hazardSystem(world: World, eventQueue: EventQueue, dt: number): void {
   const entities = world.query(['DamageOverTime', 'Health']);
@@ -29,5 +29,15 @@ export function hazardSystem(world: World, eventQueue: EventQueue, dt: number): 
     });
 
     dot.refreshed = false;
+  }
+
+  // Mark SpeedModifiers for expiry — CollisionResponse will re-refresh
+  // any that are still active from ongoing hazard overlap
+  const speedEntities = world.query(['SpeedModifier']);
+  for (const id of speedEntities) {
+    const mod = world.getComponent<SpeedModifier>(id, 'SpeedModifier');
+    if (mod) {
+      mod.refreshed = false;
+    }
   }
 }
