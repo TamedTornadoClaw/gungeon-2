@@ -70,7 +70,7 @@ const MESH_GEOMETRIES: Record<MeshId, () => THREE.BufferGeometry> = {
   [MeshId.Chest]: () => new THREE.BoxGeometry(0.8, 0.6, 0.6),
   [MeshId.Shop]: () => new THREE.BoxGeometry(1, 1, 0.8),
   [MeshId.Stairs]: () => createStairsGeometry(),
-  [MeshId.EnemyShieldMesh]: () => new THREE.PlaneGeometry(1.2, 1.8),
+  [MeshId.EnemyShieldMesh]: () => new THREE.PlaneGeometry(0.5, 0.8),
 };
 
 /** MeshIds that skip outline generation — structural, not tunable */
