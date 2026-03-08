@@ -72,7 +72,7 @@ const MESH_GEOMETRIES: Record<MeshId, () => THREE.BufferGeometry> = {
   [MeshId.Crate]: () => baseOrigin(new THREE.BoxGeometry(0.5, 0.5, 0.5), 0.5),
   [MeshId.Pillar]: () => baseOrigin(new THREE.CylinderGeometry(0.4, 0.4, 2, 12), 2),
   [MeshId.Barrel]: () => baseOrigin(new THREE.CylinderGeometry(0.4, 0.4, 1, 12), 1),
-  [MeshId.Door]: () => baseOrigin(new THREE.BoxGeometry(1, 1.5, 0.15), 1.5),
+  [MeshId.Door]: () => baseOrigin(new THREE.BoxGeometry(1, 3, 1), 3),
   [MeshId.Chest]: () => baseOrigin(new THREE.BoxGeometry(0.8, 0.6, 0.6), 0.6),
   [MeshId.Shop]: () => baseOrigin(new THREE.BoxGeometry(1, 1, 0.8), 1),
   [MeshId.Stairs]: () => createStairsGeometry(),

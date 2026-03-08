@@ -113,13 +113,17 @@ function revealNearbyDungeonEntities(
     const renderable = world.getComponent<Renderable>(item.id, 'Renderable');
     if (!renderable) continue;
 
-    // Distance check (rect query overshoots at corners)
-    const dx = item.x - playerPos.x;
-    const dz = item.z - playerPos.z;
+    // Use nearest point on entity AABB to player for both distance and LOS.
+    // This prevents long merged walls from failing LOS checks when the player
+    // is near one end but the center is far away or behind a perpendicular wall.
+    const nearX = Math.max(item.x - item.halfW, Math.min(playerPos.x, item.x + item.halfW));
+    const nearZ = Math.max(item.z - item.halfD, Math.min(playerPos.z, item.z + item.halfD));
+    const dx = nearX - playerPos.x;
+    const dz = nearZ - playerPos.z;
     const dist = Math.sqrt(dx * dx + dz * dz);
     if (dist > radius) continue;
 
-    // LOS check: raycast from player to entity against walls + closed doors
+    // LOS check: raycast from player to nearest visible point
     if (dist > 0.01) {
       if (isOccludedByWalls(world, staticTree, playerPos, dx, dz, dist, item.id)) continue;
     }

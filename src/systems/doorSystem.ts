@@ -1,7 +1,7 @@
 import { World } from '../ecs/world';
 import { EventQueue } from '../gameloop/events';
 import { EventType, SoundId } from '../ecs/components';
-import type { Door, Collider, Position } from '../ecs/components';
+import type { Door, Collider, Position, Renderable } from '../ecs/components';
 
 /**
  * DoorSystem — consumes DoorInteract events and opens closed doors.
@@ -9,6 +9,7 @@ import type { Door, Collider, Position } from '../ecs/components';
  * When a closed door receives a DoorInteract event:
  *   - Sets door.isOpen = true
  *   - Sets collider.isTrigger = true (no longer blocks movement)
+ *   - Hides the door mesh (renderable.visible = false)
  *   - Emits AudioEvent(DoorOpen) at the door's position
  *
  * Already-open doors are ignored (idempotent).
@@ -38,6 +39,12 @@ export function doorSystem(world: World, eventQueue: EventQueue): void {
     const collider = world.getComponent<Collider>(doorEntity, 'Collider');
     if (collider) {
       collider.isTrigger = true;
+    }
+
+    // Hide the door mesh so the passage is visually clear
+    const renderable = world.getComponent<Renderable>(doorEntity, 'Renderable');
+    if (renderable) {
+      renderable.visible = false;
     }
 
     const position = world.getComponent<Position>(doorEntity, 'Position');

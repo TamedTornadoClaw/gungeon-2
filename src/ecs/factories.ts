@@ -757,18 +757,27 @@ export function createDestructible(
   return id;
 }
 
-export function createDoor(world: World, position: Vec3): EntityId {
+export function createDoor(
+  world: World,
+  position: Vec3,
+  spansX: boolean = true,
+  corridorWidth: number = 7,
+): EntityId {
   const params = getDesignParams();
-  const doorCollider = params.entityColliders.door;
+  const wt = params.dungeon.wallThickness;
   const id = world.createEntity();
+
+  // Door fills the corridor opening: wide along the corridor cross-axis, thin like a wall
+  const doorWidth = spansX ? corridorWidth : wt;
+  const doorDepth = spansX ? wt : corridorWidth;
 
   world.addComponent<Position>(id, 'Position', pos(position));
   world.addComponent<Door>(id, 'Door', { isOpen: false });
   world.addComponent<Collider>(id, 'Collider', {
     type: ColliderShape.AABB,
-    width: doorCollider.width,
-    height: doorCollider.height,
-    depth: doorCollider.depth,
+    width: doorWidth,
+    height: params.dungeon.wallHeight,
+    depth: doorDepth,
     isStatic: true,
     isTrigger: false,
   });
@@ -776,6 +785,8 @@ export function createDoor(world: World, position: Vec3): EntityId {
     meshId: MeshId.Door,
     visible: false,
     scale: 1,
+    scaleX: doorWidth,
+    scaleZ: doorDepth,
   });
   world.addComponent(id, 'DoorTag', {});
   world.addComponent(id, 'DungeonEntityTag', {});

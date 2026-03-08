@@ -43,11 +43,18 @@ function pointInsideRoom(px: number, pz: number, room: Room): boolean {
   );
 }
 
+interface DoorPlacement {
+  position: Vec3;
+  /** true when the door spans the X axis (blocks a vertical corridor) */
+  spansX: boolean;
+}
+
 /**
  * Find positions where doors should be placed at room wall boundaries.
+ * Returns orientation so the door can be sized to fill the corridor opening.
  */
-function findDoorPositions(corridor: Corridor, rooms: Room[]): Vec3[] {
-  const positions: Vec3[] = [];
+function findDoorPositions(corridor: Corridor, rooms: Room[]): DoorPlacement[] {
+  const placements: DoorPlacement[] = [];
   const cStartX = Math.min(corridor.start.x, corridor.end.x);
   const cEndX = Math.max(corridor.start.x, corridor.end.x);
   const cStartZ = Math.min(corridor.start.z, corridor.end.z);
@@ -60,29 +67,31 @@ function findDoorPositions(corridor: Corridor, rooms: Room[]): Vec3[] {
     const rMax = room.bounds.max;
 
     if (isHorizontal) {
+      // Corridor runs along X — door blocks X movement, spans Z axis
       const midZ = (cStartZ + cEndZ) / 2;
       if (midZ >= rMin.z && midZ <= rMax.z) {
         if (cStartX >= rMin.x && cStartX <= rMax.x && cEndX > rMax.x) {
-          positions.push({ x: rMax.x, y: 0, z: midZ });
+          placements.push({ position: { x: rMax.x, y: 0, z: midZ }, spansX: false });
         }
         if (cEndX >= rMin.x && cEndX <= rMax.x && cStartX < rMin.x) {
-          positions.push({ x: rMin.x, y: 0, z: midZ });
+          placements.push({ position: { x: rMin.x, y: 0, z: midZ }, spansX: false });
         }
       }
     } else {
+      // Corridor runs along Z — door blocks Z movement, spans X axis
       const midX = (cStartX + cEndX) / 2;
       if (midX >= rMin.x && midX <= rMax.x) {
         if (cStartZ >= rMin.z && cStartZ <= rMax.z && cEndZ > rMax.z) {
-          positions.push({ x: midX, y: 0, z: rMax.z });
+          placements.push({ position: { x: midX, y: 0, z: rMax.z }, spansX: true });
         }
         if (cEndZ >= rMin.z && cEndZ <= rMax.z && cStartZ < rMin.z) {
-          positions.push({ x: midX, y: 0, z: rMin.z });
+          placements.push({ position: { x: midX, y: 0, z: rMin.z }, spansX: true });
         }
       }
     }
   }
 
-  return positions;
+  return placements;
 }
 
 export function createDungeonEntities(
@@ -358,16 +367,24 @@ export function createDungeonEntities(
   }
 
   // ── Step 5: Create doors at room/corridor boundaries ───────────────────
+  const corridorWidth = params.dungeon.corridorWidth;
   for (const corridor of dungeonData.corridors) {
-    const doorPositions = findDoorPositions(corridor, dungeonData.rooms);
-    for (const doorPos of doorPositions) {
-      const doorId = createDoor(world, doorPos);
+    const doorPlacements = findDoorPositions(corridor, dungeonData.rooms);
+    for (const dp of doorPlacements) {
+      const doorId = createDoor(world, dp.position, dp.spansX, corridorWidth);
       result.doorIds.push(doorId);
     }
-    if (doorPositions.length === 0) {
+    if (doorPlacements.length === 0) {
       const midX = (corridor.start.x + corridor.end.x) / 2;
       const midZ = (corridor.start.z + corridor.end.z) / 2;
-      const doorId = createDoor(world, { x: midX, y: 0, z: midZ });
+      // Determine orientation from corridor direction
+      const cStartX = Math.min(corridor.start.x, corridor.end.x);
+      const cEndX = Math.max(corridor.start.x, corridor.end.x);
+      const cStartZ = Math.min(corridor.start.z, corridor.end.z);
+      const cEndZ = Math.max(corridor.start.z, corridor.end.z);
+      const corH = cEndZ - cStartZ;
+      const isHorizontal = Math.abs(corH - corridor.width) < 0.01;
+      const doorId = createDoor(world, { x: midX, y: 0, z: midZ }, !isHorizontal, corridorWidth);
       result.doorIds.push(doorId);
     }
   }

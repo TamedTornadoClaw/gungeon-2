@@ -137,6 +137,28 @@ describe('Fog of War', () => {
     expect(world.hasComponent(floorId, 'Revealed')).toBe(false);
   });
 
+  it('reveals long wall when player is near one end but center is behind a perpendicular wall', () => {
+    const world = new World();
+    createPlayer(world, 0, 0);
+
+    // Long vertical wall (30 units tall) with center at (5, 15).
+    // Player at (0,0) is near the bottom end but far from the center.
+    const longWallId = createWall(world, 5, 15, 1, 30);
+
+    // Perpendicular wall at (3, 8) that would block a ray from (0,0) to
+    // the long wall's center (5, 15) but NOT to its nearest edge (5, 0).
+    createWall(world, 3, 8, 6, 1);
+
+    rebuildStaticWalls(world);
+    rebuildDungeonTree(world);
+    visibilitySystem(world);
+
+    // The long wall must be revealed — the player can see its nearby end
+    const renderable = world.getComponent<Renderable>(longWallId, 'Renderable')!;
+    expect(renderable.visible).toBe(true);
+    expect(world.hasComponent(longWallId, 'Revealed')).toBe(true);
+  });
+
   it('revealed entities stay visible permanently', () => {
     const world = new World();
     const playerId = createPlayer(world, 0, 0);
