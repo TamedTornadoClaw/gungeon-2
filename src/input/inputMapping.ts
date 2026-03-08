@@ -29,8 +29,8 @@ export const DEFAULT_INPUT_MAPPING: InputMapping = {
     BracketLeft: LogicalAction.DebugSpeedDown,
   },
   mouse: {
-    0: LogicalAction.FireSidearm,  // LMB
-    2: LogicalAction.FireLongArm,  // RMB
+    0: LogicalAction.FireLongArm,  // LMB
+    2: LogicalAction.FireSidearm,  // RMB
   },
   gamepadButtons: {
     // Standard gamepad mapping (https://w3c.github.io/gamepad/#remapping)
