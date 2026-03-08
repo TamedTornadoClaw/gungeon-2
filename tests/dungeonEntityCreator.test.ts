@@ -23,7 +23,6 @@ import type {
   Chest,
   Shop,
   Stairs,
-  SpawnZone,
 } from '../src/ecs/components';
 import type { DungeonData, Room, Corridor } from '../src/dungeon/dungeonData';
 import { resetCollisionState } from '../src/systems/collisionDetectionSystem';
@@ -798,7 +797,6 @@ describe('DungeonEntityCreator', () => {
           const cStartZ = Math.min(corridor.start.z, corridor.end.z);
           const cEndZ = Math.max(corridor.start.z, corridor.end.z);
           const zExtent = cEndZ - cStartZ;
-          const xExtent = cEndX - cStartX;
           // Use the width field to determine true orientation
           const isHorizontal = Math.abs(zExtent - corridor.width) < 0.01;
 
@@ -931,11 +929,6 @@ describe('DungeonEntityCreator', () => {
       for (const wallId of result.wallIds) {
         const pos = world.getComponent<Position>(wallId, 'Position')!;
         const collider = world.getComponent<Collider>(wallId, 'Collider')!;
-        const wallMinX = pos.x - collider.width / 2;
-        const wallMaxX = pos.x + collider.width / 2;
-        const wallMinZ = pos.z - collider.depth / 2;
-        const wallMaxZ = pos.z + collider.depth / 2;
-
         // Wall center in intersection zone
         const inZone = pos.x > 17 && pos.x < 23 && pos.z > 17 && pos.z < 23;
         if (inZone) {
@@ -981,7 +974,6 @@ describe('DungeonEntityCreator', () => {
         const collider = world.getComponent<Collider>(wallId, 'Collider')!;
         const cx = pos.x;
         const halfW = collider.width / 2;
-        const halfD = collider.depth / 2;
         // Wall has some part strictly between x=20 and x=25
         return (cx + halfW > 20.5) && (cx - halfW < 24.5);
       });
@@ -997,7 +989,6 @@ describe('DungeonEntityCreator', () => {
 
       // There should NOT be vertical walls at x=20.5 or x=24.5 that span the corridor height
       const blockingVertWalls = corridorRegionWalls.filter((wallId) => {
-        const pos = world.getComponent<Position>(wallId, 'Position')!;
         const collider = world.getComponent<Collider>(wallId, 'Collider')!;
         return collider.width <= 1.5 && collider.depth > 5;
       });

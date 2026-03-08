@@ -2,7 +2,9 @@ import { World } from '../ecs/world';
 import { createEventQueue } from './events';
 import { getDesignParams } from '../config/designParams';
 import { InputManager, type InputState } from '../input/inputManager';
+import { updateCameraOrbit, getCameraRay, type CameraController } from '../rendering/cameraController';
 import { AudioManager } from '../audio/audioManager';
+import { aimRaycast } from '../rendering/aimRaycast';
 import { inputSystem } from '../systems/inputSystem';
 import { playerControlSystem } from '../systems/playerControlSystem';
 import { dodgeRollSystem } from '../systems/dodgeRollSystem';
@@ -41,6 +43,7 @@ import {
 } from '../systems/effectsPipelineSystem';
 import { syncHUDSystem } from '../systems/syncHUDSystem';
 import type { Position, Collider } from '../ecs/components';
+export { buildAimCollisionMesh, disposeAimCollisionMesh } from '../rendering/aimRaycast';
 
 export { gunStatSystem } from '../systems/gunStatSystem';
 export { purchaseShopItem } from '../systems/shopSystem';
@@ -59,6 +62,7 @@ export interface GameLoopDeps {
   world: World;
   inputManager: InputManager;
   audioManager: AudioManager;
+  cameraController: CameraController;
   floorState: FloorState;
   effectsBuffer: EffectsBuffer;
   onRender?: (alpha: number) => void;
@@ -121,6 +125,10 @@ export function createGameLoop(deps: GameLoopDeps): GameLoop {
     // 1. Input
     const input: InputState = inputSystem(inputManager);
 
+    // 1.5. Camera orbit from mouse deltas
+    updateCameraOrbit(deps.cameraController, input.mouseDeltaX, input.mouseDeltaY);
+    input.aimYaw = deps.cameraController.orbitYaw;
+
     // 2. PlayerControl
     playerControlSystem(world, input, dt);
 
@@ -130,8 +138,10 @@ export function createGameLoop(deps: GameLoopDeps): GameLoop {
     // 4. AI
     aiSystem(world, dt, floorState.currentDepth);
 
-    // 5. Projectile
-    projectileSystem(world, dt, eventQueue);
+    // 5. Projectile — aim target from BVH raycast against dungeon geometry
+    const ray = getCameraRay(deps.cameraController);
+    const aimTarget = aimRaycast(ray.ox, ray.oy, ray.oz, ray.dx, ray.dy, ray.dz);
+    projectileSystem(world, dt, eventQueue, aimTarget, Math.random);
 
     // 6. EnemyWeapon
     enemyWeaponSystem(world, dt);

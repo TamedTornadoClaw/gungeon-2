@@ -3,7 +3,14 @@ import { GunType, WeaponSlot, SoundId, ParticleEffect, EventType } from '../ecs/
 import type { Gun, Player, Position, Rotation, Projectile } from '../ecs/components';
 import { createPlayerBullet } from '../ecs/factories';
 import { EventQueue } from '../gameloop/events';
+import { getDesignParams } from '../config/designParams';
 import type { EntityId } from '../types';
+
+export interface AimTarget {
+  x: number;
+  y: number;
+  z: number;
+}
 
 const GUN_FIRE_SOUNDS: Record<GunType, SoundId> = {
   [GunType.Pistol]: SoundId.PistolFire,
@@ -16,11 +23,15 @@ const GUN_FIRE_SOUNDS: Record<GunType, SoundId> = {
 /**
  * ProjectileSystem — handles player gun firing, reload timers, projectile spawning.
  * Runs at position 5 in the game loop, after PlayerControlSystem (2) and DodgeRollSystem (3).
+ *
+ * aimTarget: world XZ point where the camera crosshair hits the ground plane.
+ * Bullets are spawned at a muzzle offset from the player and directed toward this point.
  */
 export function projectileSystem(
   world: World,
   dt: number,
   eventQueue: EventQueue,
+  aimTarget?: AimTarget,
   rng: () => number = Math.random,
 ): void {
   const playerEntities = world.query(['Player', 'Position', 'Rotation']);
@@ -30,8 +41,8 @@ export function projectileSystem(
     const playerPos = world.getComponent<Position>(playerId, 'Position')!;
     const playerRot = world.getComponent<Rotation>(playerId, 'Rotation')!;
 
-    processGun(world, dt, eventQueue, rng, playerId, player.sidearmSlot, WeaponSlot.Sidearm, playerPos, playerRot);
-    processGun(world, dt, eventQueue, rng, playerId, player.longArmSlot, WeaponSlot.LongArm, playerPos, playerRot);
+    processGun(world, dt, eventQueue, rng, playerId, player.sidearmSlot, WeaponSlot.Sidearm, playerPos, playerRot, aimTarget);
+    processGun(world, dt, eventQueue, rng, playerId, player.longArmSlot, WeaponSlot.LongArm, playerPos, playerRot, aimTarget);
   }
 }
 
@@ -45,6 +56,7 @@ function processGun(
   slot: WeaponSlot,
   playerPos: Position,
   playerRot: Rotation,
+  aimTarget?: AimTarget,
 ): void {
   const gun = world.getComponent<Gun>(gunEntityId, 'Gun');
   if (!gun) return;
@@ -73,15 +85,47 @@ function processGun(
       gun.fireCooldown = 1 / gun.fireRate;
       gun.currentAmmo -= 1;
 
-      const aimAngle = playerRot.y;
+      const params = getDesignParams();
+      const { muzzleForwardOffset, muzzleHeight } = params.projectiles;
+
+      // Muzzle position: offset forward from player center
+      const faceFwdX = -Math.sin(playerRot.y);
+      const faceFwdZ = -Math.cos(playerRot.y);
+      const muzzleX = playerPos.x + faceFwdX * muzzleForwardOffset;
+      const muzzleY = muzzleHeight;
+      const muzzleZ = playerPos.z + faceFwdZ * muzzleForwardOffset;
+
+      // 3D aim direction: from muzzle toward BVH raycast hit point,
+      // falling back to the player's facing direction if no aim target.
+      let baseDirX = faceFwdX;
+      let baseDirY = 0;
+      let baseDirZ = faceFwdZ;
+      if (aimTarget) {
+        const toAimX = aimTarget.x - muzzleX;
+        const toAimY = aimTarget.y - muzzleY;
+        const toAimZ = aimTarget.z - muzzleZ;
+        const toAimMag = Math.sqrt(toAimX * toAimX + toAimY * toAimY + toAimZ * toAimZ);
+        if (toAimMag > 0.01) {
+          baseDirX = toAimX / toAimMag;
+          baseDirY = toAimY / toAimMag;
+          baseDirZ = toAimZ / toAimMag;
+        }
+      }
+
+      // Horizontal angle for spread application
+      const baseAngle = Math.atan2(-baseDirX, -baseDirZ);
+      // Pitch angle (elevation)
+      const basePitch = Math.asin(baseDirY);
 
       for (let i = 0; i < gun.projectileCount; i++) {
-        // Spread: random offset within [-spread/2, +spread/2]
+        // Spread: random offset within [-spread/2, +spread/2] on horizontal angle
         const spreadOffset = (rng() - 0.5) * gun.spread;
-        const bulletAngle = aimAngle + spreadOffset;
+        const bulletAngle = baseAngle + spreadOffset;
 
-        const vx = Math.sin(bulletAngle) * gun.projectileSpeed;
-        const vz = Math.cos(bulletAngle) * gun.projectileSpeed;
+        const cp = Math.cos(basePitch);
+        const vx = -Math.sin(bulletAngle) * cp * gun.projectileSpeed;
+        const vy = Math.sin(basePitch) * gun.projectileSpeed;
+        const vz = -Math.cos(bulletAngle) * cp * gun.projectileSpeed;
 
         // Crit roll per bullet
         const isCrit = rng() < gun.critChance;
@@ -89,8 +133,8 @@ function processGun(
 
         const bulletId = createPlayerBullet(
           world,
-          { x: playerPos.x, y: playerPos.y, z: playerPos.z },
-          { x: vx, y: 0, z: vz },
+          { x: muzzleX, y: muzzleY, z: muzzleZ },
+          { x: vx, y: vy, z: vz },
           { ...gun, damage: bulletDamage },
           playerId,
           slot,
@@ -105,18 +149,18 @@ function processGun(
         }
       }
 
-      // Muzzle flash particle
+      // Muzzle flash particle at muzzle position
       eventQueue.emit({
         type: EventType.Particle,
         effect: ParticleEffect.MuzzleFlash,
-        position: { x: playerPos.x, y: playerPos.y, z: playerPos.z },
+        position: { x: muzzleX, y: muzzleY, z: muzzleZ },
       });
 
       // Fire sound
       eventQueue.emit({
         type: EventType.Audio,
         sound: GUN_FIRE_SOUNDS[gun.gunType],
-        position: { x: playerPos.x, y: playerPos.y, z: playerPos.z },
+        position: { x: muzzleX, y: muzzleY, z: muzzleZ },
       });
     } else if (gun.currentAmmo <= 0 && !gun.isReloading) {
       // Empty mag: play click, start reload

@@ -227,7 +227,9 @@
   },
   "projectiles": {
     "bulletColliderSize": 0.2,
-    "enemyBulletLifetime": 2.0
+    "enemyBulletLifetime": 2.0,
+    "muzzleForwardOffset": 0.8,
+    "muzzleHeight": 0.5
   },
   "entityColliders": {
     "player": { "width": 1, "height": 1, "depth": 1 },
@@ -252,6 +254,14 @@
     "angle": 45,
     "distance": 20,
     "followSmoothing": 0.1,
+    "mouseSensitivity": 0.003,
+    "pitchMin": -1.2,
+    "pitchMax": 1.2,
+    "shoulderOffsetX": 1.5,
+    "shoulderHeight": 3.0,
+    "orbitDistance": 6.0,
+    "lookAhead": 2.0,
+    "lookHeight": 1.5,
     "wallFade": {
       "opacity": 0.15,
       "radius": 3.0

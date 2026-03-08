@@ -315,7 +315,7 @@ describe('ProjectileSystem', () => {
       expect(bullets.length).toBe(6);
 
       for (const b of bullets) {
-        const bulletAngle = Math.atan2(b.vel.x, b.vel.z);
+        const bulletAngle = Math.atan2(-b.vel.x, -b.vel.z);
         const diff = Math.abs(bulletAngle - aimAngle);
         expect(diff).toBeLessThanOrEqual(spread / 2 + 1e-9);
       }
@@ -340,10 +340,10 @@ describe('ProjectileSystem', () => {
         critChance: 0, // no crits to simplify
       });
 
-      projectileSystem(world, 0.016, eq, rng);
+      projectileSystem(world, 0.016, eq, undefined, rng);
 
       const bullets = getBulletProjectiles(world);
-      const angles = bullets.map((b) => Math.atan2(b.vel.x, b.vel.z));
+      const angles = bullets.map((b) => Math.atan2(-b.vel.x, -b.vel.z));
       const unique = new Set(angles.map((a) => a.toFixed(6)));
       expect(unique.size).toBeGreaterThan(1);
     });
@@ -374,7 +374,7 @@ describe('ProjectileSystem', () => {
         spread: 0,
       });
 
-      projectileSystem(world, 0.016, eq, rng);
+      projectileSystem(world, 0.016, eq, undefined, rng);
 
       const bullets = getBulletProjectiles(world);
       expect(bullets.length).toBe(4);
@@ -402,7 +402,7 @@ describe('ProjectileSystem', () => {
         spread: 0,
       });
 
-      projectileSystem(world, 0.016, eq, rng);
+      projectileSystem(world, 0.016, eq, undefined, rng);
 
       const bullets = getBulletProjectiles(world);
       expect(bullets.length).toBe(1);
@@ -443,7 +443,7 @@ describe('ProjectileSystem', () => {
         damage: 10,
       });
 
-      projectileSystem(world, 0.016, eq, rng);
+      projectileSystem(world, 0.016, eq, undefined, rng);
 
       const bullets = getBulletProjectiles(world);
       expect(bullets.every((b) => b.proj.isCritical)).toBe(true);

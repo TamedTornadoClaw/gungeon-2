@@ -1,6 +1,6 @@
 /**
  * InputManager: captures raw keyboard, mouse, and gamepad input and produces
- * normalized InputState. Holds a camera reference for screen-to-world raycasting.
+ * normalized InputState. Supports pointer lock for third-person camera control.
  *
  * Integration: Created at game init, polled each frame by inputSystem().
  * The camera reference comes from the CameraController created by the renderer.
@@ -16,6 +16,10 @@ export interface InputState {
   moveY: number;
   aimWorldX: number;
   aimWorldY: number;
+  mouseDeltaX: number;
+  mouseDeltaY: number;
+  pointerLockLost: boolean;
+  aimYaw?: number;
   fireSidearm: boolean;
   fireLongArm: boolean;
   reload: boolean;
@@ -37,6 +41,11 @@ export class InputManager {
   private mouseScreenY = 0;
   private lastAimWorldX = 0;
   private lastAimWorldY = 0;
+
+  // Pointer lock mouse deltas (accumulated between polls)
+  private _mouseDeltaX = 0;
+  private _mouseDeltaY = 0;
+  private _pointerLockLost = false;
 
   private gamepadIndex: number | null = null;
   private lastInputSource: 'keyboard' | 'gamepad' = 'keyboard';
@@ -68,6 +77,21 @@ export class InputManager {
     this.domElement = domElement;
   }
 
+  get isPointerLocked(): boolean {
+    return typeof document !== 'undefined' && this.domElement != null
+      && document.pointerLockElement === this.domElement;
+  }
+
+  requestPointerLock(): void {
+    this.domElement?.requestPointerLock();
+  }
+
+  exitPointerLock(): void {
+    if (typeof document !== 'undefined' && document.pointerLockElement) {
+      document.exitPointerLock();
+    }
+  }
+
   attach(target: EventTarget): void {
     target.addEventListener('keydown', this.onKeyDown as EventListener);
     target.addEventListener('keyup', this.onKeyUp as EventListener);
@@ -76,6 +100,10 @@ export class InputManager {
     target.addEventListener('mousemove', this.onMouseMove as EventListener);
     target.addEventListener('contextmenu', this.onContextMenu as EventListener);
     target.addEventListener('blur', this.onBlur as EventListener);
+
+    if (typeof document !== 'undefined') {
+      document.addEventListener('pointerlockchange', this.onPointerLockChange);
+    }
 
     if (typeof window !== 'undefined') {
       window.addEventListener('gamepadconnected', this.onGamepadConnected as EventListener);
@@ -91,6 +119,10 @@ export class InputManager {
     target.removeEventListener('mousemove', this.onMouseMove as EventListener);
     target.removeEventListener('contextmenu', this.onContextMenu as EventListener);
     target.removeEventListener('blur', this.onBlur as EventListener);
+
+    if (typeof document !== 'undefined') {
+      document.removeEventListener('pointerlockchange', this.onPointerLockChange);
+    }
 
     if (typeof window !== 'undefined') {
       window.removeEventListener('gamepadconnected', this.onGamepadConnected as EventListener);
@@ -201,16 +233,23 @@ export class InputManager {
       moveY /= mag;
     }
 
-    // Aim: screen-to-world raycasting for mouse, or gamepad right stick
-    if (gpAimX !== undefined && gpAimY !== undefined && this.lastInputSource === 'gamepad') {
-      // Gamepad aim: relative direction from player. Store as-is — downstream
-      // systems interpret gamepad aim differently (direction vs. world point).
-      // For now, we just set aim direction proportionally.
-      this.lastAimWorldX = gpAimX;
-      this.lastAimWorldY = gpAimY;
-    } else {
-      this.updateAimFromMouse();
+    // Aim: when pointer locked, skip raycasting. Otherwise use mouse → world raycast.
+    if (!this.isPointerLocked) {
+      if (gpAimX !== undefined && gpAimY !== undefined && this.lastInputSource === 'gamepad') {
+        this.lastAimWorldX = gpAimX;
+        this.lastAimWorldY = gpAimY;
+      } else {
+        this.updateAimFromMouse();
+      }
     }
+
+    // Capture mouse deltas and pointer lock lost flag, then reset
+    const mouseDeltaX = this._mouseDeltaX;
+    const mouseDeltaY = this._mouseDeltaY;
+    const pointerLockLost = this._pointerLockLost;
+    this._mouseDeltaX = 0;
+    this._mouseDeltaY = 0;
+    this._pointerLockLost = false;
 
     // Clear per-frame event buffers
     this.keysPressed.clear();
@@ -221,6 +260,9 @@ export class InputManager {
       moveY,
       aimWorldX: this.lastAimWorldX,
       aimWorldY: this.lastAimWorldY,
+      mouseDeltaX,
+      mouseDeltaY,
+      pointerLockLost,
       fireSidearm: actionStates.get(LogicalAction.FireSidearm) === true,
       fireLongArm: actionStates.get(LogicalAction.FireLongArm) === true,
       reload: actionStates.get(LogicalAction.Reload) === true,
@@ -250,7 +292,6 @@ export class InputManager {
     if (rect.width === 0 || rect.height === 0) return;
 
     // Convert screen coords to NDC [-1, 1] using CSS layout rect
-    // (clientX/Y are in CSS pixels, so we must use clientRect not canvas pixel buffer)
     this.ndcVec.set(
       ((this.mouseScreenX - rect.left) / rect.width) * 2 - 1,
       -((this.mouseScreenY - rect.top) / rect.height) * 2 + 1,
@@ -316,6 +357,12 @@ export class InputManager {
   private readonly onMouseMove = (e: MouseEvent): void => {
     this.mouseScreenX = e.clientX;
     this.mouseScreenY = e.clientY;
+
+    // Accumulate pointer lock deltas
+    if (this.isPointerLocked) {
+      this._mouseDeltaX += e.movementX;
+      this._mouseDeltaY += e.movementY;
+    }
   };
 
   private readonly onContextMenu = (e: Event): void => {
@@ -327,6 +374,14 @@ export class InputManager {
     this.keysPressed.clear();
     this.mouseButtonsDown.clear();
     this.mouseButtonsPressed.clear();
+    this._mouseDeltaX = 0;
+    this._mouseDeltaY = 0;
+  };
+
+  private readonly onPointerLockChange = (): void => {
+    if (typeof document !== 'undefined' && document.pointerLockElement !== this.domElement) {
+      this._pointerLockLost = true;
+    }
   };
 
   private readonly onGamepadConnected = (e: GamepadEvent): void => {

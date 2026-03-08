@@ -5,6 +5,7 @@ import type { Player } from '../ecs/components';
 import type { InputState } from '../input/inputManager';
 import { generateDungeon } from '../dungeon/generator';
 import { createDungeonEntities, setPlayerStartPosition } from '../dungeon/dungeonEntityCreator';
+import { buildAimCollisionMesh } from '../rendering/aimRaycast';
 import type { EntityId } from '../types';
 
 interface ProximityFlags {
@@ -68,6 +69,9 @@ export function floorTransitionSystem(
 
   // Spawn dungeon entities (walls, floors, hazards, etc.) and rebuild spatial hash
   createDungeonEntities(world, dungeonData, newDepth);
+
+  // Rebuild BVH collision mesh for aim raycasting on the new floor
+  buildAimCollisionMesh(world);
 
   // Reset player position to new floor start
   setPlayerStartPosition(world, playerId, dungeonData.playerStart);

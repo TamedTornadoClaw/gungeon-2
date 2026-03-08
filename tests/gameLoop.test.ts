@@ -4,15 +4,19 @@ import { EventQueue } from '../src/gameloop/events';
 
 const defaultInput = () => ({
   moveX: 0, moveY: 0, aimWorldX: 0, aimWorldY: 0,
+  mouseDeltaX: 0, mouseDeltaY: 0, pointerLockLost: false,
   fireSidearm: false, fireLongArm: false, reload: false,
   dodgeRoll: false, interact: false, openUpgrade: false, pause: false,
+  debugSpeedUp: false, debugSpeedDown: false,
 });
 
 const mocks = vi.hoisted(() => ({
   inputSystem: vi.fn().mockReturnValue({
     moveX: 0, moveY: 0, aimWorldX: 0, aimWorldY: 0,
+    mouseDeltaX: 0, mouseDeltaY: 0, pointerLockLost: false,
     fireSidearm: false, fireLongArm: false, reload: false,
     dodgeRoll: false, interact: false, openUpgrade: false, pause: false,
+    debugSpeedUp: false, debugSpeedDown: false,
   }),
   playerControlSystem: vi.fn(),
   dodgeRollSystem: vi.fn(),
@@ -39,7 +43,9 @@ const mocks = vi.hoisted(() => ({
   expireModifiersSystem: vi.fn(),
   particleSystem: vi.fn(),
   audioEventSystem: vi.fn(),
+  visibilitySystem: vi.fn(),
   effectsPipelineSystem: vi.fn(),
+  syncHUDSystem: vi.fn(),
   gunStatSystem: vi.fn(),
 }));
 
@@ -92,6 +98,17 @@ vi.mock('../src/systems/effectsPipelineSystem', () => ({
 vi.mock('../src/systems/gunStatSystem', () => ({ gunStatSystem: mocks.gunStatSystem }));
 vi.mock('../src/dungeon/generator', () => ({ generateDungeon: vi.fn() }));
 vi.mock('../src/rendering/particleRenderer', () => ({ createParticleRenderer: vi.fn() }));
+vi.mock('../src/rendering/cameraController', () => ({
+  updateCameraOrbit: vi.fn(),
+  getCameraRay: vi.fn(() => ({ ox: 0, oy: 5, oz: -6, dx: 0, dy: 0, dz: -1 })),
+}));
+vi.mock('../src/rendering/aimRaycast', () => ({
+  aimRaycast: vi.fn(() => ({ x: 0, y: 0, z: 0 })),
+  buildAimCollisionMesh: vi.fn(),
+  disposeAimCollisionMesh: vi.fn(),
+}));
+vi.mock('../src/systems/visibilitySystem', () => ({ visibilitySystem: mocks.visibilitySystem }));
+vi.mock('../src/systems/syncHUDSystem', () => ({ syncHUDSystem: mocks.syncHUDSystem }));
 
 import { createGameLoop, GameLoopDeps } from '../src/gameloop/gameLoop';
 
@@ -123,6 +140,7 @@ function createDeps(): GameLoopDeps {
     world: new World(),
     inputManager: {} as GameLoopDeps['inputManager'],
     audioManager: {} as GameLoopDeps['audioManager'],
+    cameraController: { orbitYaw: 0, orbitPitch: 0 } as GameLoopDeps['cameraController'],
     floorState: { currentDepth: 1, seed: 42 },
     effectsBuffer: { damageNumbers: [], shakeIntensity: 0, hitFlashTriggered: false },
     onRender: vi.fn(),
@@ -152,11 +170,14 @@ function allSimMocks() {
     mocks.destructibleSystem,
     mocks.doorSystem,
     mocks.spawnSystem,
+    mocks.visibilitySystem,
     mocks.floorTransitionSystem,
     mocks.deathSystem,
     mocks.expireModifiersSystem,
     mocks.particleSystem,
     mocks.audioEventSystem,
+    mocks.effectsPipelineSystem,
+    mocks.syncHUDSystem,
   ];
 }
 
@@ -251,7 +272,7 @@ describe('gameLoop', () => {
   });
 
   describe('system execution order', () => {
-    it('calls all 27 systems in the correct order', () => {
+    it('calls all 29 systems in the correct order', () => {
       const callOrder: string[] = [];
       mocks.inputSystem.mockImplementation(() => { callOrder.push('Input'); return defaultInput(); });
       mocks.playerControlSystem.mockImplementation(() => callOrder.push('PlayerControl'));
@@ -274,12 +295,14 @@ describe('gameLoop', () => {
       mocks.destructibleSystem.mockImplementation(() => callOrder.push('Destructible'));
       mocks.doorSystem.mockImplementation(() => callOrder.push('Door'));
       mocks.spawnSystem.mockImplementation(() => callOrder.push('Spawn'));
+      mocks.visibilitySystem.mockImplementation(() => callOrder.push('Visibility'));
       mocks.floorTransitionSystem.mockImplementation(() => callOrder.push('FloorTransition'));
       mocks.deathSystem.mockImplementation(() => callOrder.push('Death'));
       mocks.expireModifiersSystem.mockImplementation(() => callOrder.push('ExpireModifiers'));
       mocks.particleSystem.mockImplementation(() => callOrder.push('Particle'));
       mocks.audioEventSystem.mockImplementation(() => callOrder.push('Audio'));
       mocks.effectsPipelineSystem.mockImplementation(() => callOrder.push('EffectsPipeline'));
+      mocks.syncHUDSystem.mockImplementation(() => callOrder.push('SyncHUD'));
 
       const deps = createDeps();
       const loop = createGameLoop(deps);
@@ -291,8 +314,8 @@ describe('gameLoop', () => {
         'Input', 'PlayerControl', 'DodgeRoll', 'AI', 'Projectile', 'EnemyWeapon',
         'Movement', 'CollisionDetection', 'UpdateSpikeCooldowns', 'CollisionResponse',
         'Damage', 'ShieldRegen', 'Hazard', 'Lifetime', 'Pickup', 'Chest', 'Shop',
-        'GunXP', 'Destructible', 'Door', 'Spawn', 'FloorTransition', 'Death',
-        'ExpireModifiers', 'Particle', 'Audio', 'EffectsPipeline',
+        'GunXP', 'Destructible', 'Door', 'Spawn', 'Visibility', 'FloorTransition', 'Death',
+        'ExpireModifiers', 'Particle', 'Audio', 'EffectsPipeline', 'SyncHUD',
       ]);
       loop.stop();
     });

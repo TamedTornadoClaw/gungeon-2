@@ -1,5 +1,5 @@
 import { World } from './ecs/world';
-import { createGameLoop, type GameLoop } from './gameloop/gameLoop';
+import { createGameLoop, buildAimCollisionMesh, disposeAimCollisionMesh, type GameLoop } from './gameloop/gameLoop';
 import { createEffectsBuffer } from './systems/effectsPipelineSystem';
 import { createRenderSystem, type RenderSystem } from './rendering/renderer';
 import { initRenderer, mountRenderer, disposeRenderer, type RendererContext } from './rendering/renderer';
@@ -33,6 +33,7 @@ export function createGameSession(canvasContainer: HTMLElement): GameSession {
   createDungeonEntities(world, dungeon, floorState.currentDepth);
   createPlayer(world, dungeon.playerStart, selectedLongArm);
   initialReveal(world);
+  buildAimCollisionMesh(world);
 
   const rendererCtx = initRenderer();
   mountRenderer(rendererCtx, canvasContainer);
@@ -50,14 +51,23 @@ export function createGameSession(canvasContainer: HTMLElement): GameSession {
     world,
     inputManager,
     audioManager,
+    cameraController: rendererCtx.cameraController,
     floorState,
     effectsBuffer,
     onRender: (alpha) => renderSystem.update(world, alpha, 0),
   });
 
+  // Click on canvas to request pointer lock
+  const canvas = rendererCtx.renderer.domElement;
+  const onCanvasClick = () => inputManager.requestPointerLock();
+  canvas.addEventListener('click', onCanvasClick);
+
   const cleanup = () => {
+    canvas.removeEventListener('click', onCanvasClick);
+    inputManager.exitPointerLock();
     renderSystem.releaseAll();
     inputManager.detach(document);
+    disposeAimCollisionMesh();
     disposeRenderer(rendererCtx);
   };
 

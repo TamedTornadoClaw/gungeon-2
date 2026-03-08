@@ -54,8 +54,13 @@ export function App() {
 
       if (current === AppState.Gameplay) {
         loop?.resume()
+        // Re-lock pointer when resuming gameplay (e.g. from Paused)
+        if (prev !== undefined) {
+          getActiveSession()?.inputManager.requestPointerLock()
+        }
       } else if (FROZEN_STATES.has(current)) {
         loop?.freeze()
+        getActiveSession()?.inputManager.exitPointerLock()
       } else if (current === AppState.MainMenu) {
         loop?.stop()
         getActiveSession()?.cleanup()
@@ -63,6 +68,7 @@ export function App() {
         setActiveSession(null)
       } else if (current === AppState.Death || current === AppState.Victory) {
         loop?.stop()
+        getActiveSession()?.inputManager.exitPointerLock()
         setActiveGameLoop(null)
       }
     })
@@ -87,7 +93,7 @@ export function App() {
       {currentState === AppState.WeaponSelect && <WeaponSelect />}
       {showCanvas && <div id="three-canvas" data-testid="three-canvas" ref={canvasRef} />}
       {(currentState === AppState.Gameplay || currentState === AppState.Paused) && <GameplayHUD />}
-      {(currentState === AppState.Gameplay || currentState === AppState.Paused) && <Crosshair />}
+      {currentState === AppState.Gameplay && <Crosshair />}
       {currentState === AppState.Paused && <PauseOverlay />}
       {currentState === AppState.GunComparison && <GunComparisonScreen />}
       {currentState === AppState.GunUpgrade && <GunUpgradeMenu />}

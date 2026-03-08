@@ -24,6 +24,9 @@ function defaultInput(overrides: Partial<InputState> = {}): InputState {
     moveY: 0,
     aimWorldX: 0,
     aimWorldY: 0,
+    mouseDeltaX: 0,
+    mouseDeltaY: 0,
+    pointerLockLost: false,
     fireSidearm: false,
     fireLongArm: false,
     reload: false,
@@ -416,7 +419,7 @@ describe('playerControlSystem', () => {
     const ids = world.query(['Player', 'Velocity']);
     const vel = world.getComponent<Velocity>(ids[0], 'Velocity')!;
     expect(vel.x).toBeCloseTo(0.0001 * MOVE_SPEED);
-    expect(vel.z).toBe(0);
+    expect(vel.z).toBeCloseTo(0);
     expect(Number.isNaN(vel.x)).toBe(false);
   });
 
@@ -541,6 +544,53 @@ describe('playerControlSystem', () => {
     const vel = world.getComponent<Velocity>(ids[0], 'Velocity')!;
     expect(vel.x).toBeCloseTo(MOVE_SPEED);
     expect(vel.z).toBeCloseTo(0);
+  });
+
+  // ── aimYaw (pointer lock camera control) ──────────────────────────────
+
+  describe('aimYaw from camera orbit', () => {
+    it('when aimYaw is defined, rotation.y = aimYaw (not computed from aimWorld)', () => {
+      const world = new World();
+      makePlayer(world, { position: { x: 0, z: 0 } });
+      const input = defaultInput({ aimWorldX: 10, aimWorldY: 10, aimYaw: 1.5 });
+      playerControlSystem(world, input, DT);
+
+      const ids = world.query(['Player', 'Rotation']);
+      const rot = world.getComponent<Rotation>(ids[0], 'Rotation')!;
+      expect(rot.y).toBe(1.5);
+    });
+
+    it('when aimYaw is undefined, falls back to atan2 from aimWorld', () => {
+      const world = new World();
+      makePlayer(world, { position: { x: 0, z: 0 } });
+      const input = defaultInput({ aimWorldX: 5, aimWorldY: 5 });
+      // aimYaw is undefined by default
+      playerControlSystem(world, input, DT);
+
+      const ids = world.query(['Player', 'Rotation']);
+      const rot = world.getComponent<Rotation>(ids[0], 'Rotation')!;
+      expect(rot.y).toBeCloseTo(Math.atan2(5, 5));
+    });
+  });
+
+  describe('pointerLockLost', () => {
+    it('triggers AppState.Paused transition', () => {
+      const world = new World();
+      makePlayer(world);
+      const input = defaultInput({ pointerLockLost: true });
+      playerControlSystem(world, input, DT);
+
+      expect(useAppStore.getState().currentState).toBe(AppState.Paused);
+    });
+
+    it('does not pause when pointerLockLost is false', () => {
+      const world = new World();
+      makePlayer(world);
+      const input = defaultInput({ pointerLockLost: false });
+      playerControlSystem(world, input, DT);
+
+      expect(useAppStore.getState().currentState).toBe(AppState.Gameplay);
+    });
   });
 
   // ── Debug Speed Tuning ──────────────────────────────────────────────

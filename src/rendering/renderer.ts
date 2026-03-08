@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { createCameraController, updateCamera, type CameraController } from './cameraController';
+import { createCameraController, updateCameraPosition, type CameraController } from './cameraController';
 import { createSceneManager, type SceneManager } from './sceneManager';
 import { createInstancedRenderer, type InstancedRenderer } from './instancedRenderer';
 import { MeshId, GunType, WeaponSlot } from '../ecs/components';
@@ -12,7 +12,7 @@ const MAX_WALL_FADE_ENTITIES = 32;
 
 export { spawnDamageNumber, updateDamageNumbers, clearDamageNumbers, getActiveDamageNumbers } from './damageNumbers';
 export type { DamageNumber } from './damageNumbers';
-export { createCameraController, updateCamera, addScreenShake } from './cameraController';
+export { createCameraController, updateCameraOrbit, updateCameraPosition, addScreenShake } from './cameraController';
 export type { CameraController } from './cameraController';
 
 export {
@@ -285,7 +285,7 @@ export function createRenderSystem(ctx: RendererContext): RenderSystem {
     const y = prev ? prev.y + (pos.y - prev.y) * alpha : pos.y;
     const z = prev ? prev.z + (pos.z - prev.z) * alpha : pos.z;
 
-    updateCamera(ctx.cameraController, x, y, z, dt);
+    updateCameraPosition(ctx.cameraController, x, y, z, dt);
 
     // Collect entity positions for wall occlusion fade (player + enemies)
     updateWallFade(world, alpha);

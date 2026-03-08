@@ -56,17 +56,21 @@ export function playerControlSystem(world: World, input: InputState, _dt: number
 
     // ── Dodge Roll Initiation ──────────────────────────────────────────
     if (input.dodgeRoll && dodgeRoll && !dodgeRoll.isRolling && dodgeRoll.cooldownRemaining <= 0) {
-      // Determine roll direction from movement input, or default to facing direction
-      let rdx = input.moveX;
-      let rdy = input.moveY;
+      // Determine roll direction from movement input (rotated by yaw), or default to facing direction
+      const sinY = Math.sin(-rotation.y);
+      const cosY = Math.cos(-rotation.y);
+      const inputFwd = -input.moveY;
+      const inputRt = input.moveX;
+      let rdx = inputRt * cosY + inputFwd * sinY;
+      let rdy = inputRt * sinY - inputFwd * cosY;
       const rmag = Math.sqrt(rdx * rdx + rdy * rdy);
       if (rmag > 0) {
         rdx /= rmag;
         rdy /= rmag;
       } else {
         // Roll in facing direction
-        rdx = Math.sin(rotation.y);
-        rdy = Math.cos(rotation.y);
+        rdx = -Math.sin(rotation.y);
+        rdy = -Math.cos(rotation.y);
       }
       dodgeRoll.isRolling = true;
       dodgeRoll.rollTimer = rollDuration;
@@ -81,9 +85,22 @@ export function playerControlSystem(world: World, input: InputState, _dt: number
       velocity.x = dodgeRoll.rollDirectionX * rollSpeed;
       velocity.z = dodgeRoll.rollDirectionY * rollSpeed;
     } else {
-      // Normal movement
-      let mx = input.moveX;
-      let mz = input.moveY;
+      // Normal movement — rotate input by player yaw so W = camera forward
+      // Camera forward at yaw=0 is -Z (Three.js convention), so we negate yaw
+      // to map the rotation matrix from camera space to world movement.
+      const inputForward = -input.moveY;
+      const inputRight = input.moveX;
+      let mx: number;
+      let mz: number;
+      if (inputForward === 0 && inputRight === 0) {
+        mx = 0;
+        mz = 0;
+      } else {
+        const sinY = Math.sin(-rotation.y);
+        const cosY = Math.cos(-rotation.y);
+        mx = inputRight * cosY + inputForward * sinY;
+        mz = inputRight * sinY - inputForward * cosY;
+      }
 
       // Normalize diagonal so magnitude doesn't exceed 1
       const mag = Math.sqrt(mx * mx + mz * mz);
@@ -105,9 +122,19 @@ export function playerControlSystem(world: World, input: InputState, _dt: number
     }
 
     // ── Rotation (aim) ─────────────────────────────────────────────────
-    const dx = input.aimWorldX - position.x;
-    const dz = input.aimWorldY - position.z;
-    rotation.y = Math.atan2(dx, dz);
+    // Camera yaw when pointer locked, aimWorld fallback for gamepad/mouse
+    if (input.aimYaw !== undefined) {
+      rotation.y = input.aimYaw;
+    } else {
+      const dx = input.aimWorldX - position.x;
+      const dz = input.aimWorldY - position.z;
+      rotation.y = Math.atan2(dx, dz);
+    }
+
+    // Pointer lock lost = pause
+    if (input.pointerLockLost) {
+      useAppStore.getState().transition(AppState.Paused);
+    }
 
     // ── Gun references ─────────────────────────────────────────────────
     const sidearmGun = world.getComponent<Gun>(player.sidearmSlot, 'Gun');

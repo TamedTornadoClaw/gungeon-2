@@ -8,8 +8,10 @@ import { World } from '../src/ecs/world';
 const mocks = vi.hoisted(() => ({
   inputSystem: vi.fn().mockReturnValue({
     moveX: 0, moveY: 0, aimWorldX: 0, aimWorldY: 0,
+    mouseDeltaX: 0, mouseDeltaY: 0, pointerLockLost: false,
     fireSidearm: false, fireLongArm: false, reload: false,
     dodgeRoll: false, interact: false, openUpgrade: false, pause: false,
+    debugSpeedUp: false, debugSpeedDown: false,
   }),
   playerControlSystem: vi.fn(),
   dodgeRollSystem: vi.fn(),
@@ -31,12 +33,14 @@ const mocks = vi.hoisted(() => ({
   destructibleSystem: vi.fn(),
   doorSystem: vi.fn(),
   spawnSystem: vi.fn(),
+  visibilitySystem: vi.fn(),
   floorTransitionSystem: vi.fn(),
   deathSystem: vi.fn(),
   expireModifiersSystem: vi.fn(),
   particleSystem: vi.fn(),
   audioEventSystem: vi.fn(),
   effectsPipelineSystem: vi.fn(),
+  syncHUDSystem: vi.fn(),
 }));
 
 vi.mock('../src/config/designParams', () => ({
@@ -88,6 +92,17 @@ vi.mock('../src/systems/effectsPipelineSystem', () => ({
 vi.mock('../src/systems/gunStatSystem', () => ({ gunStatSystem: vi.fn() }));
 vi.mock('../src/dungeon/generator', () => ({ generateDungeon: vi.fn() }));
 vi.mock('../src/rendering/particleRenderer', () => ({ createParticleRenderer: vi.fn() }));
+vi.mock('../src/rendering/cameraController', () => ({
+  updateCameraOrbit: vi.fn(),
+  getCameraRay: vi.fn(() => ({ ox: 0, oy: 5, oz: -6, dx: 0, dy: 0, dz: -1 })),
+}));
+vi.mock('../src/rendering/aimRaycast', () => ({
+  aimRaycast: vi.fn(() => ({ x: 0, y: 0, z: 0 })),
+  buildAimCollisionMesh: vi.fn(),
+  disposeAimCollisionMesh: vi.fn(),
+}));
+vi.mock('../src/systems/visibilitySystem', () => ({ visibilitySystem: mocks.visibilitySystem }));
+vi.mock('../src/systems/syncHUDSystem', () => ({ syncHUDSystem: mocks.syncHUDSystem }));
 
 import { createGameLoop, type GameLoopDeps } from '../src/gameloop/gameLoop';
 
@@ -118,6 +133,7 @@ function createDeps(): GameLoopDeps {
     world: new World(),
     inputManager: {} as GameLoopDeps['inputManager'],
     audioManager: {} as GameLoopDeps['audioManager'],
+    cameraController: { orbitYaw: 0, orbitPitch: 0 } as GameLoopDeps['cameraController'],
     floorState: { currentDepth: 1, seed: 42 },
     effectsBuffer: { damageNumbers: [], shakeIntensity: 0, hitFlashTriggered: false },
     onRender: vi.fn(),
@@ -151,9 +167,10 @@ function allSystemMocks() {
     mocks.damageSystem, mocks.shieldRegenSystem, mocks.hazardSystem,
     mocks.lifetimeSystem, mocks.pickupSystem, mocks.chestSystem,
     mocks.shopSystem, mocks.gunXPSystem, mocks.destructibleSystem,
-    mocks.doorSystem, mocks.spawnSystem, mocks.floorTransitionSystem,
+    mocks.doorSystem, mocks.spawnSystem, mocks.visibilitySystem,
+    mocks.floorTransitionSystem,
     mocks.deathSystem, mocks.expireModifiersSystem, mocks.particleSystem,
-    mocks.audioEventSystem, mocks.effectsPipelineSystem,
+    mocks.audioEventSystem, mocks.effectsPipelineSystem, mocks.syncHUDSystem,
   ];
 }
 
@@ -376,9 +393,9 @@ describe('Full Game Flow Verification', () => {
         'damageSystem', 'shieldRegenSystem', 'hazardSystem',
         'lifetimeSystem', 'pickupSystem', 'chestSystem',
         'shopSystem', 'gunXPSystem', 'destructibleSystem',
-        'doorSystem', 'spawnSystem', 'floorTransitionSystem',
+        'doorSystem', 'spawnSystem', 'visibilitySystem', 'floorTransitionSystem',
         'deathSystem', 'expireModifiersSystem', 'particleSystem',
-        'audioEventSystem', 'effectsPipelineSystem',
+        'audioEventSystem', 'effectsPipelineSystem', 'syncHUDSystem',
       ] as const;
 
       for (const name of systemNames) {
@@ -411,12 +428,14 @@ describe('Full Game Flow Verification', () => {
       mocks.destructibleSystem.mockImplementation(() => callOrder.push('destructibleSystem'));
       mocks.doorSystem.mockImplementation(() => callOrder.push('doorSystem'));
       mocks.spawnSystem.mockImplementation(() => callOrder.push('spawnSystem'));
+      mocks.visibilitySystem.mockImplementation(() => callOrder.push('visibilitySystem'));
       mocks.floorTransitionSystem.mockImplementation(() => callOrder.push('floorTransitionSystem'));
       mocks.deathSystem.mockImplementation(() => callOrder.push('deathSystem'));
       mocks.expireModifiersSystem.mockImplementation(() => callOrder.push('expireModifiersSystem'));
       mocks.particleSystem.mockImplementation(() => callOrder.push('particleSystem'));
       mocks.audioEventSystem.mockImplementation(() => callOrder.push('audioEventSystem'));
       mocks.effectsPipelineSystem.mockImplementation(() => callOrder.push('effectsPipelineSystem'));
+      mocks.syncHUDSystem.mockImplementation(() => callOrder.push('syncHUDSystem'));
 
       const deps = createDeps();
       const loop = createGameLoop(deps);
@@ -432,9 +451,9 @@ describe('Full Game Flow Verification', () => {
         'damageSystem', 'shieldRegenSystem', 'hazardSystem',
         'lifetimeSystem', 'pickupSystem', 'chestSystem',
         'shopSystem', 'gunXPSystem', 'destructibleSystem',
-        'doorSystem', 'spawnSystem', 'floorTransitionSystem',
+        'doorSystem', 'spawnSystem', 'visibilitySystem', 'floorTransitionSystem',
         'deathSystem', 'expireModifiersSystem', 'particleSystem',
-        'audioEventSystem', 'effectsPipelineSystem',
+        'audioEventSystem', 'effectsPipelineSystem', 'syncHUDSystem',
       ]);
 
       loop.stop();

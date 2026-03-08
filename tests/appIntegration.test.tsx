@@ -20,7 +20,7 @@ vi.mock('../src/gameSession', () => ({
       world: {},
       rendererCtx: {},
       renderSystem: { releaseAll: vi.fn(), update: vi.fn(), getMeshMap: vi.fn() },
-      inputManager: { detach: vi.fn() },
+      inputManager: { detach: vi.fn(), requestPointerLock: vi.fn(), exitPointerLock: vi.fn() },
       floorState: { currentDepth: 1, seed: 1 },
       cleanup: vi.fn(),
     };
@@ -117,7 +117,7 @@ describe('App Integration', () => {
       [AppState.MainMenu]: ['main-menu'],
       [AppState.WeaponSelect]: ['weapon-select'],
       [AppState.Gameplay]: ['three-canvas', 'gameplay-hud', 'crosshair'],
-      [AppState.Paused]: ['three-canvas', 'gameplay-hud', 'crosshair', 'pause-overlay'],
+      [AppState.Paused]: ['three-canvas', 'gameplay-hud', 'pause-overlay'],
       [AppState.GunComparison]: ['three-canvas', 'gun-comparison-screen'],
       [AppState.GunUpgrade]: ['three-canvas', 'gun-upgrade-menu'],
       [AppState.ForcedUpgrade]: ['three-canvas', 'forced-upgrade-screen'],

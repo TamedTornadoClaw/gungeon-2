@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 const CROSSHAIR_SIZE = 24;
 const CIRCLE_SIZE = 16;
@@ -7,43 +7,29 @@ const LINE_THICKNESS = 2;
 const COLOR = '#ffffff';
 
 export function Crosshair() {
-  const [position, setPosition] = useState({ x: 0, y: 0 });
-  const [visible, setVisible] = useState(false);
-  const rafId = useRef(0);
-  const posRef = useRef({ x: 0, y: 0 });
+  const [locked, setLocked] = useState(false);
 
   useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      posRef.current = { x: e.clientX, y: e.clientY };
-      if (!visible) setVisible(true);
-      cancelAnimationFrame(rafId.current);
-      rafId.current = requestAnimationFrame(() => {
-        setPosition({ x: posRef.current.x, y: posRef.current.y });
-      });
+    const onChange = () => {
+      setLocked(document.pointerLockElement != null);
     };
+    document.addEventListener('pointerlockchange', onChange);
+    // Check initial state
+    onChange();
+    return () => document.removeEventListener('pointerlockchange', onChange);
+  }, []);
 
-    document.body.style.cursor = 'none';
-    window.addEventListener('mousemove', handleMouseMove);
-
-    return () => {
-      document.body.style.cursor = '';
-      window.removeEventListener('mousemove', handleMouseMove);
-      cancelAnimationFrame(rafId.current);
-    };
-  }, [visible]);
-
-  if (!visible) return null;
-
-  const half = CROSSHAIR_SIZE / 2;
+  if (!locked) return null;
 
   return (
     <div
       style={{
         position: 'fixed',
-        left: position.x - half,
-        top: position.y - half,
+        left: '50%',
+        top: '50%',
         width: CROSSHAIR_SIZE,
         height: CROSSHAIR_SIZE,
+        transform: 'translate(-50%, -50%)',
         pointerEvents: 'none',
         zIndex: 9999,
       }}

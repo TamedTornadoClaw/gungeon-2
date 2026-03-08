@@ -378,8 +378,6 @@ export function createDungeonEntities(
       const midX = (corridor.start.x + corridor.end.x) / 2;
       const midZ = (corridor.start.z + corridor.end.z) / 2;
       // Determine orientation from corridor direction
-      const cStartX = Math.min(corridor.start.x, corridor.end.x);
-      const cEndX = Math.max(corridor.start.x, corridor.end.x);
       const cStartZ = Math.min(corridor.start.z, corridor.end.z);
       const cEndZ = Math.max(corridor.start.z, corridor.end.z);
       const corH = cEndZ - cStartZ;

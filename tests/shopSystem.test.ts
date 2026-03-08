@@ -27,6 +27,9 @@ function makeInput(overrides: Partial<InputState> = {}): InputState {
     moveY: 0,
     aimWorldX: 0,
     aimWorldY: 0,
+    mouseDeltaX: 0,
+    mouseDeltaY: 0,
+    pointerLockLost: false,
     fireSidearm: false,
     fireLongArm: false,
     reload: false,
@@ -34,6 +37,8 @@ function makeInput(overrides: Partial<InputState> = {}): InputState {
     interact: false,
     openUpgrade: false,
     pause: false,
+    debugSpeedUp: false,
+    debugSpeedDown: false,
     ...overrides,
   };
 }

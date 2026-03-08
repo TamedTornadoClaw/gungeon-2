@@ -133,6 +133,8 @@ export interface GunMechanicsParams {
 export interface ProjectilesParams {
   bulletColliderSize: number;
   enemyBulletLifetime: number;
+  muzzleForwardOffset: number;
+  muzzleHeight: number;
 }
 
 export interface ColliderDimensions {
@@ -171,6 +173,14 @@ export interface CameraParams {
   angle: number;
   distance: number;
   followSmoothing: number;
+  mouseSensitivity: number;
+  pitchMin: number;
+  pitchMax: number;
+  shoulderOffsetX: number;
+  shoulderHeight: number;
+  orbitDistance: number;
+  lookAhead: number;
+  lookHeight: number;
   wallFade: WallFadeParams;
 }
 
