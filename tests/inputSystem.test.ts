@@ -63,6 +63,8 @@ describe('InputSystem', () => {
       expect(typeof state.interact).toBe('boolean');
       expect(typeof state.openUpgrade).toBe('boolean');
       expect(typeof state.pause).toBe('boolean');
+      expect(typeof state.debugSpeedUp).toBe('boolean');
+      expect(typeof state.debugSpeedDown).toBe('boolean');
     });
 
     it('has zero movement and all booleans false', () => {
@@ -76,6 +78,8 @@ describe('InputSystem', () => {
       expect(state.interact).toBe(false);
       expect(state.openUpgrade).toBe(false);
       expect(state.pause).toBe(false);
+      expect(state.debugSpeedUp).toBe(false);
+      expect(state.debugSpeedDown).toBe(false);
     });
 
     it('has no undefined fields', () => {
@@ -99,7 +103,7 @@ describe('InputSystem', () => {
       const mag = Math.sqrt(state.moveX ** 2 + state.moveY ** 2);
       expect(mag).toBeLessThanOrEqual(1.0 + 1e-9);
       expect(state.moveX).toBeCloseTo(1 / Math.sqrt(2), 4);
-      expect(state.moveY).toBeCloseTo(1 / Math.sqrt(2), 4);
+      expect(state.moveY).toBeCloseTo(-1 / Math.sqrt(2), 4);
     });
 
     it('all four directional keys cancel to zero', () => {
@@ -126,13 +130,13 @@ describe('InputSystem', () => {
     });
 
     it('single axis input is not reduced by normalization', () => {
-      // Only W pressed: (0, 1) magnitude is exactly 1
+      // Only W pressed: (0, -1) magnitude is exactly 1
       withEvents(mgr, (t) => {
         t.dispatchEvent(new KeyboardEvent('keydown', { code: 'KeyW' }));
       });
       const state = inputSystem(mgr);
       expect(state.moveX).toBe(0);
-      expect(state.moveY).toBe(1);
+      expect(state.moveY).toBe(-1);
     });
 
     it('normalization never produces NaN', () => {
@@ -451,6 +455,8 @@ describe('InputSystem', () => {
       'interact',
       'openUpgrade',
       'pause',
+      'debugSpeedUp',
+      'debugSpeedDown',
     ];
 
     it('every field is defined and of correct type', () => {
@@ -471,6 +477,8 @@ describe('InputSystem', () => {
         'interact',
         'openUpgrade',
         'pause',
+        'debugSpeedUp',
+        'debugSpeedDown',
       ] as const) {
         expect(state[key]).toStrictEqual(expect.any(Boolean));
       }

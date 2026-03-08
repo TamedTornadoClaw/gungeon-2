@@ -31,6 +31,8 @@ function defaultInput(overrides: Partial<InputState> = {}): InputState {
     interact: false,
     openUpgrade: false,
     pause: false,
+    debugSpeedUp: false,
+    debugSpeedDown: false,
     ...overrides,
   };
 }
@@ -539,5 +541,47 @@ describe('playerControlSystem', () => {
     const vel = world.getComponent<Velocity>(ids[0], 'Velocity')!;
     expect(vel.x).toBeCloseTo(MOVE_SPEED);
     expect(vel.z).toBeCloseTo(0);
+  });
+
+  // ── Debug Speed Tuning ──────────────────────────────────────────────
+
+  describe('debug speed tuning', () => {
+    it('debugSpeedUp increases baseMovementSpeed by 1.0', () => {
+      const originalSpeed = params.player.baseMovementSpeed;
+      const world = new World();
+      makePlayer(world);
+      const input = defaultInput({ debugSpeedUp: true });
+      playerControlSystem(world, input, DT);
+
+      expect(params.player.baseMovementSpeed).toBe(originalSpeed + 1.0);
+      // Restore
+      params.player.baseMovementSpeed = originalSpeed;
+    });
+
+    it('debugSpeedDown decreases baseMovementSpeed by 1.0', () => {
+      const originalSpeed = params.player.baseMovementSpeed;
+      params.player.baseMovementSpeed = 5.0;
+      const world = new World();
+      makePlayer(world);
+      const input = defaultInput({ debugSpeedDown: true });
+      playerControlSystem(world, input, DT);
+
+      expect(params.player.baseMovementSpeed).toBe(4.0);
+      // Restore
+      params.player.baseMovementSpeed = originalSpeed;
+    });
+
+    it('debugSpeedDown clamps at minimum 1.0', () => {
+      const originalSpeed = params.player.baseMovementSpeed;
+      params.player.baseMovementSpeed = 1.0;
+      const world = new World();
+      makePlayer(world);
+      const input = defaultInput({ debugSpeedDown: true });
+      playerControlSystem(world, input, DT);
+
+      expect(params.player.baseMovementSpeed).toBe(1.0);
+      // Restore
+      params.player.baseMovementSpeed = originalSpeed;
+    });
   });
 });

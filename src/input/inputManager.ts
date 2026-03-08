@@ -23,6 +23,8 @@ export interface InputState {
   interact: boolean;
   openUpgrade: boolean;
   pause: boolean;
+  debugSpeedUp: boolean;
+  debugSpeedDown: boolean;
 }
 
 export class InputManager {
@@ -171,8 +173,8 @@ export class InputManager {
     let kbMoveY = 0;
     if (actionStates.get(LogicalAction.MoveRight)) kbMoveX += 1;
     if (actionStates.get(LogicalAction.MoveLeft)) kbMoveX -= 1;
-    if (actionStates.get(LogicalAction.MoveUp)) kbMoveY += 1;
-    if (actionStates.get(LogicalAction.MoveDown)) kbMoveY -= 1;
+    if (actionStates.get(LogicalAction.MoveUp)) kbMoveY -= 1;
+    if (actionStates.get(LogicalAction.MoveDown)) kbMoveY += 1;
 
     // Merge: last active input source wins for movement
     let moveX: number;
@@ -226,6 +228,8 @@ export class InputManager {
       interact: actionStates.get(LogicalAction.Interact) === true,
       openUpgrade: actionStates.get(LogicalAction.OpenUpgrade) === true,
       pause: actionStates.get(LogicalAction.Pause) === true,
+      debugSpeedUp: actionStates.get(LogicalAction.DebugSpeedUp) === true,
+      debugSpeedDown: actionStates.get(LogicalAction.DebugSpeedDown) === true,
     };
   }
 
@@ -235,7 +239,9 @@ export class InputManager {
       || action === LogicalAction.Interact
       || action === LogicalAction.OpenUpgrade
       || action === LogicalAction.Pause
-      || action === LogicalAction.Reload;
+      || action === LogicalAction.Reload
+      || action === LogicalAction.DebugSpeedUp
+      || action === LogicalAction.DebugSpeedDown;
   }
 
   private updateAimFromMouse(): void {

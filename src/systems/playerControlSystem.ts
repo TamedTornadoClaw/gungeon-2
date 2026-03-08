@@ -153,6 +153,16 @@ export function playerControlSystem(world: World, input: InputState, _dt: number
       }
     }
 
+    // ── Debug Speed Tuning ──────────────────────────────────────────
+    if (input.debugSpeedUp) {
+      params.player.baseMovementSpeed += 1.0;
+      console.log(`[DebugSpeed] baseMovementSpeed = ${params.player.baseMovementSpeed}`);
+    }
+    if (input.debugSpeedDown) {
+      params.player.baseMovementSpeed = Math.max(1.0, params.player.baseMovementSpeed - 1.0);
+      console.log(`[DebugSpeed] baseMovementSpeed = ${params.player.baseMovementSpeed}`);
+    }
+
     // ── Pause ──────────────────────────────────────────────────────────
     if (input.pause) {
       useAppStore.getState().transition(AppState.Paused);

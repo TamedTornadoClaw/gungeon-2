@@ -25,6 +25,8 @@ export const DEFAULT_INPUT_MAPPING: InputMapping = {
     KeyE: LogicalAction.Interact,
     KeyU: LogicalAction.OpenUpgrade,
     Escape: LogicalAction.Pause,
+    BracketRight: LogicalAction.DebugSpeedUp,
+    BracketLeft: LogicalAction.DebugSpeedDown,
   },
   mouse: {
     0: LogicalAction.FireSidearm,  // LMB
