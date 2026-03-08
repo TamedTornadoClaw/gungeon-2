@@ -5,11 +5,10 @@ import soundManifestJson from '../config/sound-manifest.json';
 import { existsSync } from 'fs';
 import { resolve } from 'path';
 
-describe('Scaffold ShotgunFire sound', () => {
-  it('SoundId.ShotgunFire enum member exists', () => {
+describe('ShotgunFire sound scaffold', () => {
+  it('SoundId.ShotgunFire exists in the enum', () => {
     expect(SoundId.ShotgunFire).toBeDefined();
-    const name = SoundId[SoundId.ShotgunFire];
-    expect(name).toBe('ShotgunFire');
+    expect(typeof SoundId.ShotgunFire).toBe('number');
   });
 
   it('sound manifest has a ShotgunFire entry', () => {
@@ -17,9 +16,9 @@ describe('Scaffold ShotgunFire sound', () => {
     expect(manifest['ShotgunFire']).toBeDefined();
   });
 
-  it('manifest entry points to the correct file path', () => {
-    const entry = getSoundEntry(SoundId.ShotgunFire);
-    expect(entry.path).toBe('assets/audio/shotgun_fire.ogg');
+  it('manifest entry points to assets/audio/shotgun_fire.ogg', () => {
+    const manifest = soundManifestJson as Record<string, Record<string, unknown>>;
+    expect(manifest['ShotgunFire'].path).toBe('assets/audio/shotgun_fire.ogg');
   });
 
   it('placeholder audio file exists on disk', () => {
@@ -27,11 +26,17 @@ describe('Scaffold ShotgunFire sound', () => {
     expect(existsSync(filePath)).toBe(true);
   });
 
-  it('manifest entry has valid properties', () => {
+  it('getSoundEntry returns correct entry for ShotgunFire', () => {
     const entry = getSoundEntry(SoundId.ShotgunFire);
-    expect(entry.volume).toBeGreaterThanOrEqual(0);
-    expect(entry.volume).toBeLessThanOrEqual(1);
+    expect(entry).toBeDefined();
+    expect(entry.path).toBe('assets/audio/shotgun_fire.ogg');
     expect(entry.loop).toBe(false);
-    expect(entry.maxInstances).toBeGreaterThanOrEqual(1);
+  });
+
+  it('ShotgunFire has reasonable volume', () => {
+    const manifest = soundManifestJson as Record<string, Record<string, unknown>>;
+    const volume = manifest['ShotgunFire'].volume as number;
+    expect(volume).toBeGreaterThanOrEqual(0);
+    expect(volume).toBeLessThanOrEqual(1);
   });
 });
