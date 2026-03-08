@@ -54,7 +54,10 @@ export function pickupSystem(
   attractNearbyGems(world, playerPos, attractRange);
   processXPGems(world, eventQueue, player, playerPos, flySpeed, collectionThreshold, dt);
 
-  // Process interact-based pickups only when interact is pressed and in Gameplay state
+  // Auto-collect currency and health pickups within range
+  autoCollectPickups(world, eventQueue, player, playerPos, playerHealth, attractRange);
+
+  // Process interact-based pickups (gun pickups) when interact is pressed
   if (input.interact && useAppStore.getState().currentState === AppState.Gameplay) {
     processInteractPickups(world, eventQueue, player, playerHealth);
   }
@@ -172,11 +175,61 @@ function resolveXPTarget(
   return null;
 }
 
-function processInteractPickups(
+function autoCollectPickups(
   world: World,
   eventQueue: EventQueue,
   player: Player,
+  playerPos: Position,
   playerHealth: Health,
+  collectRange: number,
+): void {
+  const rangeSq = collectRange * collectRange;
+  const pickups = world.query(['PickupTag', 'Pickup', 'Position']);
+  const toDestroy: EntityId[] = [];
+
+  for (const pickupId of pickups) {
+    const pickup = world.getComponent<Pickup>(pickupId, 'Pickup')!;
+    const pos = world.getComponent<Position>(pickupId, 'Position')!;
+
+    const dx = playerPos.x - pos.x;
+    const dz = playerPos.z - pos.z;
+    if (dx * dx + dz * dz > rangeSq) continue;
+
+    if (pickup.pickupType === PickupType.Currency) {
+      const currencyData = world.getComponent<CurrencyData>(pickupId, 'CurrencyData');
+      if (!currencyData) continue;
+
+      player.currency += currencyData.amount;
+      eventQueue.emit({
+        type: EventType.Audio,
+        sound: SoundId.CurrencyPickup,
+        position: { x: pos.x, y: pos.y, z: pos.z },
+      });
+      toDestroy.push(pickupId);
+    } else if (pickup.pickupType === PickupType.HealthPickup) {
+      const hpData = world.getComponent<HealthPickupData>(pickupId, 'HealthPickupData');
+      if (!hpData) continue;
+
+      playerHealth.current = Math.min(playerHealth.current + hpData.healAmount, playerHealth.max);
+      eventQueue.emit({
+        type: EventType.Audio,
+        sound: SoundId.HealthPickup,
+        position: { x: pos.x, y: pos.y, z: pos.z },
+      });
+      toDestroy.push(pickupId);
+    }
+  }
+
+  for (const id of toDestroy) {
+    world.destroyEntity(id);
+  }
+}
+
+function processInteractPickups(
+  world: World,
+  _eventQueue: EventQueue,
+  _player: Player,
+  _playerHealth: Health,
 ): void {
   const pickups = world.query(['PickupTag', 'Pickup', 'NearPickup', 'Position']);
 
@@ -184,39 +237,6 @@ function processInteractPickups(
     const pickup = world.getComponent<Pickup>(pickupId, 'Pickup')!;
 
     switch (pickup.pickupType) {
-      case PickupType.HealthPickup: {
-        const hpData = world.getComponent<HealthPickupData>(pickupId, 'HealthPickupData');
-        if (!hpData) break;
-
-        const healAmount = Math.max(0, hpData.healAmount);
-        playerHealth.current = Math.min(playerHealth.current + healAmount, playerHealth.max);
-
-        eventQueue.emit({
-          type: EventType.Audio,
-          sound: SoundId.HealthPickup,
-          position: { ...world.getComponent<Position>(pickupId, 'Position')! },
-        });
-
-        world.destroyEntity(pickupId);
-        return; // One interact pickup per frame
-      }
-
-      case PickupType.Currency: {
-        const currencyData = world.getComponent<CurrencyData>(pickupId, 'CurrencyData');
-        if (!currencyData) break;
-
-        player.currency += currencyData.amount;
-
-        eventQueue.emit({
-          type: EventType.Audio,
-          sound: SoundId.CurrencyPickup,
-          position: { ...world.getComponent<Position>(pickupId, 'Position')! },
-        });
-
-        world.destroyEntity(pickupId);
-        return; // One interact pickup per frame
-      }
-
       case PickupType.GunPickup: {
         const gunData = world.getComponent<Gun>(pickupId, 'Gun');
         if (!gunData) break;
