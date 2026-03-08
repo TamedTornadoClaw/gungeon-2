@@ -63,7 +63,7 @@ const MESH_GEOMETRIES: Record<MeshId, () => THREE.BufferGeometry> = {
   [MeshId.FireHazard]: () => new THREE.PlaneGeometry(1, 1),
   [MeshId.SpikeHazard]: () => createSpikeHazardGeometry(),
   [MeshId.WaterHazard]: () => new THREE.PlaneGeometry(1, 1),
-  [MeshId.Crate]: () => new THREE.BoxGeometry(1, 1, 1),
+  [MeshId.Crate]: () => new THREE.BoxGeometry(0.5, 0.5, 0.5),
   [MeshId.Pillar]: () => new THREE.CylinderGeometry(0.4, 0.4, 2, 12),
   [MeshId.Barrel]: () => new THREE.CylinderGeometry(0.4, 0.4, 1, 12),
   [MeshId.Door]: () => new THREE.BoxGeometry(1, 1.5, 0.15),
