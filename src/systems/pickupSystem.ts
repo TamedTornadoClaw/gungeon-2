@@ -48,13 +48,36 @@ export function pickupSystem(
   const params = getDesignParams();
   const flySpeed = params.player.xpGemFlySpeed;
   const collectionThreshold = params.player.xpGemCollectionThreshold;
+  const attractRange = params.player.xpCollectionRange;
 
-  // Process XP gems (flying ones move toward player, collected on contact)
+  // Process XP gems (attract nearby, fly toward player, collect on contact)
+  attractNearbyGems(world, playerPos, attractRange);
   processXPGems(world, eventQueue, player, playerPos, flySpeed, collectionThreshold, dt);
 
   // Process interact-based pickups only when interact is pressed and in Gameplay state
   if (input.interact && useAppStore.getState().currentState === AppState.Gameplay) {
     processInteractPickups(world, eventQueue, player, playerHealth);
+  }
+}
+
+function attractNearbyGems(
+  world: World,
+  playerPos: Position,
+  attractRange: number,
+): void {
+  const rangeSq = attractRange * attractRange;
+  const gems = world.query(['PickupTag', 'Pickup', 'XPGem', 'Position']);
+
+  for (const gemId of gems) {
+    const xpGem = world.getComponent<XPGem>(gemId, 'XPGem')!;
+    if (xpGem.isFlying) continue;
+
+    const gemPos = world.getComponent<Position>(gemId, 'Position')!;
+    const dx = playerPos.x - gemPos.x;
+    const dz = playerPos.z - gemPos.z;
+    if (dx * dx + dz * dz <= rangeSq) {
+      xpGem.isFlying = true;
+    }
   }
 }
 
