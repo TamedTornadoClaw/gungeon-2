@@ -97,6 +97,8 @@ export enum LogicalAction {
   Interact = 'interact',
   OpenUpgrade = 'openUpgrade',
   Pause = 'pause',
+  DebugSpeedUp = 'debugSpeedUp',
+  DebugSpeedDown = 'debugSpeedDown',
 }
 
 export enum ColliderShape {
