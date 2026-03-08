@@ -68,7 +68,7 @@ const MESH_GEOMETRIES: Record<MeshId, () => THREE.BufferGeometry> = {
   [MeshId.Barrel]: () => new THREE.CylinderGeometry(0.4, 0.4, 1, 12),
   [MeshId.Door]: () => new THREE.BoxGeometry(1, 1.5, 0.15),
   [MeshId.Chest]: () => new THREE.BoxGeometry(0.8, 0.6, 0.6),
-  [MeshId.Shop]: () => new THREE.BoxGeometry(2, 2, 2),
+  [MeshId.Shop]: () => new THREE.BoxGeometry(1, 1, 0.8),
   [MeshId.Stairs]: () => createStairsGeometry(),
   [MeshId.EnemyShieldMesh]: () => new THREE.PlaneGeometry(1.2, 1.8),
 };
