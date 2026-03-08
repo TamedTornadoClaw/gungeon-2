@@ -1,5 +1,6 @@
 import { World } from '../ecs/world';
-import type { Position, SpawnZone, Health } from '../ecs/components';
+import type { Position, SpawnZone, Health, AIState } from '../ecs/components';
+import { AIBehaviorState } from '../ecs/components';
 import { createEnemy } from '../ecs/factories';
 import { getDesignParams } from '../config/designParams';
 
@@ -10,6 +11,10 @@ export function spawnSystem(
 ): void {
   const params = getDesignParams();
   const miniBossChance = params.dungeon.miniBossChancePerRoom;
+
+  // Find player for immediate aggro on spawn
+  const playerIds = world.query(['PlayerTag']);
+  const playerId = playerIds.length > 0 ? playerIds[0] : null;
 
   const zoneIds = world.query(['SpawnZone', 'Position']);
 
@@ -47,6 +52,15 @@ export function spawnSystem(
           isMini,
         );
         zone.spawnedEnemies.push(enemyId);
+
+        // Immediately aggro — player triggered this room
+        if (playerId !== null) {
+          const ai = world.getComponent<AIState>(enemyId, 'AIState');
+          if (ai) {
+            ai.state = AIBehaviorState.Chase;
+            ai.target = playerId;
+          }
+        }
       }
     }
 

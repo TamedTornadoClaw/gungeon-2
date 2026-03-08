@@ -10,7 +10,7 @@ import {
   createChest,
   createShop,
   createStairs,
-  createSpawnZone,
+  createEnemy,
   createBoss,
 } from '../ecs/factories.js';
 import { rebuildStatics } from '../systems/collisionDetectionSystem.js';
@@ -162,18 +162,19 @@ export function createDungeonEntities(
     const roomW = max.x - min.x;
     const roomH = max.z - min.z;
 
-    // Spawn zones — skip in starting room to prevent instant player death (#396)
+    // Pre-place enemies in rooms — skip starting room (#396)
     const isStartingRoom = startingRoom === room;
     if (!isStartingRoom) {
+      const halfW = roomW * params.dungeon.spawnZoneScale / 2;
+      const halfH = roomH * params.dungeon.spawnZoneScale / 2;
+
       for (const sp of room.spawnPoints) {
-        const szId = createSpawnZone(
-          world,
-          sp.position,
-          { x: roomW * params.dungeon.spawnZoneScale, y: roomH * params.dungeon.spawnZoneScale },
-          sp.enemyTypes,
-          sp.enemyCount,
-        );
-        result.spawnZoneIds.push(szId);
+        for (let i = 0; i < sp.enemyCount; i++) {
+          const enemyType = sp.enemyTypes[Math.floor(Math.random() * sp.enemyTypes.length)];
+          const x = sp.position.x - halfW + Math.random() * halfW * 2;
+          const z = sp.position.z - halfH + Math.random() * halfH * 2;
+          createEnemy(world, enemyType, { x, y: 0, z }, depth - 1, false);
+        }
       }
     }
 

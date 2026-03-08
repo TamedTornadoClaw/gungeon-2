@@ -339,8 +339,8 @@ describe('DungeonEntityCreator', () => {
     });
   });
 
-  describe('SpawnZone created per room with correct enemy types', () => {
-    it('creates spawn zone with correct dimensions, enemy types, and initial state', () => {
+  describe('Enemies pre-placed per room', () => {
+    it('creates enemies directly in non-starting rooms', () => {
       const world = new World();
       const dungeon = makeDungeonData({
         rooms: [makeRoom({
@@ -354,22 +354,11 @@ describe('DungeonEntityCreator', () => {
         playerStart: { x: -100, y: 0, z: -100 },
       });
 
-      const result = createDungeonEntities(world, dungeon, 1);
+      createDungeonEntities(world, dungeon, 1);
 
-      expect(result.spawnZoneIds).toHaveLength(1);
-      const szId = result.spawnZoneIds[0];
-      const pos = world.getComponent<Position>(szId, 'Position')!;
-      const sz = world.getComponent<SpawnZone>(szId, 'SpawnZone')!;
-      const collider = world.getComponent<Collider>(szId, 'Collider')!;
-
-      expect(pos.x).toBe(10);
-      expect(pos.z).toBe(10);
-      expect(sz.enemyTypes).toEqual([EnemyType.KnifeRusher, EnemyType.Shotgunner]);
-      expect(sz.enemyCount).toBe(5);
-      expect(sz.activated).toBe(false);
-      expect(sz.spawnedEnemies).toEqual([]);
-      expect(sz.cleared).toBe(false);
-      expect(collider.isTrigger).toBe(true);
+      // Enemies should be pre-placed (no spawn zones)
+      const enemies = world.query(['EnemyTag']);
+      expect(enemies).toHaveLength(5);
     });
   });
 
@@ -460,7 +449,7 @@ describe('DungeonEntityCreator', () => {
       expect(result.chestIds).toHaveLength(1);
       expect(result.shopIds).toHaveLength(1);
       expect(result.doorIds).toHaveLength(1);
-      expect(result.spawnZoneIds).toHaveLength(1);
+      expect(result.spawnZoneIds).toHaveLength(0);
       expect(result.stairsId).not.toBeNull();
     });
   });
@@ -601,8 +590,8 @@ describe('DungeonEntityCreator', () => {
 
       // Walls must still surround the room
       expect(result.wallIds.length).toBeGreaterThanOrEqual(4);
-      // SpawnZone must still be created
-      expect(result.spawnZoneIds).toHaveLength(1);
+      // Enemies pre-placed (no spawn zones)
+      expect(result.spawnZoneIds).toHaveLength(0);
       // Hazards created
       expect(result.hazardIds.length).toBe(hazards.length);
     });

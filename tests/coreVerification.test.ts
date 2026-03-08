@@ -61,7 +61,9 @@ describe('Core Verification', () => {
 
       expect(result.wallIds.length).toBeGreaterThan(0);
       expect(result.floorIds.length).toBeGreaterThan(0);
-      expect(result.spawnZoneIds.length).toBeGreaterThan(0);
+      // Enemies are now pre-placed instead of using spawn zones
+      const enemies = world.query(['EnemyTag']);
+      expect(enemies.length).toBeGreaterThan(0);
 
       // Verify wall entities have Position and Collider
       for (const wallId of result.wallIds) {
