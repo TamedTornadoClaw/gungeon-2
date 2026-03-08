@@ -251,7 +251,15 @@
     "fov": 50,
     "angle": 45,
     "distance": 20,
-    "followSmoothing": 0.1
+    "followSmoothing": 0.1,
+    "wallFade": {
+      "opacity": 0.15,
+      "radius": 3.0
+    }
+  },
+  "visibility": {
+    "fogOfWarRadius": 55.0,
+    "losMaxRange": 30.0
   },
   "screenEffects": {
     "shake": {

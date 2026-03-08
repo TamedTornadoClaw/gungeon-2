@@ -532,3 +532,5 @@ export type ChestTag = Record<string, never>;
 export type ShopTag = Record<string, never>;
 export type StairsTag = Record<string, never>;
 export type BossTag = Record<string, never>;
+export type DungeonEntityTag = Record<string, never>;
+export type Revealed = Record<string, never>;

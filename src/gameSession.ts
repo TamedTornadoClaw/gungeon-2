@@ -8,6 +8,7 @@ import { getAudioManager } from './audio/audioManager';
 import { generateDungeon } from './dungeon/generator';
 import { createDungeonEntities } from './dungeon/dungeonEntityCreator';
 import { createPlayer } from './ecs/factories';
+import { initialReveal } from './systems/visibilitySystem';
 import { GunType } from './ecs/components';
 import { useAppStore } from './store/appStore';
 import type { FloorState } from './systems/floorTransitionSystem';
@@ -31,6 +32,7 @@ export function createGameSession(canvasContainer: HTMLElement): GameSession {
   const dungeon = generateDungeon(floorState.seed, floorState.currentDepth);
   createDungeonEntities(world, dungeon, floorState.currentDepth);
   createPlayer(world, dungeon.playerStart, selectedLongArm);
+  initialReveal(world);
 
   const rendererCtx = initRenderer();
   mountRenderer(rendererCtx, canvasContainer);

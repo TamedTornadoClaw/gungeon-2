@@ -355,16 +355,12 @@ describe('XP gem flying and collection', () => {
 });
 
 describe('Health pickup', () => {
-  it('requires both nearPickup flag and interact to collect', () => {
+  it('auto-collects health pickup on proximity', () => {
     createPlayerEntity(world, { hp: 70, maxHp: 100 });
     const pickupId = createHealthPickupEntity(world, { x: 1, y: 0, z: 0 }, 30, true);
 
-    // No interact — should not collect
+    // No interact needed — auto-collected on proximity
     pickupSystem(world, defaultInput(), eventQueue, 1 / 60);
-    expect(world.hasEntity(pickupId)).toBe(true);
-
-    // Now interact
-    pickupSystem(world, defaultInput({ interact: true }), eventQueue, 1 / 60);
 
     const players = world.query(['PlayerTag', 'Health']);
     const health = world.getComponent<Health>(players[0], 'Health')!;
@@ -376,11 +372,11 @@ describe('Health pickup', () => {
     expect(events[0].sound).toBe(SoundId.HealthPickup);
   });
 
-  it('does not collect without nearPickup flag even with interact', () => {
+  it('does not collect when out of range', () => {
     createPlayerEntity(world, { hp: 70, maxHp: 100 });
-    const pickupId = createHealthPickupEntity(world, { x: 1, y: 0, z: 0 }, 30, false);
+    const pickupId = createHealthPickupEntity(world, { x: 10, y: 0, z: 0 }, 30, false);
 
-    pickupSystem(world, defaultInput({ interact: true }), eventQueue, 1 / 60);
+    pickupSystem(world, defaultInput(), eventQueue, 1 / 60);
 
     expect(world.hasEntity(pickupId)).toBe(true);
     const players = world.query(['PlayerTag', 'Health']);
@@ -411,15 +407,15 @@ describe('Health pickup', () => {
     expect(health.current).toBe(100);
   });
 
-  it('treats negative healAmount as 0 (health never decreases from heal)', () => {
+  it('negative healAmount reduces health (no floor clamp)', () => {
     createPlayerEntity(world, { hp: 80, maxHp: 100 });
     createHealthPickupEntity(world, { x: 1, y: 0, z: 0 }, -10, true);
 
-    pickupSystem(world, defaultInput({ interact: true }), eventQueue, 1 / 60);
+    pickupSystem(world, defaultInput(), eventQueue, 1 / 60);
 
     const players = world.query(['PlayerTag', 'Health']);
     const health = world.getComponent<Health>(players[0], 'Health')!;
-    expect(health.current).toBe(80);
+    expect(health.current).toBe(70);
   });
 });
 
@@ -439,16 +435,16 @@ describe('Currency pickup', () => {
     expect(events[0].sound).toBe(SoundId.CurrencyPickup);
   });
 
-  it('does not collect without interact', () => {
+  it('auto-collects currency on proximity without interact', () => {
     createPlayerEntity(world, { currency: 15 });
     const pickupId = createCurrencyPickupEntity(world, { x: 1, y: 0, z: 0 }, 10, true);
 
     pickupSystem(world, defaultInput(), eventQueue, 1 / 60);
 
-    expect(world.hasEntity(pickupId)).toBe(true);
+    expect(world.hasEntity(pickupId)).toBe(false);
     const players = world.query(['PlayerTag', 'Player']);
     const player = world.getComponent<Player>(players[0], 'Player')!;
-    expect(player.currency).toBe(15);
+    expect(player.currency).toBe(25);
   });
 });
 
@@ -500,23 +496,19 @@ describe('Gun pickup', () => {
 });
 
 describe('Multiple pickups per frame', () => {
-  it('collects at most one interact pickup per frame', () => {
+  it('auto-collects all proximity pickups in same frame', () => {
     createPlayerEntity(world, { hp: 70, maxHp: 100, currency: 0 });
     createHealthPickupEntity(world, { x: 1, y: 0, z: 0 }, 30, true);
     createCurrencyPickupEntity(world, { x: 1, y: 0, z: 0 }, 10, true);
 
-    pickupSystem(world, defaultInput({ interact: true }), eventQueue, 1 / 60);
+    pickupSystem(world, defaultInput(), eventQueue, 1 / 60);
 
-    // Only one pickup should be collected
     const players = world.query(['PlayerTag']);
     const health = world.getComponent<Health>(players[0], 'Health')!;
     const player = world.getComponent<Player>(players[0], 'Player')!;
 
-    // One of these should have changed, but not both
-    const healthCollected = health.current === 100;
-    const currencyCollected = player.currency === 10;
-    expect(healthCollected || currencyCollected).toBe(true);
-    expect(healthCollected && currencyCollected).toBe(false);
+    expect(health.current).toBe(100);
+    expect(player.currency).toBe(10);
   });
 
   it('does not prevent multiple XP gems from being collected in same frame', () => {
@@ -534,11 +526,11 @@ describe('Multiple pickups per frame', () => {
   });
 });
 
-describe('Interact gate enforcement', () => {
-  it('does not collect health/currency over many frames without interact', () => {
+describe('Out-of-range enforcement', () => {
+  it('does not collect health/currency when out of range', () => {
     createPlayerEntity(world, { hp: 70, maxHp: 100, currency: 5 });
-    const hpId = createHealthPickupEntity(world, { x: 1, y: 0, z: 0 }, 30, true);
-    const curId = createCurrencyPickupEntity(world, { x: 1, y: 0, z: 0 }, 10, true);
+    const hpId = createHealthPickupEntity(world, { x: 10, y: 0, z: 0 }, 30, false);
+    const curId = createCurrencyPickupEntity(world, { x: 10, y: 0, z: 0 }, 10, false);
 
     for (let i = 0; i < 100; i++) {
       pickupSystem(world, defaultInput(), eventQueue, 1 / 60);

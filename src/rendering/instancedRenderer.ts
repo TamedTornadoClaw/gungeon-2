@@ -6,6 +6,11 @@ import { getDesignParams } from '../config/designParams';
 import type { SceneManager } from './sceneManager';
 import { getMeshDef } from './sceneManager';
 
+// ── Constants ───────────────────────────────────────────────────────────────
+
+/** Max entity positions uploaded to the wall fade shader each frame */
+const MAX_FADE_ENTITIES = 32;
+
 // ── Types ───────────────────────────────────────────────────────────────────
 
 /** MeshIds that use instanced rendering (high-count entity types) */
@@ -36,6 +41,8 @@ export interface InstancedRenderer {
   getInstanceCount(meshId: MeshId): number;
   /** Check whether a MeshId uses instanced rendering */
   isInstanced(meshId: MeshId): boolean;
+  /** Update wall occlusion fade with camera + entity positions */
+  updateWallFade(cameraPos: THREE.Vector3, entityPositions: THREE.Vector3[], count: number): void;
   /** Clean up all instanced meshes */
   dispose(): void;
 }
@@ -158,6 +165,7 @@ export function createInstancedRenderer(sceneManager: SceneManager): InstancedRe
   const instancedSet = new Set<MeshId>(INSTANCED_MESH_IDS);
   const activeCounts = new Map<MeshId, number>();
   const tempMatrix = new THREE.Matrix4();
+  let wallFadeShader: THREE.WebGLProgramParametersWithUniforms | null = null;
 
   // Create InstancedMesh for each instanced type
   for (const meshId of INSTANCED_MESH_IDS) {
@@ -225,6 +233,80 @@ export function createInstancedRenderer(sceneManager: SceneManager): InstancedRe
     }
 
     const mat = new THREE.MeshToonMaterial(params);
+
+    // Wall occlusion fade: walls between camera and tracked entities become transparent.
+    // Uses a uniform buffer of entity positions. The fragment shader tests each
+    // camera→entity ray against the fragment's world position with lateral falloff.
+    if (meshId === MeshId.Wall) {
+      const { wallFade } = getDesignParams().camera;
+      params.transparent = true;
+      mat.transparent = true;
+
+      mat.onBeforeCompile = (shader) => {
+        shader.uniforms.uCameraPos = { value: new THREE.Vector3() };
+        shader.uniforms.uEntityPositions = { value: new Array(MAX_FADE_ENTITIES).fill(null).map(() => new THREE.Vector3()) };
+        shader.uniforms.uEntityCount = { value: 0 };
+        shader.uniforms.uFadeOpacity = { value: wallFade.opacity };
+        shader.uniforms.uFadeRadius = { value: wallFade.radius };
+
+        // Vertex: pass world position to fragment
+        shader.vertexShader = shader.vertexShader.replace(
+          '#include <common>',
+          `#include <common>
+           varying vec3 vWallWorldPos;`,
+        );
+        shader.vertexShader = shader.vertexShader.replace(
+          '#include <uv_vertex>',
+          `#include <uv_vertex>
+           vec4 wallWP = modelMatrix * instanceMatrix * vec4(position, 1.0);
+           vWallWorldPos = wallWP.xyz;`,
+        );
+
+        // Fragment: test each camera→entity ray for occlusion
+        shader.fragmentShader = shader.fragmentShader.replace(
+          '#include <common>',
+          `#include <common>
+           varying vec3 vWallWorldPos;
+           uniform vec3 uCameraPos;
+           uniform vec3 uEntityPositions[${MAX_FADE_ENTITIES}];
+           uniform int uEntityCount;
+           uniform float uFadeOpacity;
+           uniform float uFadeRadius;`,
+        );
+        shader.fragmentShader = shader.fragmentShader.replace(
+          '#include <dithering_fragment>',
+          `#include <dithering_fragment>
+           float minAlpha = 1.0;
+           for (int i = 0; i < ${MAX_FADE_ENTITIES}; i++) {
+             if (i >= uEntityCount) break;
+             vec3 entityPos = uEntityPositions[i];
+             vec3 rayDir = entityPos - uCameraPos;
+             float rayLen = length(rayDir);
+             if (rayLen < 0.001) continue;
+             vec3 rayNorm = rayDir / rayLen;
+
+             // Project fragment onto the camera→entity ray
+             vec3 toFrag = vWallWorldPos - uCameraPos;
+             float t = dot(toFrag, rayNorm) / rayLen;
+
+             // Only fade if fragment is between camera and entity (t in [0, 1])
+             if (t < 0.0 || t > 1.0) continue;
+
+             // Lateral distance from ray
+             vec3 closestPoint = uCameraPos + rayNorm * (t * rayLen);
+             float lateralDist = length(vWallWorldPos - closestPoint);
+
+             // Smooth falloff based on lateral distance
+             float fade = smoothstep(0.0, uFadeRadius, lateralDist);
+             float alpha = mix(uFadeOpacity, 1.0, fade);
+             minAlpha = min(minAlpha, alpha);
+           }
+           gl_FragColor.a *= minAlpha;`,
+        );
+
+        wallFadeShader = shader;
+      };
+    }
 
     // Floor uses world-space UV projection so texture tiles seamlessly
     // across all floor entities regardless of size or position.
@@ -318,6 +400,16 @@ export function createInstancedRenderer(sceneManager: SceneManager): InstancedRe
     return instancedSet.has(meshId);
   }
 
+  function updateWallFade(cameraPos: THREE.Vector3, entityPositions: THREE.Vector3[], count: number): void {
+    if (!wallFadeShader) return;
+    wallFadeShader.uniforms.uCameraPos.value.copy(cameraPos);
+    wallFadeShader.uniforms.uEntityCount.value = Math.min(count, MAX_FADE_ENTITIES);
+    const uniformPositions = wallFadeShader.uniforms.uEntityPositions.value as THREE.Vector3[];
+    for (let i = 0; i < Math.min(count, MAX_FADE_ENTITIES); i++) {
+      uniformPositions[i].copy(entityPositions[i]);
+    }
+  }
+
   function dispose(): void {
     for (const [meshId, instancedMesh] of instancedMeshes) {
       instancedMesh.geometry.dispose();
@@ -341,6 +433,7 @@ export function createInstancedRenderer(sceneManager: SceneManager): InstancedRe
     update,
     getInstanceCount,
     isInstanced,
+    updateWallFade,
     dispose,
   };
 }

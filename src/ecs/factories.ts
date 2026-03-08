@@ -489,7 +489,7 @@ export function createEnemy(
   });
   world.addComponent<Renderable>(id, 'Renderable', {
     meshId: isMini ? MINI_BOSS_MESH_MAP[enemyType] : ENEMY_MESH_MAP[enemyType],
-    visible: true,
+    visible: false,
     scale: isMini ? scaling.miniBossScale : 1,
   });
   world.addComponent(id, 'EnemyTag', {});
@@ -550,7 +550,7 @@ export function createBoss(world: World, position: Vec3, depth: number): EntityI
   });
   world.addComponent<Renderable>(id, 'Renderable', {
     meshId: MeshId.Boss,
-    visible: true,
+    visible: false,
     scale: scaling.bossScale,
   });
   world.addComponent(id, 'EnemyTag', {});
@@ -665,12 +665,13 @@ export function createWall(world: World, position: Vec3, size: Vec3): EntityId {
   });
   world.addComponent<Renderable>(id, 'Renderable', {
     meshId: MeshId.Wall,
-    visible: true,
+    visible: false,
     scale: size.y / 3,
     scaleX: size.x,
     scaleZ: size.z,
   });
   world.addComponent(id, 'WallTag', {});
+  world.addComponent(id, 'DungeonEntityTag', {});
 
   return id;
 }
@@ -682,11 +683,12 @@ export function createFloor(world: World, position: Vec3, size: Vec3): EntityId 
   world.addComponent<PreviousPosition>(id, 'PreviousPosition', prevPos(position));
   world.addComponent<Renderable>(id, 'Renderable', {
     meshId: MeshId.Floor,
-    visible: true,
+    visible: false,
     scale: 1,
     scaleX: size.x,
     scaleZ: size.z,
   });
+  world.addComponent(id, 'DungeonEntityTag', {});
 
   return id;
 }
@@ -712,12 +714,13 @@ export function createHazard(
   });
   world.addComponent<Renderable>(id, 'Renderable', {
     meshId: HAZARD_MESH_MAP[hazardType],
-    visible: true,
+    visible: false,
     scale: 1,
     scaleX: size.x,
     scaleZ: size.z,
   });
   world.addComponent(id, 'HazardTag', {});
+  world.addComponent(id, 'DungeonEntityTag', {});
 
   return id;
 }
@@ -745,10 +748,11 @@ export function createDestructible(
   });
   world.addComponent<Renderable>(id, 'Renderable', {
     meshId: MeshId.Crate,
-    visible: true,
+    visible: false,
     scale: 1,
   });
   world.addComponent(id, 'DestructibleTag', {});
+  world.addComponent(id, 'DungeonEntityTag', {});
 
   return id;
 }
@@ -770,10 +774,11 @@ export function createDoor(world: World, position: Vec3): EntityId {
   });
   world.addComponent<Renderable>(id, 'Renderable', {
     meshId: MeshId.Door,
-    visible: true,
+    visible: false,
     scale: 1,
   });
   world.addComponent(id, 'DoorTag', {});
+  world.addComponent(id, 'DungeonEntityTag', {});
 
   return id;
 }
@@ -795,10 +800,11 @@ export function createChest(world: World, position: Vec3, gunType: GunType): Ent
   });
   world.addComponent<Renderable>(id, 'Renderable', {
     meshId: MeshId.Chest,
-    visible: true,
+    visible: false,
     scale: 1,
   });
   world.addComponent(id, 'ChestTag', {});
+  world.addComponent(id, 'DungeonEntityTag', {});
 
   return id;
 }
@@ -820,10 +826,11 @@ export function createShop(world: World, position: Vec3, inventory: ShopItem[]):
   });
   world.addComponent<Renderable>(id, 'Renderable', {
     meshId: MeshId.Shop,
-    visible: true,
+    visible: false,
     scale: 1,
   });
   world.addComponent(id, 'ShopTag', {});
+  world.addComponent(id, 'DungeonEntityTag', {});
 
   return id;
 }
@@ -845,10 +852,11 @@ export function createStairs(world: World, position: Vec3, targetDepth: number):
   });
   world.addComponent<Renderable>(id, 'Renderable', {
     meshId: MeshId.Stairs,
-    visible: true,
+    visible: false,
     scale: 1,
   });
   world.addComponent(id, 'StairsTag', {});
+  world.addComponent(id, 'DungeonEntityTag', {});
 
   return id;
 }

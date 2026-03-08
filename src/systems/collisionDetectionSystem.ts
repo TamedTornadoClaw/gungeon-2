@@ -1,5 +1,5 @@
 /**
- * CollisionDetectionSystem — spatial hash grid broad-phase + AABB narrow-phase.
+ * CollisionDetectionSystem — quadtree broad-phase + AABB narrow-phase.
  *
  * Detects AABB overlaps on the X/Z plane (top-down game, Y is height).
  * Uses Collider.width for X extent and Collider.depth for Z extent.
@@ -11,6 +11,7 @@
  */
 import type { EntityId } from '../types';
 import type { Position, Collider } from '../ecs/components';
+import { Quadtree } from '../spatial/quadtree';
 
 export interface CollisionPair {
   entityA: EntityId;
@@ -25,113 +26,27 @@ export interface CollisionEntity {
   collider: Collider;
 }
 
-// ── Spatial Hash Grid ─────────────────────────────────────────────────────
-
-type CellKey = string;
-
-function cellKey(cx: number, cz: number): CellKey {
-  return `${cx},${cz}`;
-}
-
-class SpatialHashGrid {
-  private cellSize: number;
-  private cells: Map<CellKey, EntityId[]> = new Map();
-
-  constructor(cellSize: number) {
-    this.cellSize = cellSize;
-  }
-
-  clear(): void {
-    this.cells.clear();
-  }
-
-  getCellSize(): number {
-    return this.cellSize;
-  }
-
-  setCellSize(size: number): void {
-    this.cellSize = size;
-  }
-
-  insert(id: EntityId, pos: Position, col: Collider): void {
-    const halfW = col.width / 2;
-    const halfD = col.depth / 2;
-    const minCX = Math.floor((pos.x - halfW) / this.cellSize);
-    const maxCX = Math.floor((pos.x + halfW) / this.cellSize);
-    const minCZ = Math.floor((pos.z - halfD) / this.cellSize);
-    const maxCZ = Math.floor((pos.z + halfD) / this.cellSize);
-
-    for (let cx = minCX; cx <= maxCX; cx++) {
-      for (let cz = minCZ; cz <= maxCZ; cz++) {
-        const key = cellKey(cx, cz);
-        let cell = this.cells.get(key);
-        if (!cell) {
-          cell = [];
-          this.cells.set(key, cell);
-        }
-        cell.push(id);
-      }
-    }
-  }
-
-  /** Returns all entity IDs that share at least one cell with the given AABB. */
-  query(pos: Position, col: Collider): EntityId[] {
-    const halfW = col.width / 2;
-    const halfD = col.depth / 2;
-    const minCX = Math.floor((pos.x - halfW) / this.cellSize);
-    const maxCX = Math.floor((pos.x + halfW) / this.cellSize);
-    const minCZ = Math.floor((pos.z - halfD) / this.cellSize);
-    const maxCZ = Math.floor((pos.z + halfD) / this.cellSize);
-
-    const seen = new Set<EntityId>();
-    const result: EntityId[] = [];
-
-    for (let cx = minCX; cx <= maxCX; cx++) {
-      for (let cz = minCZ; cz <= maxCZ; cz++) {
-        const cell = this.cells.get(cellKey(cx, cz));
-        if (!cell) continue;
-        for (const id of cell) {
-          if (!seen.has(id)) {
-            seen.add(id);
-            result.push(id);
-          }
-        }
-      }
-    }
-    return result;
-  }
-}
-
 // ── System State ──────────────────────────────────────────────────────────
 
-const staticGrid = new SpatialHashGrid(1);
-const dynamicGrid = new SpatialHashGrid(1);
+const staticTree = new Quadtree();
+const dynamicTree = new Quadtree();
 let staticEntities: CollisionEntity[] = [];
 
 /**
- * Rebuild the static spatial hash. Call when the level changes (room load, etc).
+ * Rebuild the static quadtree. Call when the level changes (room load, etc).
  * Idempotent — safe to call multiple times.
  */
 export function rebuildStatics(entities: CollisionEntity[]): void {
   staticEntities = entities.filter(e => e.collider.isStatic);
-  staticGrid.clear();
+  staticTree.clear();
   for (const e of staticEntities) {
-    staticGrid.insert(e.id, e.position, e.collider);
+    staticTree.insertEntity(e.id, e.position.x, e.position.z, e.collider.width / 2, e.collider.depth / 2);
   }
 }
 
-/**
- * Compute the cell size as 2 * the largest dimension among dynamic colliders.
- * Falls back to 2 if there are no dynamic entities.
- */
-function computeCellSize(entities: CollisionEntity[]): number {
-  let maxDim = 0;
-  for (const e of entities) {
-    if (!e.collider.isStatic) {
-      maxDim = Math.max(maxDim, e.collider.width, e.collider.depth);
-    }
-  }
-  return maxDim > 0 ? 2 * maxDim : 2;
+/** Get the static quadtree for external queries (LOS, visibility). */
+export function getStaticTree(): Quadtree {
+  return staticTree;
 }
 
 // ── AABB Test ─────────────────────────────────────────────────────────────
@@ -164,19 +79,16 @@ export function collisionDetectionSystem(
 ): CollisionPair[] {
   const dynamicEntities = entities.filter(e => !e.collider.isStatic);
 
-  // Recompute cell size & rebuild dynamic grid
-  const cellSize = computeCellSize(entities);
-  dynamicGrid.setCellSize(cellSize);
-  dynamicGrid.clear();
+  // Rebuild dynamic quadtree each frame
+  dynamicTree.clear();
   for (const e of dynamicEntities) {
-    dynamicGrid.insert(e.id, e.position, e.collider);
+    dynamicTree.insertEntity(e.id, e.position.x, e.position.z, e.collider.width / 2, e.collider.depth / 2);
   }
 
-  // Also update static grid cell size to match
-  staticGrid.setCellSize(cellSize);
-  staticGrid.clear();
+  // Rebuild static tree each frame (statics may have been passed in entities list)
+  staticTree.clear();
   for (const e of staticEntities) {
-    staticGrid.insert(e.id, e.position, e.collider);
+    staticTree.insertEntity(e.id, e.position.x, e.position.z, e.collider.width / 2, e.collider.depth / 2);
   }
 
   // Build entity lookup
@@ -211,23 +123,37 @@ export function collisionDetectionSystem(
     }
   }
 
-  // Dynamic vs Dynamic
+  // Dynamic vs Dynamic: for each dynamic entity, query dynamic tree for candidates
   for (const e of dynamicEntities) {
-    const candidates = dynamicGrid.query(e.position, e.collider);
-    for (const candidateId of candidates) {
-      if (candidateId === e.id) continue; // no self-collision
-      const other = entityMap.get(candidateId);
+    const halfW = e.collider.width / 2;
+    const halfD = e.collider.depth / 2;
+    const candidates = dynamicTree.queryRect({
+      minX: e.position.x - halfW,
+      minZ: e.position.z - halfD,
+      maxX: e.position.x + halfW,
+      maxZ: e.position.z + halfD,
+    });
+    for (const c of candidates) {
+      if (c.id === e.id) continue;
+      const other = entityMap.get(c.id);
       if (!other) continue;
       if (other.collider.isStatic) continue;
       addPair(e, other);
     }
   }
 
-  // Dynamic vs Static
+  // Dynamic vs Static: for each dynamic entity, query static tree
   for (const e of dynamicEntities) {
-    const candidates = staticGrid.query(e.position, e.collider);
-    for (const candidateId of candidates) {
-      const other = entityMap.get(candidateId);
+    const halfW = e.collider.width / 2;
+    const halfD = e.collider.depth / 2;
+    const candidates = staticTree.queryRect({
+      minX: e.position.x - halfW,
+      minZ: e.position.z - halfD,
+      maxX: e.position.x + halfW,
+      maxZ: e.position.z + halfD,
+    });
+    for (const c of candidates) {
+      const other = entityMap.get(c.id);
       if (!other) continue;
       addPair(e, other);
     }
@@ -241,7 +167,7 @@ export function collisionDetectionSystem(
 
 /** Reset module-level state (for testing). */
 export function resetCollisionState(): void {
-  staticGrid.clear();
-  dynamicGrid.clear();
+  staticTree.clear();
+  dynamicTree.clear();
   staticEntities = [];
 }

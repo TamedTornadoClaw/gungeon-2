@@ -30,6 +30,7 @@ import { destructibleSystem } from '../systems/destructibleSystem';
 import { doorSystem } from '../systems/doorSystem';
 import { spawnSystem } from '../systems/spawnSystem';
 import { floorTransitionSystem, type FloorState } from '../systems/floorTransitionSystem';
+import { visibilitySystem } from '../systems/visibilitySystem';
 import { deathSystem } from '../systems/deathSystem';
 import { expireModifiersSystem } from '../systems/expireModifiersSystem';
 import { particleSystem } from '../systems/particleSystem';
@@ -184,6 +185,9 @@ export function createGameLoop(deps: GameLoopDeps): GameLoop {
 
     // 20. Spawn
     spawnSystem(world, floorState.currentDepth);
+
+    // 20.5. Visibility (fog of war + enemy LOS)
+    visibilitySystem(world);
 
     // 21. FloorTransition
     floorTransitionSystem(world, input, eventQueue, floorState);

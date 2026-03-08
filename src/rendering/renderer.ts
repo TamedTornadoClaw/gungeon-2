@@ -7,6 +7,9 @@ import type { Position, PreviousPosition, Rotation, Renderable, Player, Gun } fr
 import type { World } from '../ecs/world';
 import type { EntityId } from '../types';
 
+/** Max entities tracked for wall occlusion fade */
+const MAX_WALL_FADE_ENTITIES = 32;
+
 export { spawnDamageNumber, updateDamageNumbers, clearDamageNumbers, getActiveDamageNumbers } from './damageNumbers';
 export type { DamageNumber } from './damageNumbers';
 export { createCameraController, updateCamera, addScreenShake } from './cameraController';
@@ -145,6 +148,12 @@ export function createRenderSystem(ctx: RendererContext): RenderSystem {
   const meshIdMap = new Map<EntityId, MeshId>();
   let lastFrameTime = -1;
 
+  // Pre-allocated buffer for wall occlusion fade entity positions
+  const wallFadePositions: THREE.Vector3[] = [];
+  for (let i = 0; i < MAX_WALL_FADE_ENTITIES; i++) {
+    wallFadePositions.push(new THREE.Vector3());
+  }
+
   function update(world: World, alpha: number, _dt: number): void {
     // Compute real frame dt from timestamps
     const now = performance.now();
@@ -278,10 +287,48 @@ export function createRenderSystem(ctx: RendererContext): RenderSystem {
 
     updateCamera(ctx.cameraController, x, y, z, dt);
 
+    // Collect entity positions for wall occlusion fade (player + enemies)
+    updateWallFade(world, alpha);
+
     // Move directional light to follow player so shadows cover visible area
     ctx.directionalLight.position.set(x + 10, 30, z + 15);
     ctx.directionalLight.target.position.set(x, 0, z);
     ctx.directionalLight.target.updateMatrixWorld();
+  }
+
+  function updateWallFade(world: World, alpha: number): void {
+    let count = 0;
+
+    // Player first
+    const players = world.query(['Position', 'Player']);
+    for (const eid of players) {
+      if (count >= MAX_WALL_FADE_ENTITIES) break;
+      const pos = world.getComponent<Position>(eid, 'Position')!;
+      const prev = world.getComponent<PreviousPosition>(eid, 'PreviousPosition');
+      wallFadePositions[count].set(
+        prev ? prev.x + (pos.x - prev.x) * alpha : pos.x,
+        prev ? prev.y + (pos.y - prev.y) * alpha : pos.y,
+        prev ? prev.z + (pos.z - prev.z) * alpha : pos.z,
+      );
+      count++;
+    }
+
+    // Enemies (anything with Health that isn't the player)
+    const healthEntities = world.query(['Position', 'Health']);
+    for (const eid of healthEntities) {
+      if (count >= MAX_WALL_FADE_ENTITIES) break;
+      if (world.hasComponent(eid, 'Player')) continue;
+      const pos = world.getComponent<Position>(eid, 'Position')!;
+      const prev = world.getComponent<PreviousPosition>(eid, 'PreviousPosition');
+      wallFadePositions[count].set(
+        prev ? prev.x + (pos.x - prev.x) * alpha : pos.x,
+        prev ? prev.y + (pos.y - prev.y) * alpha : pos.y,
+        prev ? prev.z + (pos.z - prev.z) * alpha : pos.z,
+      );
+      count++;
+    }
+
+    ctx.instancedRenderer.updateWallFade(ctx.camera.position, wallFadePositions, count);
   }
 
   function releaseAll(): void {

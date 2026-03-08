@@ -123,7 +123,7 @@ describe('aiSystem', () => {
   // Case 2: KnifeRusher stays Idle when player outside detection range
   it('keeps KnifeRusher Idle when player outside detection range', () => {
     const world = new World();
-    createPlayer(world, 13, 0); // distance 13 > detectionRange 12
+    createPlayer(world, 51, 0); // distance 51 > detectionRange 50
     const enemyId = createEnemy(world, EnemyType.KnifeRusher, 0, 0, AIBehaviorState.Idle);
 
     aiSystem(world, DT);
@@ -434,7 +434,7 @@ describe('aiSystem', () => {
   // Case 23: Chase → Idle when player leaves detection range (non-SuicideBomber)
   it('transitions Chase → Idle when player leaves detection range', () => {
     const world = new World();
-    createPlayer(world, 20, 0); // distance 20 > detectionRange 12
+    createPlayer(world, 51, 0); // distance 51 > detectionRange 50
     const enemyId = createEnemy(world, EnemyType.KnifeRusher, 0, 0, AIBehaviorState.Chase, 0);
 
     aiSystem(world, DT);
@@ -456,7 +456,7 @@ describe('aiSystem', () => {
           (ex, ez, px, pz) => {
             const dist = Math.sqrt((px - ex) ** 2 + (pz - ez) ** 2);
             // Only test when player is within detection range and not at same position
-            if (dist < 0.01 || dist > 12) return;
+            if (dist < 0.01 || dist > 50) return;
 
             const world = new World();
             createPlayer(world, px, pz);

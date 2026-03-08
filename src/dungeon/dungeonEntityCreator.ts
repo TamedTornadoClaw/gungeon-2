@@ -14,6 +14,7 @@ import {
   createBoss,
 } from '../ecs/factories.js';
 import { rebuildStatics } from '../systems/collisionDetectionSystem.js';
+import { rebuildDungeonTree } from '../systems/visibilitySystem.js';
 import type { CollisionEntity } from '../systems/collisionDetectionSystem.js';
 import { getDesignParams } from '../config/designParams.js';
 import type { DungeonData, Room, Corridor } from './dungeonData.js';
@@ -405,6 +406,7 @@ export function rebuildStaticColliders(world: World): void {
     }
   }
   rebuildStatics(staticColliders);
+  rebuildDungeonTree(world);
 }
 
 export function setPlayerStartPosition(

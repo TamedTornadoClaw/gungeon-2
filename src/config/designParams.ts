@@ -161,11 +161,17 @@ export interface DestructiblesParams {
   barrelHealth: number;
 }
 
+export interface WallFadeParams {
+  opacity: number;
+  radius: number;
+}
+
 export interface CameraParams {
   fov: number;
   angle: number;
   distance: number;
   followSmoothing: number;
+  wallFade: WallFadeParams;
 }
 
 export interface ShakeParams {
@@ -247,6 +253,11 @@ export interface ParticlesParams {
   effects: Record<string, ParticleEffectParams>;
 }
 
+export interface VisibilityParams {
+  fogOfWarRadius: number;
+  losMaxRange: number;
+}
+
 export interface DesignParams {
   player: PlayerParams;
   guns: Record<string, GunParams>;
@@ -260,6 +271,7 @@ export interface DesignParams {
   entityColliders: EntityCollidersParams;
   destructibles: DestructiblesParams;
   camera: CameraParams;
+  visibility: VisibilityParams;
   screenEffects: ScreenEffectsParams;
   particles: ParticlesParams;
   loadingScreen: LoadingScreenParams;
@@ -284,6 +296,7 @@ const REQUIRED_SECTIONS: ReadonlyArray<keyof DesignParams> = [
   'entityColliders',
   'destructibles',
   'camera',
+  'visibility',
   'screenEffects',
   'particles',
   'loadingScreen',
