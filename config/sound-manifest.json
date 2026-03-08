@@ -294,13 +294,5 @@
     "pitchMax": 1.0,
     "maxInstances": 1,
     "loop": true
-  },
-  "FloorTransition": {
-    "path": "assets/audio/floor_transition.ogg",
-    "volume": 0.7,
-    "pitchMin": 1.0,
-    "pitchMax": 1.0,
-    "maxInstances": 1,
-    "loop": false
   }
 }
