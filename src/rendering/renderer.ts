@@ -40,6 +40,7 @@ export interface RendererContext {
   instancedRenderer: InstancedRenderer;
   ambientLight: THREE.AmbientLight;
   directionalLight: THREE.DirectionalLight;
+  _resizeCleanup: (() => void) | null;
 }
 
 export function initRenderer(): RendererContext {
@@ -56,10 +57,10 @@ export function initRenderer(): RendererContext {
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
 
-  const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
+  const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
   scene.add(ambientLight);
 
-  const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+  const directionalLight = new THREE.DirectionalLight(0xffffff, 1.0);
   directionalLight.position.set(10, 20, 10);
   directionalLight.castShadow = true;
   directionalLight.shadow.mapSize.set(2048, 2048);
@@ -74,7 +75,7 @@ export function initRenderer(): RendererContext {
   const sceneManager = createSceneManager(scene);
   const instancedRenderer = createInstancedRenderer(sceneManager);
 
-  return { renderer, scene, camera, cameraController, sceneManager, instancedRenderer, ambientLight, directionalLight };
+  return { renderer, scene, camera, cameraController, sceneManager, instancedRenderer, ambientLight, directionalLight, _resizeCleanup: null };
 }
 
 export function mountRenderer(
@@ -86,9 +87,25 @@ export function mountRenderer(
   ctx.camera.aspect = width / height;
   ctx.camera.updateProjectionMatrix();
   container.appendChild(ctx.renderer.domElement);
+
+  const onResize = (): void => {
+    const { width: w, height: h } = container.getBoundingClientRect();
+    if (w === 0 || h === 0) return;
+    ctx.renderer.setSize(w, h);
+    ctx.camera.aspect = w / h;
+    ctx.camera.updateProjectionMatrix();
+  };
+  window.addEventListener('resize', onResize);
+  ctx._resizeCleanup = () => {
+    window.removeEventListener('resize', onResize);
+  };
 }
 
 export function unmountRenderer(ctx: RendererContext): void {
+  if (ctx._resizeCleanup) {
+    ctx._resizeCleanup();
+    ctx._resizeCleanup = null;
+  }
   const canvas = ctx.renderer.domElement;
   canvas.parentElement?.removeChild(canvas);
 }

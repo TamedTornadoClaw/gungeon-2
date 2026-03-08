@@ -29,12 +29,12 @@ describe('Wall mesh scaffold', () => {
     manager.releaseMesh(MeshId.Wall, mesh);
   });
 
-  it('uses BoxGeometry(1, 1, 1) as placeholder', () => {
+  it('uses BoxGeometry(1, 3, 1) for 3m tall walls', () => {
     const mesh = manager.acquireMesh(MeshId.Wall);
     expect(mesh.geometry).toBeInstanceOf(THREE.BoxGeometry);
     const params = (mesh.geometry as THREE.BoxGeometry).parameters;
     expect(params.width).toBe(1);
-    expect(params.height).toBe(1);
+    expect(params.height).toBe(3);
     expect(params.depth).toBe(1);
     manager.releaseMesh(MeshId.Wall, mesh);
   });

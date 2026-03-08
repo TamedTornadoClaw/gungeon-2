@@ -58,6 +58,99 @@ function getColor(meshId: MeshId): THREE.Color {
   return new THREE.Color(parseHexColor(sceneMeshes.colors[name]));
 }
 
+// ── Procedural Textures ──────────────────────────────────────────────────────
+
+function createBrickTexture(): THREE.CanvasTexture | null {
+  if (typeof document === 'undefined') return null;
+
+  const size = 128;
+  const canvas = document.createElement('canvas');
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext('2d')!;
+
+  // Fill with base mortar color
+  ctx.fillStyle = '#888888';
+  ctx.fillRect(0, 0, size, size);
+
+  const brickH = 16;
+  const brickW = 32;
+  const mortarSize = 2;
+  const rows = Math.ceil(size / brickH);
+  const cols = Math.ceil(size / brickW) + 1;
+
+  for (let row = 0; row < rows; row++) {
+    const offset = row % 2 === 1 ? brickW / 2 : 0;
+    for (let col = -1; col < cols; col++) {
+      // Per-brick color variation
+      const variation = Math.floor(Math.random() * 30) - 15;
+      const r = Math.min(255, Math.max(0, 140 + variation));
+      const g = Math.min(255, Math.max(0, 100 + variation));
+      const b = Math.min(255, Math.max(0, 80 + variation));
+      ctx.fillStyle = `rgb(${r},${g},${b})`;
+
+      const x = col * brickW + offset + mortarSize;
+      const y = row * brickH + mortarSize;
+      const w = brickW - mortarSize * 2;
+      const h = brickH - mortarSize * 2;
+      ctx.fillRect(x, y, w, h);
+    }
+  }
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.wrapS = THREE.RepeatWrapping;
+  texture.wrapT = THREE.RepeatWrapping;
+  texture.repeat.set(1, 3);
+  return texture;
+}
+
+function createTileTexture(): THREE.CanvasTexture | null {
+  if (typeof document === 'undefined') return null;
+
+  const size = 128;
+  const tileSize = 32;
+  const canvas = document.createElement('canvas');
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext('2d')!;
+
+  // Fill background
+  ctx.fillStyle = '#444444';
+  ctx.fillRect(0, 0, size, size);
+
+  const tiles = size / tileSize;
+  for (let row = 0; row < tiles; row++) {
+    for (let col = 0; col < tiles; col++) {
+      // Per-tile color variation
+      const variation = Math.floor(Math.random() * 20) - 10;
+      const r = Math.min(255, Math.max(0, 68 + variation));
+      const g = Math.min(255, Math.max(0, 68 + variation));
+      const b = Math.min(255, Math.max(0, 68 + variation));
+      ctx.fillStyle = `rgb(${r},${g},${b})`;
+      ctx.fillRect(col * tileSize + 1, row * tileSize + 1, tileSize - 2, tileSize - 2);
+    }
+  }
+
+  // Draw grid lines
+  ctx.strokeStyle = '#333333';
+  ctx.lineWidth = 1;
+  for (let i = 0; i <= tiles; i++) {
+    ctx.beginPath();
+    ctx.moveTo(i * tileSize, 0);
+    ctx.lineTo(i * tileSize, size);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(0, i * tileSize);
+    ctx.lineTo(size, i * tileSize);
+    ctx.stroke();
+  }
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.wrapS = THREE.RepeatWrapping;
+  texture.wrapT = THREE.RepeatWrapping;
+  return texture;
+}
+
 // ── Factory ─────────────────────────────────────────────────────────────────
 
 export function createInstancedRenderer(sceneManager: SceneManager): InstancedRenderer {
@@ -116,6 +209,19 @@ export function createInstancedRenderer(sceneManager: SceneManager): InstancedRe
     if (transparencyEntry) {
       params.transparent = true;
       params.opacity = transparencyEntry.opacity;
+    }
+
+    // Apply procedural textures
+    if (meshId === MeshId.Wall) {
+      const brickTex = createBrickTexture();
+      if (brickTex) {
+        params.map = brickTex;
+      }
+    } else if (meshId === MeshId.Floor) {
+      const tileTex = createTileTexture();
+      if (tileTex) {
+        params.map = tileTex;
+      }
     }
 
     return new THREE.MeshToonMaterial(params);

@@ -57,7 +57,7 @@ const MESH_GEOMETRIES: Record<MeshId, () => THREE.BufferGeometry> = {
   [MeshId.HealthPickup]: () => createCrossGeometry(),
   [MeshId.Currency]: () => new THREE.CylinderGeometry(0.15, 0.15, 0.05, 16),
   [MeshId.GunPickupGlow]: () => new THREE.TorusGeometry(0.3, 0.05, 8, 24),
-  [MeshId.Wall]: () => new THREE.BoxGeometry(1, 1, 1),
+  [MeshId.Wall]: () => new THREE.BoxGeometry(1, 3, 1),
   [MeshId.Floor]: () => new THREE.PlaneGeometry(1, 1),
   [MeshId.Pit]: () => new THREE.PlaneGeometry(1, 1),
   [MeshId.FireHazard]: () => new THREE.PlaneGeometry(1, 1),

@@ -122,17 +122,13 @@ export function playerControlSystem(world: World, input: InputState, _dt: number
 
     if (input.fireSidearm && sidearmGun && !fired) {
       player.activeSlot = WeaponSlot.Sidearm;
-      if (sidearmGun.currentAmmo > 0 && !sidearmGun.isReloading && sidearmGun.fireCooldown <= 0) {
-        sidearmGun.fireRequested = true;
-      }
+      sidearmGun.fireRequested = true;
       fired = true;
     }
 
     if (input.fireLongArm && longArmGun && !fired) {
       player.activeSlot = WeaponSlot.LongArm;
-      if (longArmGun.currentAmmo > 0 && !longArmGun.isReloading && longArmGun.fireCooldown <= 0) {
-        longArmGun.fireRequested = true;
-      }
+      longArmGun.fireRequested = true;
       fired = true;
     }
 

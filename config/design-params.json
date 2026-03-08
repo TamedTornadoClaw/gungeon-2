@@ -212,7 +212,7 @@
     "healthPickupDropChance": 0.05,
     "bossFloorDepth": 10,
     "wallThickness": 1,
-    "wallHeight": 2,
+    "wallHeight": 3,
     "spawnZoneScale": 0.8,
     "chestOffset": 3,
     "shopOffset": -3

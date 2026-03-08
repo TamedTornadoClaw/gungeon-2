@@ -218,7 +218,7 @@ describe('playerControlSystem', () => {
     expect(Number.isNaN(vel.z)).toBe(false);
   });
 
-  it('3. Fire sidearm with empty magazine — fireRequested stays false', () => {
+  it('3. Fire sidearm with empty magazine — fireRequested is true (intent captured, projectileSystem handles guard)', () => {
     const world = new World();
     const { sidearmId } = makePlayer(world, {
       sidearmOverrides: { currentAmmo: 0 },
@@ -227,10 +227,10 @@ describe('playerControlSystem', () => {
     playerControlSystem(world, input, DT);
 
     const gun = world.getComponent<Gun>(sidearmId, 'Gun')!;
-    expect(gun.fireRequested).toBe(false);
+    expect(gun.fireRequested).toBe(true);
   });
 
-  it('4. Fire long arm while reloading — fireRequested stays false', () => {
+  it('4. Fire long arm while reloading — fireRequested is true (intent captured, projectileSystem handles guard)', () => {
     const world = new World();
     const { longArmId } = makePlayer(world, {
       longArmOverrides: { isReloading: true, reloadTimer: 0.5 },
@@ -239,10 +239,10 @@ describe('playerControlSystem', () => {
     playerControlSystem(world, input, DT);
 
     const gun = world.getComponent<Gun>(longArmId, 'Gun')!;
-    expect(gun.fireRequested).toBe(false);
+    expect(gun.fireRequested).toBe(true);
   });
 
-  it('5. Fire sidearm while cooldown positive — fireRequested stays false', () => {
+  it('5. Fire sidearm while cooldown positive — fireRequested is true (intent captured, projectileSystem handles guard)', () => {
     const world = new World();
     const { sidearmId } = makePlayer(world, {
       sidearmOverrides: { fireCooldown: 0.2 },
@@ -251,7 +251,7 @@ describe('playerControlSystem', () => {
     playerControlSystem(world, input, DT);
 
     const gun = world.getComponent<Gun>(sidearmId, 'Gun')!;
-    expect(gun.fireRequested).toBe(false);
+    expect(gun.fireRequested).toBe(true);
   });
 
   it('6. Both fire inputs pressed simultaneously — at most one gun fires', () => {
